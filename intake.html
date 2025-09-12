@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Intakeformulier</title>
   <style>
     body {
@@ -35,13 +35,10 @@
     form {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 14px;
       text-align: left;
     }
-    label {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
+    label { font-weight: 600; }
     input, select, textarea {
       padding: 10px;
       border-radius: 6px;
@@ -49,6 +46,7 @@
       font-size: 14px;
       width: 100%;
     }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     button {
       padding: 12px;
       border: none;
@@ -57,11 +55,11 @@
       color: #fff;
       font-size: 16px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 8px;
     }
-    button:hover {
-      background: #0056b3;
-    }
+    button:hover { background: #0056b3; }
+    #status { margin-top: 10px; font-weight: 600; }
+    .muted { font-size: 12px; color: #666; }
   </style>
 </head>
 <body>
@@ -69,36 +67,107 @@
     <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
     <h1>Intakeformulier ✈️</h1>
 
-    <form id="intakeForm" action="mail.php" method="POST">
-      <label for="date">Vertrekdatum</label>
-      <input id="date" name="date" type="date" required />
+    <!-- LET OP: geen mail.php meer, we posten via JS naar /api/mail -->
+    <form id="intakeForm" novalidate>
+      <div class="row">
+        <div>
+          <label for="date">Vertrekdatum</label>
+          <input id="date" name="date" type="date" required />
+        </div>
+        <div>
+          <label for="return">Terugkomstdatum</label>
+          <input id="return" name="return" type="date" required />
+        </div>
+      </div>
 
-      <label for="return">Terugkomstdatum</label>
-      <input id="return" name="return" type="date" required />
+      <div class="row">
+        <div>
+          <label for="airport">Vertrek vanaf</label>
+          <select id="airport" name="airport" required>
+            <option value="" disabled selected>Kies je luchthaven</option>
+            <option value="AMS">Amsterdam Schiphol (AMS)</option>
+            <option value="RTM">Rotterdam The Hague (RTM)</option>
+            <option value="EIN">Eindhoven (EIN)</option>
+          </select>
+        </div>
+        <div>
+          <label for="destination">Bestemming</label>
+          <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
+        </div>
+      </div>
 
-      <label for="airport">Vertrek vanaf</label>
-      <select id="airport" name="airport" required>
-        <option value="" disabled selected>Kies je luchthaven</option>
-        <option value="AMS">Amsterdam Schiphol (AMS)</option>
-        <option value="RTM">Rotterdam The Hague Airport (RTM)</option>
-        <option value="EIN">Eindhoven Airport (EIN)</option>
-      </select>
+      <div class="row">
+        <div>
+          <label for="name">Naam</label>
+          <input id="name" name="name" type="text" placeholder="Jouw naam" required />
+        </div>
+        <div>
+          <label for="email">E-mailadres</label>
+          <input id="email" name="email" type="email" placeholder="jij@voorbeeld.com" required />
+        </div>
+      </div>
 
-      <label for="destination">Bestemming</label>
-      <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
-
-      <label for="name">Naam</label>
-      <input id="name" name="name" type="text" placeholder="Jouw naam" required />
-
-      <label for="email">E-mailadres</label>
-      <input id="email" name="email" type="email" placeholder="jouw@email.com" required />
-
-      <label for="message">Bericht</label>
+      <label for="message">Bericht (optioneel)</label>
       <textarea id="message" name="message" rows="4" placeholder="Extra wensen of opmerkingen..."></textarea>
 
+      <!-- Honeypot tegen bots -->
+      <input type="text" name="company" style="display:none" tabindex="-1" autocomplete="off" />
+
+      <label class="muted">
+        <input type="checkbox" id="consent" required />
+        Ik ga akkoord met verwerking van mijn gegevens volgens de <a href="privacy.html">privacyverklaring</a>.
+      </label>
+
       <button type="submit">Versturen</button>
+      <p id="status" aria-live="polite"></p>
     </form>
   </div>
+
+  <script>
+    document.getElementById('intakeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const statusEl = document.getElementById('status');
+
+      // honeypot check
+      if (f.company && f.company.value) {
+        statusEl.textContent = 'Verzending geweigerd.';
+        return;
+      }
+
+      if (!f.checkValidity()) {
+        statusEl.textContent = 'Controleer je invoer.';
+        return;
+      }
+
+      const payload = {
+        name: f.name.value.trim(),
+        email: f.email.value.trim(),
+        message:
+          `Vertrek: ${f.date.value} • Terug: ${f.return.value} • ` +
+          `Vanaf: ${f.airport.value} • Bestemming: ${f.destination.value}` +
+          (f.message.value ? `\n\nOpmerking: ${f.message.value}` : '')
+      };
+
+      try {
+        statusEl.textContent = 'Versturen...';
+        const res = await fetch('/api/mail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          window.location.href = 'bedankt.html';
+        } else {
+          const text = await res.text();
+          statusEl.textContent = 'Er ging iets mis: ' + text;
+        }
+      } catch (err) {
+        statusEl.textContent = 'Netwerkfout: ' + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
 
