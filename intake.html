@@ -1,126 +1,105 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Intakeformulier</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
       background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      max-width: 150px;
+      margin-bottom: 20px;
     }
     h1 {
+      font-size: 26px;
+      margin-bottom: 20px;
       color: #333;
     }
     form {
-      max-width: 500px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      text-align: left;
     }
     label {
-      display: block;
-      margin-top: 15px;
       font-weight: bold;
+      margin-bottom: 5px;
     }
-    input, select, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 5px;
+    input, select, textarea {
+      padding: 10px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      box-sizing: border-box;
+      font-size: 14px;
+      width: 100%;
     }
     button {
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
       background: #007bff;
       color: #fff;
-      border: none;
-      margin-top: 20px;
-      cursor: pointer;
       font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
     }
     button:hover {
       background: #0056b3;
     }
-    #status {
-      margin-top: 15px;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
-  <h1>Intakeformulier ✈️</h1>
+  <div class="container">
+    <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
+    <h1>Intakeformulier ✈️</h1>
 
-  <form id="intakeForm">
-    <label>Naam
-      <input type="text" name="name" required />
-    </label>
+    <form id="intakeForm" action="mail.php" method="POST">
+      <label for="date">Vertrekdatum</label>
+      <input id="date" name="date" type="date" required />
 
-    <label>E-mail
-      <input type="email" name="email" required />
-    </label>
+      <label for="return">Terugkomstdatum</label>
+      <input id="return" name="return" type="date" required />
 
-    <label>Vertrekdatum
-      <input type="date" name="vertrekdatum" required />
-    </label>
-
-    <label>Terugkomstdatum
-      <input type="date" name="terugkomstdatum" required />
-    </label>
-
-    <label>Vertrek vanaf
-      <select name="from" required>
-        <option value="">Kies je luchthaven</option>
-        <option value="AMS">Amsterdam (AMS)</option>
-        <option value="RTM">Rotterdam (RTM)</option>
-        <option value="EIN">Eindhoven (EIN)</option>
+      <label for="airport">Vertrek vanaf</label>
+      <select id="airport" name="airport" required>
+        <option value="" disabled selected>Kies je luchthaven</option>
+        <option value="AMS">Amsterdam Schiphol (AMS)</option>
+        <option value="RTM">Rotterdam The Hague Airport (RTM)</option>
+        <option value="EIN">Eindhoven Airport (EIN)</option>
       </select>
-    </label>
 
-    <label>Bestemming
-      <input type="text" name="bestemming" placeholder="Bijv. Barcelona" required />
-    </label>
+      <label for="destination">Bestemming</label>
+      <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
 
-    <button type="submit">Versturen</button>
-  </form>
+      <label for="name">Naam</label>
+      <input id="name" name="name" type="text" placeholder="Jouw naam" required />
 
-  <p id="status" aria-live="polite"></p>
+      <label for="email">E-mailadres</label>
+      <input id="email" name="email" type="email" placeholder="jouw@email.com" required />
 
-  <script>
-    document.getElementById('intakeForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const f = e.target;
+      <label for="message">Bericht</label>
+      <textarea id="message" name="message" rows="4" placeholder="Extra wensen of opmerkingen..."></textarea>
 
-      const payload = {
-        name: f.name.value.trim(),
-        email: f.email.value.trim(),
-        message:
-          `Vertrek: ${f.vertrekdatum.value} • Terug: ${f.terugkomstdatum.value} • ` +
-          `Vanaf: ${f.from.value} • Bestemming: ${f.bestemming.value}`
-      };
-
-      const statusEl = document.getElementById('status');
-
-      try {
-        const res = await fetch('/api/mail', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          window.location.href = 'bedankt.html';
-        } else {
-          const text = await res.text();
-          statusEl.textContent = 'Er ging iets mis: ' + text;
-        }
-      } catch (err) {
-        statusEl.textContent = 'Netwerkfout: ' + err.message;
-      }
-    });
-  </script>
+      <button type="submit">Versturen</button>
+    </form>
+  </div>
 </body>
 </html>
+
 
