@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intake - TrAIveller.ai</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a> ·
+    <a href="over.html">Over ons</a> ·
+    <a href="contact.html">Contact</a> ·
+    <a href="privacy.html">Privacy</a>
+  </nav>
+
+  <h1>Intakeformulier ✍️</h1>
+  <form id="intakeForm" class="card" action="mail.php" method="POST" autocomplete="on">
+    <label for="date">Vertrekdatum</label>
+    <input id="date" name="date" type="date" required />
+
+    <label for="return">Terugkomstdatum</label>
+    <input id="return" name="return" type="date" required />
+
+    <label for="airport">Vertrek vanaf</label>
+    <select id="airport" name="airport" required>
+      <option value="" disabled selected>Kies je luchthaven</option>
+      <option value="AMS">Amsterdam Schiphol (AMS)</option>
+      <option value="RTM">Rotterdam The Hague (RTM)</option>
+      <option value="EIN">Eindhoven (EIN)</option>
+    </select>
+
+    <label for="destination">Bestemming</label>
+    <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
+
+    <button type="submit">Versturen</button>
+  </form>
+</body>
+</html>
