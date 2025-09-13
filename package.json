@@ -6,6 +6,6 @@
     "start": "node api/mail.js"
   },
   "dependencies": {
-    "@resend/node": "^2.0.0"
-  }
+  "resend": "^4.0.0"
+}
 }
