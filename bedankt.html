@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bedankt!</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bedankt – TrAIveller.ai</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,55 +12,57 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
     }
-    .container {
+    .card {
       background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 40px 30px;
+      border-radius: 14px;
       text-align: center;
       max-width: 500px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .logo {
-      max-width: 150px;
+      max-width: 140px;
       margin-bottom: 20px;
     }
     h1 {
-      color: #28a745;
-      font-size: 28px;
-      margin-bottom: 10px;
+      font-size: 26px;
+      color: #0a66c2;
+      margin-bottom: 12px;
     }
     p {
-      margin-top: 10px;
-      color: #555;
       font-size: 16px;
+      color: #444;
+      margin-bottom: 24px;
     }
-    a {
+    a.button {
       display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #007bff;
+      background: #0a66c2;
       color: #fff;
-      border-radius: 6px;
+      padding: 12px 20px;
+      border-radius: 8px;
       text-decoration: none;
-      transition: background 0.2s;
+      font-weight: 600;
+      transition: background 0.2s ease;
     }
-    a:hover {
-      background: #0056b3;
+    a.button:hover {
+      background: #084b90;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
+  <div class="card">
+    <img src="assets/images/logo.png" alt="TrAIveller.ai Logo" class="logo" />
     <h1>Bedankt voor je aanvraag ✈️</h1>
-    <p>We hebben je intakeformulier ontvangen en sturen je zo snel mogelijk een voorstel.</p>
-    <a href="index.html">Terug naar homepagina</a>
+    <p>We hebben je intakeformulier ontvangen.<br/>
+    Ons team gaat voor je aan de slag en je ontvangt binnenkort een reactie per e-mail.</p>
+    <a href="index.html" class="button">Terug naar Home</a>
   </div>
 </body>
 </html>
+
 
 
 
