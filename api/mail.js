@@ -3,18 +3,33 @@ import { Resend } from 'resend';
 
 // Kleine helpers voor veilige inhoud
 const escapeHtml = (s = '') =>
-  s.replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  s.replace(/[<>&"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 const nl2br = (s = '') => s.replace(/\r?\n/g, '<br>');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
+  // Alleen POST toegestaan
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // --- Lees body (werkt voor JSON én x-www-form-urlencoded) ---
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const rawBody = Buffer.concat(chunks).toString();
+  const ct = (req.headers['content-type'] || '').toLowerCase();
+
+  let data = {};
+  if (ct.includes('application/json')) {
+    data = rawBody ? JSON.parse(rawBody) : {};
+  } else if (ct.includes('application/x-www-form-urlencoded')) {
+    const params = new URLSearchParams(rawBody);
+    data = Object.fromEntries(params.entries());
+  }
+
   try {
-    // Payload uit intake.html (fetch met JSON)
+    // Payload vanuit formulier / fetch
     const {
       name = 'Onbekend',
       email = '',
@@ -22,10 +37,10 @@ export default async function handler(req, res) {
       date = '',
       return: ret = '',
       airport = '',
-      destination = '',
-    } = req.body || {};
+      destination = ''
+    } = data || {};
 
-    // Aanpassen naar jouw eigen inbox indien nodig
+    // Aanpassen naar je eigen inbox indien nodig
     const toAddress = 'traivellerdev@outlook.com';
 
     // Verzenden
@@ -36,8 +51,7 @@ export default async function handler(req, res) {
       subject: `Nieuwe intake via TrAIveller.ai – ${name}`,
 
       // Plain-text fallback (goed voor spamfilters)
-      text:
-`Nieuwe intake bij TrAIveller.ai
+      text: `Nieuwe intake bij TrAIveller.ai
 
 Naam: ${name}
 E-mail: ${email}
@@ -59,7 +73,9 @@ Verzonden op: ${new Date().toISOString()}
   <body style="margin:0;padding:0;background:#f6f9fc;font-family:Arial,Helvetica,sans-serif;color:#111;">
     <div style="max-width:600px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6ecf1">
       <div style="padding:20px 24px;border-bottom:1px solid #eef2f6">
-        <h1 style="margin:0 0 4px 0;font-size:20px;">Nieuwe intake bij <span style="color:#0a66c2;">TrAIveller.ai</span></h1>
+        <h1 style="margin:0 0 4px 0;font-size:20px;">
+          Nieuwe intake bij <span style="color:#0a66c2;">TrAIveller.ai</span>
+        </h1>
         <p style="margin:0;color:#667085;font-size:13px;">Zojuist ontvangen • ${new Date().toLocaleString('nl-NL')}</p>
       </div>
 
@@ -101,7 +117,7 @@ Verzonden op: ${new Date().toISOString()}
       </div>
     </div>
   </body>
-</html>`,
+</html>`
       // Eventueel extra headers:
       // headers: { 'List-Unsubscribe': '<mailto:noreply@traiveller.ai>' },
     });
