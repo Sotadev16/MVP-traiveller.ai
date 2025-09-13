@@ -15,14 +15,13 @@ export default async function handler(req, res) {
   try {
     const { name = "Onbekend", email = "", message = "" } = req.body || {};
 
-    const fromAddress = "TrAIveller.ai <noreply@traiveller.ai>";
     const toAddress = "traivellerdev@outlook.com"; // <- hier komt jouw mailbox
 
     await resend.emails.send({
-      from: fromAddress,
-      to: [toAddress],
-      reply_to: email || undefined, // handig voor direct antwoorden
-      subject: `Nieuwe intake via TrAIveller.ai - ${name}`,
+  from: "TrAIveller.ai <noreply@traiveller.ai>",   // <-- hier
+  to: [toAddress],
+  reply_to: email || undefined,
+  subject: `Nieuwe intake via TrAIveller.ai - ${name}`,
 
       // Plain-text fallback (spamfilters)
       text: `
