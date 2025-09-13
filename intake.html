@@ -68,27 +68,35 @@
     <h1>Intakeformulier ✈️</h1>
 
     <!-- LET OP: geen mail.php meer, we posten via JS naar /api/mail -->
-    <form id="intakeForm" novalidate>
-      <div class="row">
-        <div>
-          <label for="date">Vertrekdatum</label>
-          <input id="date" name="date" type="date" required />
-        </div>
-        <div>
-          <label for="return">Terugkomstdatum</label>
-          <input id="return" name="return" type="date" required />
-        </div>
-      </div>
+    <form id="intakeForm" method="POST" action="/api/mail">
+  <label for="date">Vertrekdatum</label>
+  <input id="date" name="date" type="date" required />
 
-      <div class="row">
-        <div>
-          <label for="airport">Vertrek vanaf</label>
-          <select id="airport" name="airport" required>
-            <option value="" disabled selected>Kies je luchthaven</option>
-            <option value="AMS">Amsterdam Schiphol (AMS)</option>
-            <option value="RTM">Rotterdam The Hague (RTM)</option>
-            <option value="EIN">Eindhoven (EIN)</option>
-          </select>
+  <label for="return">Terugkomstdatum</label>
+  <input id="return" name="return" type="date" required />
+
+  <label for="airport">Vertrek vanaf</label>
+  <select id="airport" name="airport" required>
+    <option value="AMS">Amsterdam Schiphol (AMS)</option>
+    <option value="RTM">Rotterdam The Hague (RTM)</option>
+    <option value="EIN">Eindhoven (EIN)</option>
+  </select>
+
+  <label for="destination">Bestemming</label>
+  <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
+
+  <label for="name">Naam</label>
+  <input id="name" name="name" type="text" required />
+
+  <label for="email">E-mailadres</label>
+  <input id="email" name="email" type="email" required />
+
+  <label for="message">Bericht (optioneel)</label>
+  <textarea id="message" name="message"></textarea>
+
+  <button type="submit">Versturen</button>
+</form>
+
         </div>
         <div>
           <label for="destination">Bestemming</label>
