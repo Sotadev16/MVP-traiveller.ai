@@ -1,0 +1,11 @@
+{
+  "name": "mvp-traiveller-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node api/mail.js"
+  },
+  "dependencies": {
+    "@resend/node": "^2.0.0"
+  }
+}
