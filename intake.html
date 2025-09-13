@@ -46,7 +46,6 @@
       font-size: 14px;
       width: 100%;
     }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     button {
       padding: 12px;
       border: none;
@@ -67,54 +66,29 @@
     <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
     <h1>Intakeformulier ✈️</h1>
 
-    <!-- LET OP: geen mail.php meer, we posten via JS naar /api/mail -->
-   <form id="intakeForm" method="POST" action="/api/mail">
-  <label for="date">Vertrekdatum</label>
-  <input id="date" name="date" type="date" required />
+    <form id="intakeForm">
+      <label for="date">Vertrekdatum</label>
+      <input id="date" name="date" type="date" required />
 
-  <label for="return">Terugkomstdatum</label>
-  <input id="return" name="return" type="date" required />
+      <label for="return">Terugkomstdatum</label>
+      <input id="return" name="return" type="date" required />
 
-  <label for="airport">Vertrek vanaf</label>
-  <select id="airport" name="airport" required>
-    <option value="AMS">Amsterdam Schiphol (AMS)</option>
-    <option value="RTM">Rotterdam The Hague (RTM)</option>
-    <option value="EIN">Eindhoven (EIN)</option>
-  </select>
+      <label for="airport">Vertrek vanaf</label>
+      <select id="airport" name="airport" required>
+        <option value="" disabled selected>Kies je luchthaven</option>
+        <option value="AMS">Amsterdam Schiphol (AMS)</option>
+        <option value="RTM">Rotterdam The Hague (RTM)</option>
+        <option value="EIN">Eindhoven (EIN)</option>
+      </select>
 
-  <label for="destination">Bestemming</label>
-  <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
+      <label for="destination">Bestemming</label>
+      <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
 
-  <label for="name">Naam</label>
-  <input id="name" name="name" type="text" required />
+      <label for="name">Naam</label>
+      <input id="name" name="name" type="text" placeholder="Jouw naam" required />
 
-  <label for="email">E-mailadres</label>
-  <input id="email" name="email" type="email" required />
-
-  <label for="message">Bericht (optioneel)</label>
-  <textarea id="message" name="message"></textarea>
-
-  <button type="submit">Versturen</button>
-</form>
-
-
-        </div>
-        <div>
-          <label for="destination">Bestemming</label>
-          <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label for="name">Naam</label>
-          <input id="name" name="name" type="text" placeholder="Jouw naam" required />
-        </div>
-        <div>
-          <label for="email">E-mailadres</label>
-          <input id="email" name="email" type="email" placeholder="jij@voorbeeld.com" required />
-        </div>
-      </div>
+      <label for="email">E-mailadres</label>
+      <input id="email" name="email" type="email" placeholder="jij@voorbeeld.com" required />
 
       <label for="message">Bericht (optioneel)</label>
       <textarea id="message" name="message" rows="4" placeholder="Extra wensen of opmerkingen..."></textarea>
@@ -124,7 +98,8 @@
 
       <label class="muted">
         <input type="checkbox" id="consent" required />
-        Ik ga akkoord met verwerking van mijn gegevens volgens de <a href="privacy.html">privacyverklaring</a>.
+        Ik ga akkoord met verwerking van mijn gegevens volgens de 
+        <a href="privacy.html">privacyverklaring</a>.
       </label>
 
       <button type="submit">Versturen</button>
@@ -138,46 +113,47 @@
       const f = e.target;
       const statusEl = document.getElementById('status');
 
-      // honeypot check
+      // Honeypot check
       if (f.company && f.company.value) {
-        statusEl.textContent = 'Verzending geweigerd.';
+        statusEl.textContent = "Verzending geweigerd.";
         return;
       }
 
       if (!f.checkValidity()) {
-        statusEl.textContent = 'Controleer je invoer.';
+        statusEl.textContent = "Controleer je invoer.";
         return;
       }
 
       const payload = {
         name: f.name.value.trim(),
         email: f.email.value.trim(),
-        message:
-          `Vertrek: ${f.date.value} • Terug: ${f.return.value} • ` +
-          `Vanaf: ${f.airport.value} • Bestemming: ${f.destination.value}` +
-          (f.message.value ? `\n\nOpmerking: ${f.message.value}` : '')
+        message: 
+          `Vertrek: ${f.date.value} → Terug: ${f.return.value}\n` +
+          `Vanaf: ${f.airport.value} → Bestemming: ${f.destination.value}\n\n` +
+          (f.message.value ? `Opmerking: ${f.message.value}` : "")
       };
 
       try {
-        statusEl.textContent = 'Versturen...';
-        const res = await fetch('/api/mail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        statusEl.textContent = "Versturen...";
+        const res = await fetch("/api/mail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
 
         if (res.ok) {
-          window.location.href = 'bedankt.html';
+          window.location.href = "bedankt.html";
         } else {
           const text = await res.text();
-          statusEl.textContent = 'Er ging iets mis: ' + text;
+          statusEl.textContent = "Er ging iets mis: " + text;
         }
       } catch (err) {
-        statusEl.textContent = 'Netwerkfout: ' + err.message;
+        statusEl.textContent = "Netwerkfout: " + err.message;
       }
     });
   </script>
 </body>
 </html>
+
 
 
