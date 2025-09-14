@@ -2,15 +2,15 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-// ------------ Config -------------
-const TO_EMAIL   = 'traivellerdev@outlook.com';           // jouw inbox
-// TIP: na DKIM-verificatie: 'TrAIveller.ai <noreply@traiveller.ai>'
+// ---------- Config ----------
+const TO_EMAIL   = 'traivellerdev@outlook.com';                  // jouw inbox
+// TIP: na DKIM-verify: 'TrAIveller.ai <noreply@traiveller.ai>'
 const FROM_EMAIL = 'TrAIveller.ai <onboarding@resend.dev>';
 
-// ------------ Helpers ------------
+// ---------- Helpers ----------
 const escapeHtml = (s = '') =>
   s.replace(/[<>&"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-const nl2br   = (s = '') => s.replace(/\r?\n/g, '<br>');
+const nl2br = (s = '') => s.replace(/\r?\n/g, '<br>');
 const isEmail = (s = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 const isISODate = (s = '') => /^\d{4}-\d{2}-\d{2}$/.test(s); // 2025-10-01
 
@@ -39,18 +39,18 @@ async function parseBody(req) {
   const raw = Buffer.concat(chunks).toString();
   const ct = (req.headers['content-type'] || '').toLowerCase();
 
-  if (ct.includes('application/json')) {
-    return raw ? JSON.parse(raw) : {};
-  }
+  if (ct.includes('application/json')) return JSON.parse(raw || '{}');
+
   if (ct.includes('application/x-www-form-urlencoded')) {
     const params = new URLSearchParams(raw);
     return Object.fromEntries(params.entries());
   }
+
   // laatste poging: probeer JSON
-  return raw ? JSON.parse(raw) : {};
+  return JSON.parse(raw || '{}');
 }
 
-// ------------- Handler --------------
+// ---------- Handler ----------
 export default async function handler(req, res) {
   // CORS + security headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -82,42 +82,45 @@ export default async function handler(req, res) {
 
   // Velden
   const {
-  name = 'Onbekend',
-  email = '',
-  message = '',
-  date = '',
-  return: ret = '',
-  airport = '',
-  destination = '',
-  // 👇 nieuw
-  budget = '',
-  adults = '',
-  children = '',
-  trip_types = '',
-  accommodation = '',
-  transport_local = ''
-} = data || {};
+    name = 'Onbekend',
+    email = '',
+    message = '',
+    date = '',
+    return: ret = '',
+    airport = '',
+    destination = '',
+    // nieuw
+    budget = '',
+    adults = '',
+    children = '',
+    trip_types = '',
+    accommodation = '',
+    transport_local = '',
+  } = data || {};
 
   // Validatie
   if (!isEmail(email)) return res.status(400).json({ success: false, error: 'Ongeldig e-mailadres.' });
-  if (!name || !airport || !destination || !date || !ret)
+  if (!name || !airport || !destination || !date || !ret) {
     return res.status(400).json({ success: false, error: 'Ontbrekende verplichte velden.' });
-  if (!isISODate(date) || !isISODate(ret))
+  }
+  if (!isISODate(date) || !isISODate(ret)) {
     return res.status(400).json({ success: false, error: 'Datums moeten YYYY-MM-DD zijn.' });
-  if (!process.env.RESEND_API_KEY)
+  }
+  if (!process.env.RESEND_API_KEY) {
     return res.status(500).json({ success: false, error: 'Resend is niet geconfigureerd.' });
+  }
   if (!supabase) {
-    // Log alleen: mail gaat gewoon door
-    console.warn('Supabase env ontbreekt (SUPABASE_URL / SUPABASE_SERVICE_ROLE) — oversla DB insert.');
+    // Log alleen; mail gaat gewoon door
+    console.warn('Supabase env ontbreekt (SUPABASE_URL / SUPABASE_SERVICE_ROLE) – oversla DB insert.');
   }
 
   try {
-    // Tekst & HTML
-   const textBody = `
-📩 Nieuwe intake van TrAIveller.ai
+    // Tekst & HTML (admin)
+    const textBody = `📬 Nieuwe intake van TrAIveller.ai
 
 Naam: ${name}
 E-mail: ${email}
+
 Vertrekdatum: ${date}
 Terugkomstdatum: ${ret}
 Vertrekluchthaven: ${airport}
@@ -134,25 +137,43 @@ ${message}
 `;
 
     const htmlBody = `
-  <h2>📩 Nieuwe intake van TrAIveller.ai</h2>
-  <p><strong>Naam:</strong> ${name}</p>
-  <p><strong>E-mail:</strong> ${email}</p>
-  <p><strong>Vertrekdatum:</strong> ${date}</p>
-  <p><strong>Terugkomstdatum:</strong> ${ret}</p>
-  <p><strong>Vertrekluchthaven:</strong> ${airport}</p>
-  <p><strong>Bestemming/regio:</strong> ${destination}</p>
-  <hr/>
-  <p><strong>💰 Budget:</strong> €${budget}</p>
-  <p><strong>👨‍👩‍👧‍👦 Volwassenen:</strong> ${adults}, <strong>Kinderen:</strong> ${children}</p>
-  <p><strong>🌍 Type reis:</strong> ${trip_types}</p>
-  <p><strong>🏨 Accommodatie:</strong> ${accommodation}</p>
-  <p><strong>🚗 Vervoer ter plaatse:</strong> ${transport_local}</p>
-  <hr/>
-  <p><strong>Extra wensen:</strong><br/>${message}</p>
-`;
+      <h2>📩 Nieuwe intake van TrAIveller.ai</h2>
+      <p><strong>Naam:</strong> ${escapeHtml(name)}</p>
+      <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
+      <p><strong>Vertrekdatum:</strong> ${escapeHtml(date)}</p>
+      <p><strong>Terugkomstdatum:</strong> ${escapeHtml(ret)}</p>
+      <p><strong>Vertrekluchthaven:</strong> ${escapeHtml(airport)}</p>
+      <p><strong>Bestemming/regio:</strong> ${escapeHtml(destination)}</p>
+      <hr/>
+      <p><strong>💰 Budget:</strong> €${escapeHtml(budget)}</p>
+      <p><strong>👨‍👩‍👧‍👦 Volwassenen:</strong> ${escapeHtml(adults)} <strong>Kinderen:</strong> ${escapeHtml(children)}</p>
+      <p><strong>🌍 Type reis:</strong> ${escapeHtml(trip_types)}</p>
+      <p><strong>🏨 Accommodatie:</strong> ${escapeHtml(accommodation)}</p>
+      <p><strong>🚗 Vervoer ter plaatse:</strong> ${escapeHtml(transport_local)}</p>
+      <hr/>
+      <p><strong>Extra wensen:</strong><br/>${nl2br(escapeHtml(message || '—'))}</p>
+    `;
 
-    // Parallel: mail + (optioneel) DB insert
+    // Bevestiging voor gebruiker
+    const userText = `Bedankt ${name}! 🌟
+
+We hebben je intake ontvangen en gaan voor je aan de slag.
+Je ontvangt binnen 1–2 werkdagen een voorstel in je inbox (${email}).
+
+Groet,
+TrAIveller.ai`;
+    const userHtml = `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
+        <h2>✅ Bedankt, ${escapeHtml(name)}!</h2>
+        <p>We hebben je intake ontvangen en gaan voor je aan de slag.</p>
+        <p>Je ontvangt binnen 1–2 werkdagen een voorstel in je inbox (<strong>${escapeHtml(email)}</strong>).</p>
+        <p>Groet,<br/>TrAIveller.ai</p>
+      </div>
+    `;
+
+    // Parallel: admin mail (verplicht), user mail (optioneel), DB insert (optioneel)
     const tasks = [
+      // 1) admin
       resend.emails.send({
         from: FROM_EMAIL,
         to: [TO_EMAIL],
@@ -161,34 +182,46 @@ ${message}
         text: textBody,
         html: htmlBody,
       }),
+      // 2) user confirmation (fouten blokkeren niet)
+      resend.emails.send({
+        from: FROM_EMAIL,
+        to: [email],
+        reply_to: TO_EMAIL, // zodat ze jou kunnen antwoorden
+        subject: 'Bedankt – we hebben je intake ontvangen',
+        text: userText,
+        html: userHtml,
+      }),
     ];
 
     if (supabase) {
       tasks.push(
-        supabase.from('intakes').insert([{
-          vertrek_datum: date || null,
-          terug_datum: ret || null,
-          bestemming: destination || null,
-          vertrek_vanaf: airport || null,
-          email: email || null,
-          notes: message || null,
-        }])
+        supabase.from('intakes').insert([
+          {
+            vertrek_datum: date || null,
+            terug_datum: ret || null,
+            bestemming: destination || null,
+            vertrek_vanaf: airport || null,
+            email: email || null,
+            notes: message || null,
+          },
+        ])
       );
     }
 
-    const [mailResult, dbResult] = await Promise.allSettled(tasks);
+    const results = await Promise.allSettled(tasks);
 
-    if (mailResult.status === 'rejected') {
-      console.error('Resend error:', mailResult.reason);
+    // Resultaat 0 = admin mail (moet slagen)
+    const adminResult = results[0];
+    if (adminResult.status === 'rejected') {
+      console.error('Resend admin mail error:', adminResult.reason);
       return res.status(500).json({ success: false, error: 'Fout bij versturen e-mail' });
     }
 
-    // DB fouten loggen (mail was succesvol)
-    if (dbResult && dbResult.status === 'rejected') {
-      console.error('Supabase insert error:', dbResult.reason);
-    } else if (dbResult && dbResult.status === 'fulfilled' && dbResult.value?.error) {
-      console.error('Supabase insert error:', dbResult.value.error);
-    }
+    // Log eventuele fouten in user mail / DB, maar laat response slagen
+    results.slice(1).forEach((r, i) => {
+      if (r.status === 'rejected') console.error('Optionele task faalde', i + 1, r.reason);
+      else if (r.value?.error) console.error('Optionele task error', i + 1, r.value.error);
+    });
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -196,6 +229,7 @@ ${message}
     return res.status(500).json({ success: false, error: 'Interne serverfout' });
   }
 }
+
 
 
 
