@@ -29,7 +29,11 @@
     <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
     <h1>Intakeformulier ✈️</h1>
 
-    <form id="intakeForm" action="https://script.google.com/macros/s/AKfycbw-QY2tVpv_gFQQ8Qlz1zGQYGmscDKC69ws_G1gl-a8Ywo_eNwfU8UHMTeC_thPIvwj/exec" method="POST">
+    <!--
+      BELANGRIJK:
+      Vervang hieronder de ACTION door jouw eigen Google Apps Script Web App URL (eindigt op /exec)
+    -->
+    <form id="intakeForm" action="https://script.google.com/macros/s/AKfycbw-QY2tVpv_gFQ8Qlz1zGQYGmscDKC69ws_G1g1-aBYwo_eNwfU8UHMTeC_thP1wvj/exec" method="POST">
       <!-- Datums -->
       <div>
         <label for="date">Vertrekdatum</label>
@@ -41,7 +45,7 @@
       </div>
 
       <!-- Luchthaven & bestemming -->
-      <div>
+      <div class="full">
         <label for="airport">Vertrekluchthaven</label>
         <select id="airport" name="airport" required>
           <option value="" disabled selected>Kies</option>
@@ -51,7 +55,8 @@
           <option value="ANY">Maakt niet uit</option>
         </select>
       </div>
-      <div>
+
+      <div class="full">
         <label for="destination">Bestemming of regio</label>
         <input id="destination" name="destination" type="text" placeholder="bv. Spanje / Algarve / Zuid-Turkije" />
         <small class="muted">Laat leeg en kies “Verras me” hieronder als je open staat voor suggesties.</small>
@@ -135,7 +140,7 @@
   </div>
 
   <script>
-    // Zet 'min' op datumvelden = vandaag
+    // Zet 'min' op datums = vandaag
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().slice(0, 10);
       document.getElementById('date').setAttribute('min', today);
@@ -146,9 +151,9 @@
     document.getElementById('intakeForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const form = e.target;
-      const statusEl = document.getElementById('status');
-      const btn = document.getElementById('submitBtn');
+      const form   = e.target;
+      const status = document.getElementById('status');
+      const btn    = document.getElementById('submitBtn');
 
       // Honeypot
       if (form.company && form.company.value) return;
@@ -156,35 +161,45 @@
       // Browser-validatie
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
-      // Verzamel trip_types (checkboxen) -> comma string
+      // Verzamel checkboxen naar CSV
       const tripTypes = [...form.querySelectorAll('input[name="trip_types"]:checked')].map(i => i.value).join(', ');
 
-      // Bouw payload
-      const fd = new FormData(form);
-      fd.delete('trip_types');
-      fd.append('trip_types', tripTypes);
+      // Bouw payload met keys die je Apps Script verwacht
+      const payload = {
+        vertrekdatum:      form.date.value,
+        terugkomstdatum:   form.return.value,
+        vertrekluchthaven: form.airport.value,
+        bestemming:        form.destination.value || '',
+        reisbudget:        form.budget.value || '',
+        volwassenen:       form.adults.value,
+        kinderen:          form.children.value || '0',
+        typeReis:          tripTypes,
+        accomodatie:       (form.accommodation.value || ''),   // let op: 'accomodatie' zoals in je Apps Script
+        vervoer:           form.transport_local.value || '',
+        extraWensen:       form.message.value || '',
+        naam:              form.name.value,
+        email:             form.email.value
+      };
 
       // UI state
       btn.disabled = true;
-      statusEl.textContent = 'Versturen…';
+      status.textContent = 'Versturen…';
 
       try {
-        const response = await fetch(form.action, {
+        // Simple request (geen CORS preflight) + geen response nodig
+        const body = new URLSearchParams(payload).toString();
+
+        await fetch(form.action, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(fd)
+          body,
+          mode: 'no-cors'
         });
 
-        const result = await response.json().catch(() => ({}));
-
-        if (response.ok && result.success) {
-          window.location.href = 'bedankt.html';
-        } else {
-          statusEl.textContent = '❌ Er ging iets mis: ' + (result.error || response.statusText);
-          btn.disabled = false;
-        }
+        // We kunnen resp. niet lezen in no-cors, maar de POST is verstuurd.
+        window.location.href = 'bedankt.html';
       } catch (err) {
-        statusEl.textContent = '⚠️ Netwerkfout: ' + err.message;
+        status.textContent = '⚠️ Netwerkfout: ' + err.message;
         btn.disabled = false;
       }
     });
