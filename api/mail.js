@@ -82,14 +82,21 @@ export default async function handler(req, res) {
 
   // Velden
   const {
-    name = 'Onbekend',
-    email = '',
-    message = '',
-    date = '',
-    return: ret = '',
-    airport = '',
-    destination = '',
-  } = data || {};
+  name = 'Onbekend',
+  email = '',
+  message = '',
+  date = '',
+  return: ret = '',
+  airport = '',
+  destination = '',
+  // 👇 nieuw
+  budget = '',
+  adults = '',
+  children = '',
+  trip_types = '',
+  accommodation = '',
+  transport_local = ''
+} = data || {};
 
   // Validatie
   if (!isEmail(email)) return res.status(400).json({ success: false, error: 'Ongeldig e-mailadres.' });
