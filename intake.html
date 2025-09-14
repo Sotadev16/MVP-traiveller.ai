@@ -5,59 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Intakeformulier</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      max-width: 600px;
-      width: 100%;
-      text-align: left;
-    }
-    .logo {
-      max-width: 150px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      font-size: 26px;
-      margin-bottom: 20px;
-      color: #333;
-      text-align: center;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    label { font-weight: 600; }
-    input, select, textarea {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      width: 100%;
-    }
-    button {
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      background: #007bff;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    button:hover { background: #0056b3; }
-    .muted { font-size: 12px; color: #666; }
+    body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+    .container{background:#fff;padding:30px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.1);max-width:780px;width:100%}
+    .logo{max-width:150px;margin-bottom:20px}
+    h1{font-size:26px;margin:0 0 16px;text-align:center;color:#333}
+    form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    form .full{grid-column:1/-1}
+    label{font-weight:600}
+    input,select,textarea{padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;width:100%;box-sizing:border-box}
+    fieldset{border:1px solid #e5e7eb;border-radius:8px;padding:12px}
+    legend{font-weight:700;font-size:14px;color:#333}
+    .choices{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+    .choice{display:flex;gap:8px;align-items:center;background:#f6f7f9;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px}
+    button{grid-column:1/-1;padding:12px;border:none;border-radius:8px;background:#007bff;color:#fff;font-size:16px;cursor:pointer;margin-top:4px}
+    button:hover{background:#0056b3}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .muted{font-size:12px;color:#666}
+    #status{grid-column:1/-1;min-height:18px;font-size:13px}
   </style>
 </head>
 <body>
@@ -65,72 +29,162 @@
     <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
     <h1>Intakeformulier ✈️</h1>
 
-    <form id="intakeForm" action="https://mvp-traiveller-ai.vercel.app/api/mail" method="POST">
-      <label for="date">Vertrekdatum</label>
-      <input id="date" name="date" type="date" required />
+    <form id="intakeForm" action="/api/mail" method="POST" novalidate>
+      <!-- Datums -->
+      <div>
+        <label for="date">Vertrekdatum</label>
+        <input id="date" name="date" type="date" required />
+      </div>
+      <div>
+        <label for="return">Terugkomstdatum</label>
+        <input id="return" name="return" type="date" required />
+      </div>
 
-      <label for="return">Terugkomstdatum</label>
-      <input id="return" name="return" type="date" required />
+      <!-- Luchthaven & bestemming -->
+      <div>
+        <label for="airport">Vertrekluchthaven</label>
+        <select id="airport" name="airport" required>
+          <option value="" disabled selected>Kies</option>
+          <option value="AMS">Amsterdam (AMS)</option>
+          <option value="RTM">Rotterdam (RTM)</option>
+          <option value="EIN">Eindhoven (EIN)</option>
+          <option value="ANY">Maakt niet uit</option>
+        </select>
+      </div>
 
-      <label for="airport">Vertrek vanaf</label>
-      <select id="airport" name="airport" required>
-        <option value="" disabled selected>Kies je luchthaven</option>
-        <option value="AMS">Amsterdam Schiphol (AMS)</option>
-        <option value="RTM">Rotterdam The Hague (RTM)</option>
-        <option value="EIN">Eindhoven (EIN)</option>
-      </select>
+      <div>
+        <label for="destination">Bestemming of regio</label>
+        <input id="destination" name="destination" type="text" placeholder="bv. Spanje / Algarve / Zuid-Turkije" />
+        <small class="muted">Laat leeg en kies “Verras me” hieronder als je open staat voor suggesties.</small>
+      </div>
 
-      <label for="destination">Bestemming</label>
-      <input id="destination" name="destination" type="text" placeholder="Bijv. Barcelona" required />
+      <!-- Budget & reizigers -->
+      <div>
+        <label for="budget">Reisbudget totaal (€)</label>
+        <input id="budget" name="budget" type="number" min="0" step="50" placeholder="bv. 2500" />
+      </div>
+      <div>
+        <label for="adults">Volwassenen</label>
+        <input id="adults" name="adults" type="number" min="1" value="2" required />
+      </div>
+      <div>
+        <label for="children">Kinderen</label>
+        <input id="children" name="children" type="number" min="0" value="0" />
+      </div>
 
-      <label for="name">Naam</label>
-      <input id="name" name="name" type="text" placeholder="Jouw naam" required />
+      <!-- Type reis -->
+      <fieldset class="full">
+        <legend>Type reis (meerdere mogelijk)</legend>
+        <div class="choices">
+          <label class="choice"><input type="checkbox" name="trip_types" value="strand" /> Strand</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="citytrip" /> Citytrip</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="natuur" /> Natuur</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="luxe" /> Luxe</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="budget" /> Budget</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="halal-friendly" /> Halal-friendly</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="familie" /> Familie</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="verras-me" /> Verras me</label>
+        </div>
+      </fieldset>
 
-      <label for="email">E-mailadres</label>
-      <input id="email" name="email" type="email" placeholder="jij@voorbeeld.com" required />
+      <!-- Accommodatie -->
+      <fieldset class="full">
+        <legend>Voorkeur accommodatie</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="accommodation" value="hotel" /> Hotel</label>
+          <label class="choice"><input type="radio" name="accommodation" value="appartement" /> Appartement</label>
+          <label class="choice"><input type="radio" name="accommodation" value="all-inclusive" /> All-inclusive</label>
+          <label class="choice"><input type="radio" name="accommodation" value="geen-voorkeur" checked /> Geen voorkeur</label>
+        </div>
+      </fieldset>
 
-      <label for="message">Bericht (optioneel)</label>
-      <textarea id="message" name="message" rows="4" placeholder="Extra wensen of opmerkingen..."></textarea>
+      <!-- Vervoer ter plaatse -->
+      <fieldset class="full">
+        <legend>Vervoer ter plaatse</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="transport_local" value="huurauto" /> Huurauto</label>
+          <label class="choice"><input type="radio" name="transport_local" value="ov" /> Openbaar vervoer</label>
+          <label class="choice"><input type="radio" name="transport_local" value="geen-voorkeur" checked /> Geen voorkeur</label>
+        </div>
+      </fieldset>
 
-      <!-- Honeypot tegen bots -->
-      <input type="text" name="company" style="display:none" tabindex="-1" autocomplete="off" />
+      <!-- Persoonlijke gegevens -->
+      <div>
+        <label for="name">Naam</label>
+        <input id="name" name="name" type="text" autocomplete="name" required />
+      </div>
+      <div>
+        <label for="email">E-mailadres</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
 
-      <label class="muted">
-        <input type="checkbox" id="consent" required />
-        Ik ga akkoord met verwerking van mijn gegevens volgens de 
-        <a href="privacy.html">privacyverklaring</a>.
+      <!-- Extra wensen -->
+      <div class="full">
+        <label for="message">Extra wensen (halal eten, zwembad, kids club, rust, fitness…)</label>
+        <textarea id="message" name="message" rows="4" placeholder="Vertel ons wat belangrijk is voor jullie"></textarea>
+      </div>
+
+      <!-- Honeypot + consent -->
+      <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" style="display:none" />
+      <label class="muted full">
+        <input type="checkbox" id="consent" required /> Ik ga akkoord met verwerking van mijn gegevens.
       </label>
 
-      <button type="submit">Versturen</button>
+      <button id="submitBtn" type="submit">Versturen</button>
+      <p id="status" aria-live="polite" class="full"></p>
     </form>
   </div>
 
   <script>
-  document.getElementById("intakeForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const data = new FormData(form);
-    const response = await fetch(form.action, {
-      method: "POST",
-      body: new URLSearchParams(data),
-      headers: { "Content-Type": "application/x-www-form-urlencoded" }
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+      const f = document.getElementById('intakeForm');
+      const statusEl = document.getElementById('status');
+      const btn = document.getElementById('submitBtn');
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('date').setAttribute('min', today);
+      document.getElementById('return').setAttribute('min', today);
 
-    try {
-      const result = await response.json();
-      if (result.success) {
-        window.location.href = "bedankt.html"; // ✅ Redirect naar bedankpagina
-      } else {
-        alert("❌ Er ging iets mis bij het verzenden. Probeer opnieuw.");
-      }
-    } catch (err) {
-      alert("⚠️ Fout in de verbinding: " + err.message);
-    }
-  });
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (f.company && f.company.value) return; // bot
+
+        if (!f.checkValidity()) { f.reportValidity(); statusEl.textContent = 'Controleer je invoer.'; return; }
+
+        // Verzamel trip_types (meerdere)
+        const tripTypes = [...new FormData(f).getAll('trip_types')];
+
+        btn.disabled = true;
+        statusEl.textContent = 'Versturen...';
+
+        // Bouw payload
+        const fd = new FormData(f);
+        fd.delete('trip_types');
+        fd.append('trip_types', tripTypes.join(', '));
+
+        try {
+          const res = await fetch(f.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams(fd)
+          });
+          const json = await res.json().catch(() => ({}));
+          if (res.ok && json.success) {
+            statusEl.textContent = 'Gelukt! Doorsturen...';
+            window.location.href = 'bedankt.html';
+          } else {
+            statusEl.textContent = 'Er ging iets mis: ' + (json.error || res.statusText);
+            btn.disabled = false;
+          }
+        } catch (err) {
+          statusEl.textContent = 'Netwerkfout: ' + err.message;
+          btn.disabled = false;
+        }
+      });
+    });
   </script>
 </body>
 </html>
+
 
 
 
