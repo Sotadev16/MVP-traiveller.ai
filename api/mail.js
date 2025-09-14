@@ -113,20 +113,24 @@ export default async function handler(req, res) {
 
   try {
     // Tekst & HTML
-    const textBody = `Nieuwe intake bij TrAIveller.ai
+   const textBody = `
+📩 Nieuwe intake van TrAIveller.ai
 
 Naam: ${name}
 E-mail: ${email}
+Vertrekdatum: ${date}
+Terugkomstdatum: ${ret}
+Vertrekluchthaven: ${airport}
+Bestemming/regio: ${destination}
 
-Vertrek: ${date}
-Terug: ${ret}
-Vanaf: ${airport}
-Bestemming: ${destination}
+💰 Budget: €${budget}
+👨‍👩‍👧‍👦 Volwassenen: ${adults}, Kinderen: ${children}
+🌍 Type reis: ${trip_types}
+🏨 Accommodatie: ${accommodation}
+🚗 Vervoer ter plaatse: ${transport_local}
 
-Bericht:
-${message || '—'}
-
-Verzonden op: ${new Date().toISOString()}
+Extra wensen:
+${message}
 `;
 
     const htmlBody = `<!doctype html>
