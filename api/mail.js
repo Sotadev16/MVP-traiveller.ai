@@ -133,54 +133,23 @@ Extra wensen:
 ${message}
 `;
 
-    const htmlBody = `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#f6f9fc;font-family:Arial,Helvetica,sans-serif;color:#111;">
-    <div style="max-width:680px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e6ecf1">
-      <div style="padding:20px 24px;border-bottom:1px solid #eef2f6">
-        <h1 style="margin:0 0 4px 0;font-size:20px;">Nieuwe intake bij <span style="color:#0a66c2;">TrAIveller.ai</span></h1>
-        <p style="margin:0;color:#667085;font-size:13px;">Zojuist ontvangen • ${new Date().toLocaleString('nl-NL')}</p>
-      </div>
-
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
-        <tbody>
-          <tr>
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">Naam</td>
-            <td style="padding:12px 24px;font-size:14px;"><strong>${escapeHtml(name)}</strong></td>
-          </tr>
-          <tr style="background:#fafbfc;">
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">E-mail</td>
-            <td style="padding:12px 24px;font-size:14px;">${escapeHtml(email)}</td>
-          </tr>
-          <tr>
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">Vertrek</td>
-            <td style="padding:12px 24px;font-size:14px;">${escapeHtml(date)}</td>
-          </tr>
-          <tr style="background:#fafbfc;">
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">Terug</td>
-            <td style="padding:12px 24px;font-size:14px;">${escapeHtml(ret)}</td>
-          </tr>
-          <tr>
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">Vertrek vanaf</td>
-            <td style="padding:12px 24px;font-size:14px;">${escapeHtml(airport)}</td>
-          </tr>
-          <tr style="background:#fafbfc;">
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;">Bestemming</td>
-            <td style="padding:12px 24px;font-size:14px;">${escapeHtml(destination)}</td>
-          </tr>
-          <tr>
-            <td style="padding:12px 24px;width:160px;color:#667085;font-size:14px;vertical-align:top;">Bericht</td>
-            <td style="padding:12px 24px;font-size:14px;line-height:1.5;">${nl2br(escapeHtml(message || '—'))}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="padding:12px 24px;border-top:1px solid #eef2f6;color:#667085;font-size:12px;">
-        Antwoorden kan direct via “Beantwoorden”. Deze melding is verzonden door TrAIveller.ai.
-      </div>
-    </div>
-  </body>
-</html>`;
+    const htmlBody = `
+  <h2>📩 Nieuwe intake van TrAIveller.ai</h2>
+  <p><strong>Naam:</strong> ${name}</p>
+  <p><strong>E-mail:</strong> ${email}</p>
+  <p><strong>Vertrekdatum:</strong> ${date}</p>
+  <p><strong>Terugkomstdatum:</strong> ${ret}</p>
+  <p><strong>Vertrekluchthaven:</strong> ${airport}</p>
+  <p><strong>Bestemming/regio:</strong> ${destination}</p>
+  <hr/>
+  <p><strong>💰 Budget:</strong> €${budget}</p>
+  <p><strong>👨‍👩‍👧‍👦 Volwassenen:</strong> ${adults}, <strong>Kinderen:</strong> ${children}</p>
+  <p><strong>🌍 Type reis:</strong> ${trip_types}</p>
+  <p><strong>🏨 Accommodatie:</strong> ${accommodation}</p>
+  <p><strong>🚗 Vervoer ter plaatse:</strong> ${transport_local}</p>
+  <hr/>
+  <p><strong>Extra wensen:</strong><br/>${message}</p>
+`;
 
     // Parallel: mail + (optioneel) DB insert
     const tasks = [
