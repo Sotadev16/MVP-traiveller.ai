@@ -147,63 +147,53 @@
       document.getElementById('return').setAttribute('min', today);
     });
 
-    // Submit handler
-    document.getElementById('intakeForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    <script>
+document.getElementById('intakeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-      const form   = e.target;
-      const status = document.getElementById('status');
-      const btn    = document.getElementById('submitBtn');
+  const form = e.target;
 
-      // Honeypot
-      if (form.company && form.company.value) return;
+  // Verzamel checkboxen "type reis" → CSV
+  const typeReis = [...form.querySelectorAll('input[name="trip_types"]:checked')]
+    .map(i => i.value)
+    .join(',');
 
-      // Browser-validatie
-      if (!form.checkValidity()) { form.reportValidity(); return; }
+  // Dit zijn de keys die je Apps Script verwacht
+  const data = {
+    vertrekdatum: form.date.value,
+    terugkomstdatum: form.return.value,
+    vertrekluchthaven: form.airport.value,
+    bestemming: form.destination.value,
+    reisbudget: form.budget.value,
+    volwassenen: form.adults.value,
+    kinderen: form.children.value,
+    typeReis, // CSV
+    accomodatie: form.accommodation.value,   // let op: 'accomodatie' (1 m) zoals in Apps Script
+    vervoer: form.transport_local.value,
+    extraWensen: form.message.value,
+    naam: form.name.value,
+    email: form.email.value
+  };
 
-      // Verzamel checkboxen naar CSV
-      const tripTypes = [...form.querySelectorAll('input[name="trip_types"]:checked')].map(i => i.value).join(', ');
-
-      // Bouw payload met keys die je Apps Script verwacht
-      const payload = {
-        vertrekdatum:      form.date.value,
-        terugkomstdatum:   form.return.value,
-        vertrekluchthaven: form.airport.value,
-        bestemming:        form.destination.value || '',
-        reisbudget:        form.budget.value || '',
-        volwassenen:       form.adults.value,
-        kinderen:          form.children.value || '0',
-        typeReis:          tripTypes,
-        accomodatie:       (form.accommodation.value || ''),   // let op: 'accomodatie' zoals in je Apps Script
-        vervoer:           form.transport_local.value || '',
-        extraWensen:       form.message.value || '',
-        naam:              form.name.value,
-        email:             form.email.value
-      };
-
-      // UI state
-      btn.disabled = true;
-      status.textContent = 'Versturen…';
-
-      try {
-        // Simple request (geen CORS preflight) + geen response nodig
-        const body = new URLSearchParams(payload).toString();
-
-        await fetch(form.action, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body,
-          mode: 'no-cors'
-        });
-
-        // We kunnen resp. niet lezen in no-cors, maar de POST is verstuurd.
-        window.location.href = 'bedankt.html';
-      } catch (err) {
-        status.textContent = '⚠️ Netwerkfout: ' + err.message;
-        btn.disabled = false;
-      }
+  try {
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
-  </script>
+
+    const result = await response.json().catch(() => ({}));
+    if (response.ok && result.success) {
+      window.location.href = 'bedankt.html';
+    } else {
+      alert('❌ Er ging iets mis: ' + (result.error || response.statusText));
+    }
+  } catch (err) {
+    alert('⚠️ Netwerkfout: ' + err.message);
+  }
+});
+</script>
+
 </body>
 </html>
 
