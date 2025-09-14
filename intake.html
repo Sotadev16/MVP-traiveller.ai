@@ -10,13 +10,13 @@
     .logo{max-width:150px;margin-bottom:20px}
     h1{font-size:26px;margin:0 0 16px;text-align:center;color:#333}
     form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    form .full{grid-column:1/-1}
+    .full{grid-column:1/-1}
     label{font-weight:600}
     input,select,textarea{padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;width:100%;box-sizing:border-box}
     fieldset{border:1px solid #e5e7eb;border-radius:8px;padding:12px}
     legend{font-weight:700;font-size:14px;color:#333}
     .choices{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-    .choice{display:flex;gap:8px;align-items:center;background:#f6f7f9;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px}
+    .choice{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px}
     button{grid-column:1/-1;padding:12px;border:none;border-radius:8px;background:#007bff;color:#fff;font-size:16px;cursor:pointer;margin-top:4px}
     button:hover{background:#0056b3}
     button[disabled]{opacity:.6;cursor:not-allowed}
@@ -29,8 +29,7 @@
     <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
     <h1>Intakeformulier ✈️</h1>
 
-   <form id="intakeForm" action="https://www.traiveller.ai/api/mail" method="POST" novalidate>
-
+    <form id="intakeForm" action="https://www.traiveller.ai/api/mail" method="POST">
       <!-- Datums -->
       <div>
         <label for="date">Vertrekdatum</label>
@@ -52,7 +51,6 @@
           <option value="ANY">Maakt niet uit</option>
         </select>
       </div>
-
       <div>
         <label for="destination">Bestemming of regio</label>
         <input id="destination" name="destination" type="text" placeholder="bv. Spanje / Algarve / Zuid-Turkije" />
@@ -137,54 +135,63 @@
   </div>
 
   <script>
+    // Zet 'min' op datumvelden = vandaag
     document.addEventListener('DOMContentLoaded', () => {
-      const f = document.getElementById('intakeForm');
-      const statusEl = document.getElementById('status');
-      const btn = document.getElementById('submitBtn');
-      const today = new Date().toISOString().slice(0,10);
+      const today = new Date().toISOString().slice(0, 10);
       document.getElementById('date').setAttribute('min', today);
       document.getElementById('return').setAttribute('min', today);
+    });
 
-      f.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (f.company && f.company.value) return; // bot
+    // Submit handler
+    document.getElementById('intakeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-        if (!f.checkValidity()) { f.reportValidity(); statusEl.textContent = 'Controleer je invoer.'; return; }
+      const form = e.target;
+      const statusEl = document.getElementById('status');
+      const btn = document.getElementById('submitBtn');
 
-        // Verzamel trip_types (meerdere)
-        const tripTypes = [...new FormData(f).getAll('trip_types')];
+      // Honeypot
+      if (form.company && form.company.value) return;
 
-        btn.disabled = true;
-        statusEl.textContent = 'Versturen...';
+      // Browser-validatie
+      if (!form.checkValidity()) { form.reportValidity(); return; }
 
-        // Bouw payload
-        const fd = new FormData(f);
-        fd.delete('trip_types');
-        fd.append('trip_types', tripTypes.join(', '));
+      // Verzamel trip_types (checkboxen) -> comma string
+      const tripTypes = [...form.querySelectorAll('input[name="trip_types"]:checked')].map(i => i.value).join(', ');
 
-        try {
-          const res = await fetch(f.action, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(fd)
-          });
-          const json = await res.json().catch(() => ({}));
-          if (res.ok && json.success) {
-            statusEl.textContent = 'Gelukt! Doorsturen...';
-            window.location.href = 'bedankt.html';
-          } else {
-            statusEl.textContent = 'Er ging iets mis: ' + (json.error || res.statusText);
-            btn.disabled = false;
-          }
-        } catch (err) {
-          statusEl.textContent = 'Netwerkfout: ' + err.message;
+      // Bouw payload
+      const fd = new FormData(form);
+      fd.delete('trip_types');
+      fd.append('trip_types', tripTypes);
+
+      // UI state
+      btn.disabled = true;
+      statusEl.textContent = 'Versturen…';
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(fd)
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok && result.success) {
+          window.location.href = 'bedankt.html';
+        } else {
+          statusEl.textContent = '❌ Er ging iets mis: ' + (result.error || response.statusText);
           btn.disabled = false;
         }
-      });
+      } catch (err) {
+        statusEl.textContent = '⚠️ Netwerkfout: ' + err.message;
+        btn.disabled = false;
+      }
     });
   </script>
 </body>
 </html>
+
 
 
 
