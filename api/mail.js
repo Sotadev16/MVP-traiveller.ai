@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 
 // -------- Config --------
 const TO_EMAIL = 'traivellerdev@outlook.com'; // ontvanger
-const FROM_EMAIL = 'TrAIveller.ai <noreply@traiveller.ai>'; // domein moet bij Resend geverifieerd zijn
+const FROM_EMAIL = 'TrAIveller.ai <onboarding@resend.dev>';
 
 // -------- Helpers --------
 const escapeHtml = (s = '') =>
