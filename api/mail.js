@@ -175,17 +175,18 @@ export default async function handler(req, res) {
     }
 
     // 2) Admin-mail
-    if (resend) {
-      tasks.push(
-        resend.emails.send({
-          from: FROM_EMAIL,
-          to: TO_EMAIL,
-          reply_to: email || undefined,
-          subject: `Nieuwe intake via TrAIveller.ai — ${name || email}`,
-          text: textSummary,
-          html: htmlSummary,
-        })
-      );
+if (resend) {
+  tasks.push(
+    resend.emails.send({
+      from: FROM_EMAIL,                         // bv. 'TrAIveller.ai <noreply@traiveller.ai>'
+      to: 'traivellerdev@outlook.com',          // <-- direct adres i.p.v. TO_EMAIL
+      reply_to: email || undefined,
+      subject: `Nieuwe intake via TrAIveller.ai – ${name || email}`,
+      text: textSummary,
+      html: htmlSummary,
+    })
+  );
+}
 
       // 3) Klant-bevestiging
       tasks.push(
