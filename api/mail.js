@@ -128,6 +128,13 @@ const {
   if (!supabase) {
     console.warn('Supabase ENV mist (SUPABASE_URL / SUPABASE_SERVICE_ROLE) — DB insert wordt overgeslagen.');
   }
+  // ===== Combineer notes: message + leeftijden kinderen =====
+const combinedNotes = [
+  (message || '').trim(),
+  (children_ages && String(children_ages).trim())
+    ? `Leeftijden kinderen: ${String(children_ages).trim()}`
+    : ''
+].filter(Boolean).join('\n');
 
   // ===== Email content =====
   const textBody =
