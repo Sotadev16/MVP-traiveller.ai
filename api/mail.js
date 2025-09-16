@@ -232,32 +232,28 @@ Je kunt op deze mail antwoorden als je nog iets wilt toevoegen.
 
     if (supabase) {
   tasks.push(
-    supabase.from('intakes').insert([
-      {
-        // id en created_at worden automatisch gezet door Supabase
-        naam: name || null,                              // extra veld, voeg je later evt. toe in DB
-        email: email || null,
-        vertrek_datum: date || null,
-        terug_datum: ret || null,
-        vertrek_vanaf: airport || null,
-        bestemming: destination || null,
-        budget: budget || null,
-        personen: adults || children
-          ? Number(adults || 0) + Number(children || 0)
-          : null,
-        notes: message || null,
-        vervoer: transport_local || null,
-        ip: ip || null,
+    supabase.from('intakes').insert([{
+      // id en created_at worden automatisch gezet door Supabase
+      email: email || null,
+      vertrek_datum: date || null,
+      terug_datum: ret || null,
+      vertrek_vanaf: airport || null,
+      bestemming: destination || null,
+      budget: budget || null,
+      personen: (adults || children)
+        ? Number(adults || 0) + Number(children || 0)
+        : null,
+      notes: combinedNotes || null,   // 👈 altijd message + evt. leeftijden
+      vervoer: transport_local || null,
+      ip: ip || null,
 
-        // optioneel invullen → pas aan als je form straks halal/dieet/transport_type gaat gebruiken
-        halal: null,
-        vlucht_type: null,
-        dieet_voorkeuren: null,
-      },
-    ])
+      // optioneel — alleen laten staan als deze kolommen in je DB bestaan
+      halal: null,
+      vlucht_type: null,
+      dieet_voorkeuren: null,
+    }])
   );
 }
-
 
     await Promise.all(tasks);
 
