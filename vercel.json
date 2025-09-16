@@ -1,11 +1,4 @@
 {
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "over.html", "use": "@vercel/static" },
-    { "src": "contact.html", "use": "@vercel/static" },
-    { "src": "privacy.html", "use": "@vercel/static" },
-    { "src": "intake.html", "use": "@vercel/static" },
-    { "src": "bedankt.html", "use": "@vercel/static" },
-    { "src": "public/**/*", "use": "@vercel/static" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
+
