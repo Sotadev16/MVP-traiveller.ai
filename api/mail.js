@@ -69,26 +69,39 @@ export default async function handler(req, res) {
     // Log waarmee we sturen (geen secrets)
     console.log('Mail FROM:', FROM_EMAIL, ' TO(admin):', TO_EMAIL, ' reply_to:', email);
 
-    // 1) Admin-mail
-    try {
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: TO_EMAIL,                         // direct naar Outlook
-        reply_to: email || undefined,         // ok
-        subject: `Nieuwe intake via TrAIveller.ai – ${name || email}`,
-        text: [
-          `Naam: ${name || '-'}`,
-          `E-mail: ${email || '-'}`,
-          `Vertrek: ${date}  Terug: ${ret}`,
-          `Vanaf: ${airport}  Bestemming: ${destination}`,
-          `Budget: €${budget ?? '-'}`,
-          `Reizigers (volw/kind): ${adults || 0}/${children || 0}`,
-          `Vervoer ter plaatse: ${transport_local || '-'}`,
-          ``,
-          `Notes:`,
-          combinedNotes || '-'
-        ].join('\n'),
-      });
+   /* ==== vaste afzender & admin ====
+   Zorg dat je domein/sender in Resend geverifieerd is.
+*/
+const FROM_EMAIL  = 'TrAIveller.ai <noreply@traiveller.ai>';   // altijd vanuit je domein
+const ADMIN_EMAIL = 'traivellerdev@outlook.com';               // waar de intake heen moet
+
+// 2) Admin-mail (komt in jouw inbox)
+if (resend) {
+  tasks.push(
+    resend.emails.send({
+      from: FROM_EMAIL,                // <-- nooit meer onboarding@resend.dev
+      to: ADMIN_EMAIL,                 // direct adres (ipv TO_EMAIL env kan ook)
+      reply_to: isEmail(email) ? email : undefined, // zodat je direct kunt antwoorden
+      subject: `Nieuwe intake via TrAIveller.ai – ${name || email}`,
+      text: textSummary,
+      html: htmlSummary,
+    })
+  );
+}
+
+// 3) Klant-bevestiging (alleen sturen als klantmail geldig is)
+if (resend && isEmail(email)) {
+  tasks.push(
+    resend.emails.send({
+      from: FROM_EMAIL,                // ook de bevestiging altijd vanaf je domein
+      to: email,
+      subject: 'Bevestiging: we hebben je intake ontvangen (TrAIveller.ai)',
+      text: confirmText,
+      html: confirmHtml,
+    })
+  );
+}
+
     } catch (e) {
       console.error('Resend admin send FAILED:', e?.message || e);
       return res.status(500).json({ success: false, error: `Resend admin failed: ${e?.message || e}` });
