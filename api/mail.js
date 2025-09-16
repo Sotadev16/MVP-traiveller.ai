@@ -18,7 +18,7 @@ const supabase =
 const TO_EMAIL = process.env.TO_EMAIL || 'travellerdev@outlook.com';
 // vanaf welk adres stuur je mail (moet bij Resend geverifieerd zijn)
 const FROM_EMAIL =
-  process.env.FROM_EMAIL || 'TrAIveller.ai <noreply@traiveller.ai>';
+  process.env.FROM_EMAIL || 'TrAIveller.ai <onboarding@resend.dev>';
 
 /* ========= Helpers ========= */
 const isEmail = (s = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
