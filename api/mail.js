@@ -35,10 +35,8 @@ export default async function handler(req, res) {
       transport_local = '', children_ages = ''
     } = data;
 
-    const combinedNotes = [
-      (message || '').trim(),
-      children_ages ? `Leeftijden kinderen: ${String(children_ages).trim()}` : ''
-    ].filter(Boolean).join('\n');
+   // Alleen vrije notitie (zonder leeftijden) om doublures te voorkomen
+const combinedNotes = (message || '').trim();
 
     // ---- Supabase insert (mag falen zonder de request te killen) ----
     let dbError = null;
