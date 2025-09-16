@@ -115,6 +115,14 @@ const {
 } = data || {};
 
   // ===== Validatie =====
+  // ==== Combineer notes: message + leeftijden ====
+const combinedNotes = [
+  (message || '').trim(),
+  (children_ages && String(children_ages).trim())
+    ? `Leeftijden kinderen: ${String(children_ages).trim()}`
+    : ''
+].filter(Boolean).join('\n');
+
   if (!isEmail(email)) return res.status(400).json({ success: false, error: 'Ongeldig e-mailadres.' });
   if (!name || !airport || !destination || !date || !ret) {
     return res.status(400).json({ success: false, error: 'Ontbrekende verplichte velden.' });
