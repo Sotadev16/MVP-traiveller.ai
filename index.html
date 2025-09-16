@@ -1,55 +1,47 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TrAIveller.ai</title>
-  <meta name="description" content="Jouw AI-reisbuddy – vind de beste deals en verrassende trips." />
-  <link rel="preload" as="image" href="/images/beach-hero.jpg" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrAIveller.ai</title>
+  <meta name="description" content="Jouw AI-reisbuddy – vind de beste deals en verrassende trips." />
+  <!-- Preload key assets -->
+  <link rel="preload" as="image" href="/images/beach-hero.jpg" />
+  <link rel="preload" as="image" href="/images/traiveller-logo.png" />
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="font-sans antialiased bg-slate-900">
+<body class="font-sans antialiased bg-slate-900 text-white overflow-x-hidden">
+  <!-- Navigation -->
+  <nav class="absolute top-6 left-0 right-0 z-20">
+    <div class="mx-auto max-w-5xl px-6 text-center text-white/90">
+      <a href="/" class="mx-2 hover:underline" aria-label="Home">Home</a> ·
+      <a href="/over" class="mx-2 hover:underline" aria-label="Over ons">Over ons</a> ·
+      <a href="/contact" class="mx-2 hover:underline" aria-label="Contact">Contact</a> ·
+      <a href="/privacy" class="mx-2 hover:underline" aria-label="Privacy">Privacy</a>
+    </div>
+  </nav>
 
-  <!-- Navigatie -->
-  <nav class="absolute top-6 left-0 right-0 z-20">
-    <div class="mx-auto max-w-5xl px-6 text-center text-white/90 drop-shadow">
-      <a href="index.html" class="mx-2 hover:underline">Home</a> ·
-      <a href="over.html" class="mx-2 hover:underline">Over ons</a> ·
-      <a href="contact.html" class="mx-2 hover:underline">Contact</a> ·
-      <a href="privacy.html" class="mx-2 hover:underline">Privacy</a>
-    </div>
-  </nav>
-
-  <!-- Hero -->
- <!-- Hero -->
-<section class="relative min-h-screen flex flex-col items-center justify-center text-center text-white">
-
-  <!-- Achtergrond -->
-  <div class="absolute inset-0 bg-cover bg-center"
-       style="background-image:url('/images/beach-hero.jpg?v=3');"></div>
-
-  <!-- Overlay -->
-  <div class="absolute inset-0 bg-black/40"></div>
-
-  <!-- Content -->
-  <div class="relative z-10 max-w-2xl px-6">
-    <img src="/images/traiveller-logo.png?v=3" alt="TrAIveller logo"
-         class="mx-auto mb-8 w-40 md:w-56 drop-shadow-lg" />
-
-    <h1 class="mb-6 text-5xl md:text-7xl font-extrabold leading-tight tracking-tight drop-shadow-xl">
-      Welkom bij <span class="text-yellow-400">TrAIveller.ai</span> ✈️
-    </h1>
-
-    <p class="text-lg md:text-2xl mb-8 opacity-95">
-      Jouw AI-reisbuddy – vind de beste deals en verrassende trips.
-    </p>
-
-    <a href="intake.html"
-       class="inline-block px-8 py-3 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 text-lg font-semibold shadow-lg hover:scale-105 active:scale-100 transition">
-      Start je intake
-    </a>
-  </div>
-</section>
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center justify-center text-center">
+    <!-- Background Image -->
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/images/beach-hero.jpg');"></div>
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/40"></div>
+    <!-- Content -->
+    <div class="relative z-10 max-w-2xl px-6">
+      <img src="/images/traiveller-logo.png" alt="TrAIveller logo" class="mx-auto mb-8 w-40 md:w-56 drop-shadow-lg" loading="lazy" />
+      <h1 class="mb-6 text-5xl md:text-7xl font-extrabold leading-tight tracking-tight drop-shadow-xl">
+        Welkom bij <span class="text-yellow-400">TrAIveller.ai</span> ✈️
+      </h1>
+      <p class="text-lg md:text-2xl mb-8 opacity-95">
+        Jouw AI-reisbuddy – vind de beste deals en verrassende trips.
+      </p>
+      <a href="/intake" class="inline-block px-8 py-3 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 text-lg font-semibold shadow-lg hover:scale-105 active:scale-100 transition transform duration-200" aria-label="Start je intake">Start je intake</a>
+    </div>
+  </section>
+</body>
+</html>
 
 
 
