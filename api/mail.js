@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
   // ===== SAFE MODE: eerst bewijzen dat de route werkt =====
   // Zet op false zodra dit {success:true} geeft.
-  const SAFE_MODE = true;
+  const SAFE_MODE = false;
 
   try {
     const data = await parseBody(req);
