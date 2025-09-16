@@ -21,46 +21,36 @@
   </nav>
 
   <!-- Hero -->
-  <section class="relative min-h-screen flex items-center justify-center text-white">
-    <!-- Achtergrond -->
-    <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('/images/beach-hero.jpg');"></div>
-    <!-- Overlay + zachte vignette -->
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30"></div>
+ <!-- Hero -->
+<section class="relative min-h-screen flex flex-col items-center justify-center text-center text-white">
 
-    <!-- Content -->
-    <div class="absolute inset-0 bg-cover bg-center"
-     style="background-image:url('/images/beach-hero.jpg');"></div>
-<img src="/images/traiveller-logo.png" alt="TrAIveller logo"
-     class="mx-auto mb-8 w-40 md:w-56 drop-shadow-lg" />
+  <!-- Achtergrond -->
+  <div class="absolute inset-0 bg-cover bg-center"
+       style="background-image:url('/images/beach-hero.jpg?v=3');"></div>
 
-      <h1 class="mb-6 text-5xl md:text-7xl font-extrabold leading-tight tracking-tight drop-shadow-xl">
-        Welkom bij
-        <span class="whitespace-nowrap">
-          Tr<span class="text-yellow-400">AI</span>veller.ai
-        </span> ✈️
-      </h1>
-      <p class="mx-auto mb-10 max-w-2xl text-xl md:text-2xl text-white/95">
-        Jouw AI-reisbuddy – vind de beste deals en verrassende trips.
-      </p>
-      <a href="intake.html"
-         class="inline-block rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 px-10 py-4 text-xl font-semibold shadow-xl transition
-                hover:scale-105 active:scale-100">
-        Start je intake
-      </a>
+  <!-- Overlay -->
+  <div class="absolute inset-0 bg-black/40"></div>
 
-      <!-- kleine glass-card voor extra contrast op heel lichte foto’s -->
-      <!-- Achtergrond -->
-<div class="absolute inset-0 bg-cover bg-center"
-     style="background-image:url('/images/beach-hero.jpg?v=3');"></div>
+  <!-- Content -->
+  <div class="relative z-10 max-w-2xl px-6">
+    <img src="/images/traiveller-logo.png?v=3" alt="TrAIveller logo"
+         class="mx-auto mb-8 w-40 md:w-56 drop-shadow-lg" />
 
-<!-- Overlay -->
-<div class="absolute inset-0 bg-black/50"></div>
+    <h1 class="mb-6 text-5xl md:text-7xl font-extrabold leading-tight tracking-tight drop-shadow-xl">
+      Welkom bij <span class="text-yellow-400">TrAIveller.ai</span> ✈️
+    </h1>
 
-  </section>
+    <p class="text-lg md:text-2xl mb-8 opacity-95">
+      Jouw AI-reisbuddy – vind de beste deals en verrassende trips.
+    </p>
 
-</body>
-</html>
+    <a href="intake.html"
+       class="inline-block px-8 py-3 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 text-lg font-semibold shadow-lg hover:scale-105 active:scale-100 transition">
+      Start je intake
+    </a>
+  </div>
+</section>
+
 
 
 
