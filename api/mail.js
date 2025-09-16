@@ -1,21 +1,23 @@
-// api/mail.js
+// /api/mail.js
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
 // ===== Config =====
-const TO_EMAIL   = 'traivellerdev@outlook.com'; // jouw inbox
-// TIP: na DKIM live kun je FROM_EMAIL zetten op 'TrAIveller.ai <noreply@traiveller.ai>'
-const FROM_EMAIL = 'TrAIveller.ai <onboarding@resend.dev>';
+const TO_EMAIL   = process.env.TO_EMAIL || 'traivellerdev@outlook.com';  // admin inbox
+const FROM_EMAIL = process.env.FROM_EMAIL || 'TrAIveller.ai <onboarding@resend.dev>'; // zet hier je geverifieerde domein-sender
 
 // ===== Helpers =====
 const escapeHtml = (s = '') =>
   s.replace(/[<>&"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-const nl2br   = (s = '') => s.replace(/\r?\n/g, '<br>');
-const isEmail = (s = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
-const isISODate = (s = '') => /^\d{4}-\d{2}-\d{2}$/.test(s); // 2025-10-01
 
-// Simple in-memory rate limit (per serverless instance)
-const RATE_LIMIT = { MAX: 3, WINDOW_MS: 5 * 60 * 1000 };
+const nl2br = (s = '') => s.replace(/\n?/g, '').replace(/\n/g, '<br/>');
+
+const isEmail = (s = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+const isISODate = (s = '') => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+// ===== Very light IP rate-limit (in-memory; per serverless instance) =====
+const RATE_LIMIT = { MAX: 3, WINDOW_MS: 5 * 60 * 1000 }; // 3 requests per 5 min
 const hitMap = new Map();
 function rateLimitAllow(ip) {
   const now = Date.now();
@@ -25,28 +27,39 @@ function rateLimitAllow(ip) {
   return arr.length <= RATE_LIMIT.MAX;
 }
 
-// ===== Clients =====
-const resend = new Resend(process.env.RESEND_API_KEY);
-const supabase =
-  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE
-    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE)
-    : null;
+function getIP(req) {
+  const xf = (req.headers['x-forwarded-for'] || '').toString();
+  return (xf.split(',')[0] || '').trim() || req.socket?.remoteAddress || 'unknown';
+}
 
-// Parse body (JSON of x-www-form-urlencoded)
+// Robust body parser: JSON or form-urlencoded
 async function parseBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
   const raw = Buffer.concat(chunks).toString();
   const ct = (req.headers['content-type'] || '').toLowerCase();
 
-  if (ct.includes('application/json')) return raw ? JSON.parse(raw) : {};
+  if (ct.includes('application/json')) {
+    return raw ? JSON.parse(raw) : {};
+  }
   if (ct.includes('application/x-www-form-urlencoded')) {
     const params = new URLSearchParams(raw);
     return Object.fromEntries(params.entries());
   }
   // laatste poging
-  return raw ? JSON.parse(raw) : {};
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
+
+// ===== Clients =====
+const resend = new Resend(process.env.RESEND_API_KEY);
+const supabase =
+  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE)
+    : null;
 
 // ===== Handler =====
 export default async function handler(req, res) {
@@ -59,15 +72,17 @@ export default async function handler(req, res) {
   res.setHeader('Permissions-Policy', 'geolocation=()');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
 
   // Rate limit
-  const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0]?.trim() || 'unknown';
+  const ip = getIP(req);
   if (!rateLimitAllow(ip)) {
     return res.status(429).json({ success: false, error: 'Te veel verzoeken, probeer later opnieuw.' });
   }
 
-  // Body
+  // Parse body
   let data;
   try {
     data = await parseBody(req);
@@ -75,19 +90,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Ongeldig verzoekformaat.' });
   }
 
-  // Honeypot (bots stil accepteren)
-  if (data.company) return res.status(200).json({ success: true });
+  // Honeypot (optioneel veld "company"): als ingevuld, doe alsof OK om bots te laten wegvallen
+  if (data.company) {
+    return res.status(200).json({ success: true });
+  }
 
-  // Velden
+  // ===== Velden =====
   const {
-    name = 'Onbekend',
+    name = '',
     email = '',
     message = '',
     date = '',
     return: ret = '',
     airport = '',
     destination = '',
-    // nieuw
     budget = '',
     adults = '',
     children = '',
@@ -96,22 +112,24 @@ export default async function handler(req, res) {
     transport_local = '',
   } = data || {};
 
-  // Validatie
+  // ===== Validatie =====
   if (!isEmail(email)) return res.status(400).json({ success: false, error: 'Ongeldig e-mailadres.' });
-  if (!name || !airport || !destination || !date || !ret)
+  if (!name || !airport || !destination || !date || !ret) {
     return res.status(400).json({ success: false, error: 'Ontbrekende verplichte velden.' });
-  if (!isISODate(date) || !isISODate(ret))
-    return res.status(400).json({ success: false, error: 'Datums moeten YYYY-MM-DD zijn.' });
-  if (!process.env.RESEND_API_KEY)
+  }
+  if (!isISODate(date) || !isISODate(ret)) {
+    return res.status(400).json({ success: false, error: 'Datums moeten formaat YYYY-MM-DD hebben.' });
+  }
+  if (!process.env.RESEND_API_KEY) {
     return res.status(500).json({ success: false, error: 'Resend is niet geconfigureerd.' });
+  }
   if (!supabase) {
-    // mail gaat door; DB optioneel
-    console.warn('Supabase env ontbreekt (SUPABASE_URL / SUPABASE_SERVICE_ROLE) – oversla DB insert.');
+    console.warn('Supabase ENV mist (SUPABASE_URL / SUPABASE_SERVICE_ROLE) — DB insert wordt overgeslagen.');
   }
 
-  try {
-    // ===== Inhoud: admin mail =====
-    const textBody = `Nieuwe intake van TrAIveller.ai
+  // ===== Email content =====
+  const textBody =
+`Nieuwe intake van TrAIveller.ai
 
 Naam: ${name}
 E-mail: ${email}
@@ -131,71 +149,72 @@ Extra wensen:
 ${message}
 `;
 
-    const htmlBody = `
-      <h2>📩 Nieuwe intake van TrAIveller.ai</h2>
-      <p><strong>Naam:</strong> ${escapeHtml(name)}</p>
-      <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
-      <p><strong>Vertrekdatum:</strong> ${escapeHtml(date)}</p>
-      <p><strong>Terugkomstdatum:</strong> ${escapeHtml(ret)}</p>
-      <p><strong>Vertrekluchthaven:</strong> ${escapeHtml(airport)}</p>
-      <p><strong>Bestemming/regio:</strong> ${escapeHtml(destination)}</p>
-      <hr/>
-      <p><strong>Budget:</strong> €${escapeHtml(String(budget))}</p>
-      <p><strong>Volwassenen:</strong> ${escapeHtml(String(adults))}, <strong>Kinderen:</strong> ${escapeHtml(String(children))}</p>
-      <p><strong>Type reis:</strong> ${escapeHtml(String(trip_types))}</p>
-      <p><strong>Accommodatie:</strong> ${escapeHtml(String(accommodation))}</p>
-      <p><strong>Vervoer ter plaatse:</strong> ${escapeHtml(String(transport_local))}</p>
-      <hr/>
-      <p><strong>Extra wensen:</strong><br/>${nl2br(escapeHtml(message || '—'))}</p>
-    `;
+  const htmlBody = `
+    <h2>✈️ Nieuwe intake van TrAIveller.ai</h2>
+    <p><strong>Naam:</strong> ${escapeHtml(name)}</p>
+    <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
+    <p><strong>Vertrekdatum:</strong> ${escapeHtml(date)}</p>
+    <p><strong>Terugkomstdatum:</strong> ${escapeHtml(ret)}</p>
+    <p><strong>Vertrekluchthaven:</strong> ${escapeHtml(airport)}</p>
+    <p><strong>Bestemming/regio:</strong> ${escapeHtml(destination)}</p>
+    <hr/>
+    <p><strong>Budget:</strong> €${escapeHtml(String(budget))}</p>
+    <p><strong>Volwassenen:</strong> ${escapeHtml(String(adults))}, <strong>Kinderen:</strong> ${escapeHtml(String(children))}</p>
+    <p><strong>Type reis:</strong> ${escapeHtml(String(trip_types))}</p>
+    <p><strong>Accommodatie:</strong> ${escapeHtml(String(accommodation))}</p>
+    <p><strong>Vervoer ter plaatse:</strong> ${escapeHtml(String(transport_local))}</p>
+    <p><strong>Extra wensen:</strong><br/>${nl2br(escapeHtml(message || '--'))}</p>
+  `;
 
-    // ===== Inhoud: bevestiging naar klant =====
-    const confirmText = `Bedankt ${name}!
+  // Bevestiging naar klant
+  const confirmText =
+`Bedankt, ${name}!
 
-We hebben je intake ontvangen en gaan ermee aan de slag.
-Samenvatting:
-- Vertrek: ${date} • Terug: ${ret}
-- Vanaf: ${airport} • Bestemming/regio: ${destination}
-- Budget: €${budget} • Reizigers (volw/kind): ${adults}/${children}
-- Type reis: ${trip_types}
-- Accommodatie: ${accommodation}
-- Vervoer: ${transport_local}
+We hebben je intake ontvangen en gaan ermee aan de slag. Hieronder een korte samenvatting.
 
-Je kunt op deze mail antwoorden als je nog iets wilt aanvullen.
-Team TrAIveller.ai
-`;
+Vertrek: ${date}  •  Terug: ${ret}
+Vanaf: ${airport}  •  Bestemming/regio: ${destination}
+Budget: €${budget}  •  Reizigers (volw/kind): ${adults}/${children}
+Type reis: ${trip_types}
+Accommodatie: ${accommodation}
+Vervoer: ${transport_local}
 
-    const confirmHtml = `
-      <h2>Bedankt, ${escapeHtml(name)}! ✈️</h2>
-      <p>We hebben je intake ontvangen en gaan ermee aan de slag. Hieronder een korte samenvatting.</p>
-      <ul>
-        <li><strong>Vertrek:</strong> ${escapeHtml(date)} — <strong>Terug:</strong> ${escapeHtml(ret)}</li>
-        <li><strong>Vanaf:</strong> ${escapeHtml(airport)} — <strong>Bestemming/regio:</strong> ${escapeHtml(destination)}</li>
-        <li><strong>Budget:</strong> €${escapeHtml(String(budget))} — <strong>Reizigers (volw/kind):</strong> ${escapeHtml(String(adults))}/${escapeHtml(String(children))}</li>
-        <li><strong>Type reis:</strong> ${escapeHtml(String(trip_types))}</li>
-        <li><strong>Accommodatie:</strong> ${escapeHtml(String(accommodation))}</li>
-        <li><strong>Vervoer ter plaatse:</strong> ${escapeHtml(String(transport_local))}</li>
-      </ul>
-      <p><strong>Extra wensen:</strong><br/>${nl2br(escapeHtml(message || '—'))}</p>
-      <p>Je kunt op deze mail <em>gewoon beantwoorden</em> als je nog iets wilt toevoegen.</p>
-      <p>– Team TrAIveller.ai</p>
-    `;
+Je kunt op deze mail antwoorden als je nog iets wilt toevoegen.
 
-    // ===== Acties parallel: admin mail + klant mail + (optioneel) DB insert =====
+— Team TrAIveller.ai`;
+
+  const confirmHtml = `
+    <h2>Bedankt, ${escapeHtml(name)}! ✨</h2>
+    <p>We hebben je intake ontvangen en gaan ermee aan de slag. Hieronder een korte samenvatting.</p>
+    <ul>
+      <li><strong>Vertrek:</strong> ${escapeHtml(date)} &nbsp;•&nbsp; <strong>Terug:</strong> ${escapeHtml(ret)}</li>
+      <li><strong>Vanaf:</strong> ${escapeHtml(airport)} &nbsp;•&nbsp; <strong>Bestemming/regio:</strong> ${escapeHtml(destination)}</li>
+      <li><strong>Budget:</strong> €${escapeHtml(String(budget))} &nbsp;•&nbsp; <strong>Reizigers (volw/kind):</strong> ${escapeHtml(String(adults))}/${escapeHtml(String(children))}</li>
+      <li><strong>Type reis:</strong> ${escapeHtml(String(trip_types))}</li>
+      <li><strong>Accommodatie:</strong> ${escapeHtml(String(accommodation))}</li>
+      <li><strong>Vervoer:</strong> ${escapeHtml(String(transport_local))}</li>
+    </ul>
+    <p><strong>Extra wensen:</strong><br/>${nl2br(escapeHtml(message || '--'))}</p>
+    <p>Je kunt op deze mail antwoorden als je nog iets wilt toevoegen.</p>
+    <p>— Team TrAIveller.ai</p>
+  `;
+
+  try {
+    // ===== Acties parallel: admin-mail + klant-mail + (optioneel) DB insert =====
     const tasks = [
-      // naar jou (admin)
+      // Admin
       resend.emails.send({
         from: FROM_EMAIL,
-        to: [TO_EMAIL],
+        to: TO_EMAIL,
         reply_to: email || undefined,
         subject: `Nieuwe intake via TrAIveller.ai – ${name}`,
         text: textBody,
         html: htmlBody,
       }),
-      // bevestiging naar klant
+      // Klant
       resend.emails.send({
         from: FROM_EMAIL,
-        to: [email],
+        to: email,
         subject: 'Bevestiging: we hebben je intake ontvangen (TrAIveller.ai)',
         text: confirmText,
         html: confirmHtml,
@@ -206,46 +225,36 @@ Team TrAIveller.ai
       tasks.push(
         supabase.from('intakes').insert([
           {
+            created_at: new Date().toISOString(),
+            naam: name || null,
+            email: email || null,
             vertrek_datum: date || null,
             terug_datum: ret || null,
-            bestemming: destination || null,
             vertrek_vanaf: airport || null,
-            email: email || null,
-            notes: message || null,
+            bestemming: destination || null,
+            budget: budget || null,
+            volwassenen: adults || null,
+            kinderen: children || null,
+            type_reis: trip_types || null,
+            accomodatie: accommodation || null, // schrijfwijze naar wens
+            vervoer_locaal: transport_local || null,
+            notities: message || null,
+            ip: ip || null,
           },
         ])
       );
     }
 
-    const results = await Promise.allSettled(tasks);
-
-    // Controleer mail(s)
-    const adminMail = results[0];
-    const userMail = results[1];
-
-    if (adminMail.status === 'rejected') {
-      console.error('Resend admin mail error:', adminMail.reason);
-      return res.status(500).json({ success: false, error: 'Fout bij versturen e-mail' });
-    }
-    if (userMail.status === 'rejected') {
-      // Niet blokkeren voor de gebruiker, maar wel loggen
-      console.error('Resend user mail error:', userMail.reason);
-    }
-
-    // DB fouten alleen loggen
-    const dbResult = results[2];
-    if (dbResult && dbResult.status === 'rejected') {
-      console.error('Supabase insert error:', dbResult.reason);
-    } else if (dbResult && dbResult.status === 'fulfilled' && dbResult.value?.error) {
-      console.error('Supabase insert error:', dbResult.value.error);
-    }
+    await Promise.all(tasks);
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Onverwachte fout:', err);
-    return res.status(500).json({ success: false, error: 'Interne serverfout' });
+    console.error('MAIL/API ERROR:', err);
+    // Toon nette fout, log detail in console
+    return res.status(500).json({ success: false, error: 'Er ging iets mis bij verzenden of opslaan.' });
   }
 }
+
 
 
 
