@@ -222,28 +222,33 @@ Je kunt op deze mail antwoorden als je nog iets wilt toevoegen.
     ];
 
     if (supabase) {
-      tasks.push(
-        supabase.from('intakes').insert([
-          {
-            created_at: new Date().toISOString(),
-            naam: name || null,
-            email: email || null,
-            vertrek_datum: date || null,
-            terug_datum: ret || null,
-            vertrek_vanaf: airport || null,
-            bestemming: destination || null,
-            budget: budget || null,
-            volwassenen: adults || null,
-            kinderen: children || null,
-            type_reis: trip_types || null,
-            accomodatie: accommodation || null, // schrijfwijze naar wens
-            vervoer_locaal: transport_local || null,
-            notities: message || null,
-            ip: ip || null,
-          },
-        ])
-      );
-    }
+  tasks.push(
+    supabase.from('intakes').insert([
+      {
+        // id en created_at worden automatisch gezet door Supabase
+        naam: name || null,                              // extra veld, voeg je later evt. toe in DB
+        email: email || null,
+        vertrek_datum: date || null,
+        terug_datum: ret || null,
+        vertrek_vanaf: airport || null,
+        bestemming: destination || null,
+        budget: budget || null,
+        personen: adults || children
+          ? Number(adults || 0) + Number(children || 0)
+          : null,
+        notes: message || null,
+        vervoer: transport_local || null,
+        ip: ip || null,
+
+        // optioneel invullen → pas aan als je form straks halal/dieet/transport_type gaat gebruiken
+        halal: null,
+        vlucht_type: null,
+        dieet_voorkeuren: null,
+      },
+    ])
+  );
+}
+
 
     await Promise.all(tasks);
 
