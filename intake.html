@@ -3,91 +3,124 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intakeformulier</title>
+  <title>TrAIveller – Intake</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fa;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
-    .container{background:#fff;padding:30px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.1);max-width:780px;width:100%}
-    .logo{max-width:150px;margin-bottom:20px}
-    h1{font-size:26px;margin:0 0 16px;text-align:center;color:#333}
-    form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    :root{--bg:#f7f9fb;--card:#fff;--ink:#222;--muted:#6a7280;--brand:#0a84ff;--brand-d:#066ad1;--line:#e6ebf2}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);display:grid;place-items:center;min-height:100vh;padding:24px}
+    .container{width:100%;max-width:780px;background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(2,10,30,.06);padding:28px}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    header img{height:40px;width:auto}
+    header h1{font-size:22px;margin:0}
+    p.lead{margin:.25rem 0 1rem;color:var(--muted)}
+    form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .full{grid-column:1/-1}
     label{font-weight:600}
-    input,select,textarea{padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;width:100%;box-sizing:border-box}
-    fieldset{border:1px solid #e5e7eb;border-radius:8px;padding:12px}
-    legend{font-weight:700;font-size:14px;color:#333}
-    .choices{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-    .choice{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px}
-    button{grid-column:1/-1;padding:12px;border:none;border-radius:8px;background:#007bff;color:#fff;font-size:16px;cursor:pointer;margin-top:4px}
-    button:hover{background:#0056b3}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    .muted{font-size:12px;color:#666}
-    #status{grid-column:1/-1;min-height:18px;font-size:13px}
+    input,select,textarea{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+    fieldset{border:1px solid var(--line);border-radius:12px;padding:12px}
+    legend{font-weight:700;color:var(--ink);padding:0 4px}
+    small.muted{color:var(--muted)}
+    .choices{display:flex;flex-wrap:wrap;gap:8px}
+    .choice{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px 10px;border-radius:999px;background:#fff}
+    button{grid-column:1/-1;padding:12px 16px;border:none;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+    button:hover{background:var(--brand-d)}
+    #status{grid-column:1/-1;min-height:18px;font-size:14px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .tooltip{display:inline-block;border-bottom:1px dashed var(--muted);cursor:help}
+    .ages{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+    .ages input{padding:10px}
+    .sr{position:absolute;left:-9999px}
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="assets/images/logo.png" alt="TrAIveller Logo" class="logo" />
-    <h1>Intakeformulier ✈️</h1>
+    <header>
+      <img src="/assets/images/logo.png" alt="TrAIveller logo">
+      <h1>Intakeformulier ✈️</h1>
+    </header>
+    <p class="lead">We regelen de beste deal voor jouw voorkeuren. <span class="tooltip" title="We combineren AI met slimme prijsvergelijking en handmatige check voor de beste prijs/kwaliteit.">Hoe?</span> Wij doen het werk – jij geniet.</p>
 
-    <!--
-      BELANGRIJK:
-      Vervang hieronder de ACTION door jouw eigen Google Apps Script Web App URL (eindigt op /exec)
-    -->
-    <form id="intakeForm" action="https://script.google.com/macros/s/AKfycbxtX-Y8rD5iZeKag3e4PLPqJaeB7L2Jmk6KqcDp6JBz2Er6v72hl4mR3Rd4EeRnf9Dd/exec" method="POST">
+    <form id="intakeForm" autocomplete="on">
       <!-- Datums -->
       <div>
         <label for="date">Vertrekdatum</label>
         <input id="date" name="date" type="date" required />
       </div>
       <div>
-        <label for="return">Terugkomstdatum</label>
-        <input id="return" name="return" type="date" required />
+        <label for="ret">Terugkomstdatum</label>
+        <input id="ret" name="return" type="date" required />
       </div>
 
-      <!-- Luchthaven & bestemming -->
-      <div class="full">
+      <!-- Luchthaven -->
+      <div>
         <label for="airport">Vertrekluchthaven</label>
         <select id="airport" name="airport" required>
-          <option value="" disabled selected>Kies</option>
-          <option value="AMS">Amsterdam (AMS)</option>
-          <option value="RTM">Rotterdam (RTM)</option>
+          <option value="" disabled selected>Kies je luchthaven</option>
+          <option value="AMS">Amsterdam Schiphol (AMS)</option>
+          <option value="RTM">Rotterdam The Hague (RTM)</option>
           <option value="EIN">Eindhoven (EIN)</option>
           <option value="ANY">Maakt niet uit</option>
         </select>
       </div>
 
-      <div class="full">
-        <label for="destination">Bestemming of regio</label>
-        <input id="destination" name="destination" type="text" placeholder="bv. Spanje / Algarve / Zuid-Turkije" />
-        <small class="muted">Laat leeg en kies “Verras me” hieronder als je open staat voor suggesties.</small>
+      <!-- Bestemming -->
+      <div>
+        <label for="destination">Bestemming / Regio</label>
+        <select id="destination" name="destination" required>
+          <option value="" disabled selected>Kies bestemming</option>
+          <option value="verras-me">🎁 Verras me</option>
+          <optgroup label="Populair">
+            <option>Aruba</option><option>Tanger</option><option>Marrakech</option>
+            <option>Istanbul</option><option>Antalya</option><option>Dubai</option>
+            <option>Gran Canaria</option><option>Canarische Eilanden</option>
+            <option>Barcelona</option><option>Rome</option><option>Lissabon</option>
+            <option>Londen</option><option>Parijs</option>
+          </optgroup>
+        </select>
       </div>
 
-      <!-- Budget & reizigers -->
-      <div>
-        <label for="budget">Reisbudget totaal (€)</label>
-        <input id="budget" name="budget" type="number" min="0" step="50" placeholder="bv. 2500" />
-      </div>
+      <!-- Reizigers -->
       <div>
         <label for="adults">Volwassenen</label>
-        <input id="adults" name="adults" type="number" min="1" value="2" required />
+        <input id="adults" name="adults" type="number" min="1" step="1" value="2" required />
       </div>
       <div>
         <label for="children">Kinderen</label>
-        <input id="children" name="children" type="number" min="0" value="0" />
+        <input id="children" name="children" type="number" min="0" step="1" value="0" />
       </div>
 
-      <!-- Type reis -->
+      <!-- Leeftijden kinderen (dynamisch) -->
+      <div class="full" id="agesWrap" style="display:none">
+        <label>Leeftijden kinderen</label>
+        <div id="ages" class="ages"></div>
+        <small class="muted">Vul leeftijd per kind in (0–17). Helpt bij het vinden van kinderkortingen en familiekamers.</small>
+      </div>
+
+      <!-- Vervoer lokaal -->
+      <div>
+        <label for="transport_local">Vervoer ter plaatse</label>
+        <select id="transport_local" name="transport_local">
+          <option value="" selected>Geen voorkeur</option>
+          <option value="auto">Auto huren</option>
+          <option value="kleine auto">Kleine auto</option>
+          <option value="SUV">SUV</option>
+          <option value="ov">Openbaar vervoer</option>
+          <option value="geen">Geen</option>
+        </select>
+      </div>
+
+      <!-- Type reis (meerdere) -->
       <fieldset class="full">
         <legend>Type reis (meerdere mogelijk)</legend>
         <div class="choices">
-          <label class="choice"><input type="checkbox" name="trip_types" value="strand" /> Strand</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="citytrip" /> Citytrip</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="natuur" /> Natuur</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="luxe" /> Luxe</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="budget" /> Budget</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="halal-friendly" /> Halal-friendly</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="familie" /> Familie</label>
-          <label class="choice"><input type="checkbox" name="trip_types" value="verras-me" /> Verras me</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="strand" />Strand</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="citytrip" />Citytrip</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="natuur" />Natuur</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="luxe" />Luxe</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="budget" />Budget</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="halal-friendly" />Halal-friendly</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="familie" />Familie</label>
+          <label class="choice"><input type="checkbox" name="trip_types" value="verras me" />Verras me</label>
         </div>
       </fieldset>
 
@@ -95,24 +128,32 @@
       <fieldset class="full">
         <legend>Voorkeur accommodatie</legend>
         <div class="choices">
-          <label class="choice"><input type="radio" name="accommodation" value="hotel" /> Hotel</label>
-          <label class="choice"><input type="radio" name="accommodation" value="appartement" /> Appartement</label>
-          <label class="choice"><input type="radio" name="accommodation" value="all-inclusive" /> All-inclusive</label>
-          <label class="choice"><input type="radio" name="accommodation" value="geen-voorkeur" checked /> Geen voorkeur</label>
+          <label class="choice"><input type="radio" name="accommodation" value="hotel" />Hotel</label>
+          <label class="choice"><input type="radio" name="accommodation" value="appartement" />Appartement</label>
+          <label class="choice"><input type="radio" name="accommodation" value="airbnb" />Airbnb</label>
+          <label class="choice"><input type="radio" name="accommodation" value="all-inclusive" />All-inclusive</label>
+          <label class="choice"><input type="radio" name="accommodation" value="" checked />Geen voorkeur</label>
         </div>
       </fieldset>
 
-      <!-- Vervoer ter plaatse -->
-      <fieldset class="full">
-        <legend>Vervoer ter plaatse</legend>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="transport_local" value="huurauto" /> Huurauto</label>
-          <label class="choice"><input type="radio" name="transport_local" value="ov" /> Openbaar vervoer</label>
-          <label class="choice"><input type="radio" name="transport_local" value="geen-voorkeur" checked /> Geen voorkeur</label>
+      <!-- Budget presets + vrij invullen -->
+      <div class="full">
+        <label for="budgetPreset">Budget per persoon <span class="tooltip" title="Slim budgetadvies: kies een snelbedrag of typ zelf. Wij optimaliseren op prijs/kwaliteit met slimme deals.">ⓘ</span></label>
+        <div class="grid2">
+          <select id="budgetPreset" name="budgetPreset">
+            <option value="" selected>Kies snelbedrag…</option>
+            <option value="250">€250</option>
+            <option value="500">€500</option>
+            <option value="750">€750</option>
+            <option value="1000">€1.000</option>
+            <option value="custom">Ander bedrag…</option>
+          </select>
+          <input id="budget" name="budget" type="text" inputmode="decimal" placeholder="of typ zelf: bijv. €750" />
         </div>
-      </fieldset>
+        <small class="muted">We rekenen per persoon. Bedrag mag ook met “€” of “.”/“,”.</small>
+      </div>
 
-      <!-- Persoonlijke gegevens -->
+      <!-- Persoonlijk -->
       <div>
         <label for="name">Naam</label>
         <input id="name" name="name" type="text" autocomplete="name" required />
@@ -124,78 +165,167 @@
 
       <!-- Extra wensen -->
       <div class="full">
-        <label for="message">Extra wensen (halal eten, zwembad, kids club, rust, fitness…)</label>
-        <textarea id="message" name="message" rows="4" placeholder="Vertel ons wat belangrijk is voor jullie"></textarea>
+        <label for="message">Extra wensen</label>
+        <textarea id="message" name="message" rows="4" placeholder="Bijv. halal, zwembandjes, kinderactiviteiten, kamers naast elkaar…"></textarea>
       </div>
 
       <!-- Honeypot + consent -->
-      <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" style="display:none" />
-      <label class="muted full">
-        <input type="checkbox" id="consent" required /> Ik ga akkoord met verwerking van mijn gegevens.
-      </label>
+      <input type="text" id="company" name="company" class="sr" tabindex="-1" autocomplete="off" />
+      <div class="full">
+        <label class="choice" style="border:none;padding:0">
+          <input type="checkbox" id="consent" required />
+          Ik ga akkoord met de verwerking van mijn gegevens.
+        </label>
+      </div>
 
-      <button id="submitBtn" type="submit">Versturen</button>
-      <p id="status" aria-live="polite" class="full"></p>
+      <button type="submit" id="submitBtn">Versturen</button>
+      <p id="status" aria-live="polite"></p>
     </form>
   </div>
 
   <script>
-    // Zet 'min' op datums = vandaag
-    document.addEventListener('DOMContentLoaded', () => {
-      const today = new Date().toISOString().slice(0, 10);
-      document.getElementById('date').setAttribute('min', today);
-      document.getElementById('return').setAttribute('min', today);
-    });
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
 
-    <script>
-document.getElementById('intakeForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const form = e.target;
-
-  // Verzamel checkboxen "type reis" → CSV
-  const typeReis = [...form.querySelectorAll('input[name="trip_types"]:checked')]
-    .map(i => i.value)
-    .join(',');
-
-  // Dit zijn de keys die je Apps Script verwacht
-  const data = {
-    vertrekdatum: form.date.value,
-    terugkomstdatum: form.return.value,
-    vertrekluchthaven: form.airport.value,
-    bestemming: form.destination.value,
-    reisbudget: form.budget.value,
-    volwassenen: form.adults.value,
-    kinderen: form.children.value,
-    typeReis, // CSV
-    accomodatie: form.accommodation.value,   // let op: 'accomodatie' (1 m) zoals in Apps Script
-    vervoer: form.transport_local.value,
-    extraWensen: form.message.value,
-    naam: form.name.value,
-    email: form.email.value
-  };
-
-  try {
-    const response = await fetch(form.action, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    const result = await response.json().catch(() => ({}));
-    if (response.ok && result.success) {
-      window.location.href = 'bedankt.html';
-    } else {
-      alert('❌ Er ging iets mis: ' + (result.error || response.statusText));
+    // ===== Datums: geen verleden; terug >= vertrek =====
+    function setDateMins() {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const iso = today.toISOString().slice(0,10);
+      $('date').setAttribute('min', iso);
+      $('ret').setAttribute('min', iso);
     }
-  } catch (err) {
-    alert('⚠️ Netwerkfout: ' + err.message);
-  }
-});
-</script>
+    setDateMins();
+    $('date').addEventListener('change', () => {
+      const d = $('date').value;
+      if (d) $('ret').setAttribute('min', d);
+    });
 
+    // ===== Budget: preset <-> custom sync =====
+    const presetEl = $('budgetPreset');
+    const customEl = $('budget');
+    presetEl.addEventListener('change', () => {
+      const v = presetEl.value;
+      if (!v) return;
+      if (v === 'custom') { customEl.focus(); customEl.select?.(); return; }
+      customEl.value = v; // zet het nummer
+    });
+    customEl.addEventListener('input', () => {
+      presetEl.value = customEl.value.trim() ? 'custom' : '';
+    });
+
+    function parseMoney(v) {
+      if (v == null) return null;
+      const n = String(v).replace(/[^0-9.,-]/g, '').replace(',', '.');
+      const f = parseFloat(n);
+      return Number.isFinite(f) ? f : null;
+    }
+
+    // ===== Kinderen leeftijden: dynamisch velden =====
+    const childrenEl = $('children');
+    const agesWrap = $('agesWrap');
+    const agesBox = $('ages');
+
+    function renderAges() {
+      const count = Math.max(0, parseInt(childrenEl.value || '0', 10));
+      agesBox.innerHTML = '';
+      if (count > 0) {
+        agesWrap.style.display = '';
+        for (let i = 1; i <= count; i++) {
+          const inp = document.createElement('input');
+          inp.type = 'number';
+          inp.min = '0'; inp.max = '17'; inp.step = '1';
+          inp.placeholder = `Leeftijd ${i}`;
+          inp.setAttribute('aria-label', `Leeftijd kind ${i}`);
+          agesBox.appendChild(inp);
+        }
+      } else {
+        agesWrap.style.display = 'none';
+      }
+    }
+    childrenEl.addEventListener('input', renderAges);
+    renderAges();
+
+    // ===== Verzenden =====
+    function show(msg){ statusEl.textContent = msg; }
+
+    document.getElementById('intakeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      show('');
+
+      // datums check
+      const date = $('date').value;
+      const ret  = $('ret').value;
+      if (!date || !ret) return show('Vul vertrek- en terugkomstdatum in.');
+      if (ret < date)     return show('Terugkomstdatum moet na vertrekdatum liggen.');
+
+      // budget als nummer
+      const budgetNumber = parseMoney(customEl.value);
+      if (budgetNumber == null || budgetNumber <= 0) return show('Vul een geldig budget in (bijv. 750).');
+
+      // trip_types CSV
+      const trip_types_csv = Array.from(document.querySelectorAll('input[name="trip_types"]:checked'))
+        .map(i => i.value).join(',');
+
+      // leeftijden kinderen
+      const ageValues = Array.from(agesBox.querySelectorAll('input')).map(i => i.value.trim()).filter(Boolean);
+      const children_ages = ageValues.join(','); // "4,7,12"
+
+      // payload naar /api/mail (keys matchen backend)
+      const payload = {
+        name: $('name').value.trim(),
+        email: $('email').value.trim(),
+        message: (function(){
+          const base = $('message').value.trim();
+          return children_ages ? (base ? base + `\n\nLeeftijden kinderen: ${children_ages}` : `Leeftijden kinderen: ${children_ages}`) : base;
+        })(),
+        date,
+        return: ret,
+        airport: $('airport').value,
+        destination: $('destination').value,
+        budget: budgetNumber,
+        adults: parseInt($('adults').value || '0', 10),
+        children: parseInt(childrenEl.value || '0', 10),
+        trip_types: trip_types_csv,
+        accommodation: (document.querySelector('input[name="accommodation"]:checked')?.value ?? ''),
+        transport_local: $('transport_local').value,
+        children_ages // extra veld; je backend kan dit desnoods in notes opslaan
+      };
+
+      // basisvalidaties
+      if (!payload.airport) return show('Kies je vertrekluchthaven.');
+      if (!payload.destination) return show('Kies je bestemming of “Verras me”.');
+      if (!payload.adults || payload.adults < 1) return show('Minimaal 1 volwassene.');
+      if (!document.getElementById('consent').checked) return show('Gelieve akkoord te gaan met verwerking van je gegevens.');
+
+      // spam honeypot
+      if (document.getElementById('company').value) {
+        show('Bedankt!');
+        e.target.reset(); setDateMins(); return;
+      }
+
+      // POST
+      try {
+        const r = await fetch('/api/mail', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await r.json().catch(()=>({}));
+        if (r.ok && json.success) {
+          show('✅ Ingevuld! We sturen zo een bevestiging per e-mail.');
+          e.target.reset(); presetEl.value=''; setDateMins(); renderAges();
+        } else {
+          show('❌ Fout bij versturen: ' + (json.error || r.statusText));
+        }
+      } catch (err) {
+        console.error(err);
+        show('❌ Netwerkfout. Probeer het nog eens.');
+      }
+    });
+  </script>
 </body>
 </html>
+
 
 
 
