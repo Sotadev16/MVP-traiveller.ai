@@ -16,7 +16,7 @@ const supabase =
 /* ========== Config (mail) ========== */
 /** Gebruik onboarding@resend.dev zolang je eigen domein/sender nog niet 100% verified is */
 const FROM =
-  process.env.FROM_EMAIL || 'TrAIveller.ai <onboarding@resend.dev>';
+  process.env.FROM_EMAIL || 'TrAIveller.ai <noreply@traiveller.ai>';
 /** Admin-inbox waar nieuwe intakes landen */
 const ADMIN =
   process.env.TO_EMAIL || 'traivellerdev@outlook.com';
