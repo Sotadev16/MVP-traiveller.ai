@@ -1,13 +1,13 @@
 {
   "name": "mvp-traiveller-ai",
+  "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": { "node": ">=18 <23" },
   "dependencies": {
     "resend": "^4.0.0",
     "@supabase/supabase-js": "^2.45.0"
-  },
-  "engines": {
-    "node": ">=18 <23"
   }
 }
+
 
