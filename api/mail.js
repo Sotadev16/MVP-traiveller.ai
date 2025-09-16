@@ -1,31 +1,36 @@
-// ===== bovenin: ENV & clients =====
+// api/mail.js — compact & correct
+
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+/* ---------- Clients ---------- */
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const supabase =
+  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE)
+    : null;
 
-const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE)
-  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE)
-  : null;
+/* ---------- Config ---------- */
+// Altijd 1 duidelijke afzender (domein geverifieerd bij Resend)
+const FROM_EMAIL = 'TrAIveller.ai <noreply@traiveller.ai>';
+// Admin-inbox voor nieuwe intakes
+const ADMIN_EMAIL = 'traivellerdev@outlook.com';
 
-// Admin + From (VEILIG FROM)
-const TO_EMAIL = process.env.TO_EMAIL || 'traivellerdev@outlook.com';
-const FROM_EMAIL = process.env.FROM_EMAIL || 'TrAIveller.ai <onboarding@resend.dev>';
+/* ---------- Helpers ---------- */
+const isEmail = (s = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
+const escapeHtml = (s = '') => String(s).replace(/[<>&'"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&#39;','"':'&quot;'}[m]));
+const getIP = (req) => (req.headers['x-forwarded-for'] || '').toString().split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
-function getIP(req) {
-  const xf = (req.headers['x-forwarded-for'] || '').toString();
-  return xf.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-}
-
-// ===== handler (alleen belangrijkste delen hieronder) =====
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   try {
+    if (!resend) {
+      return res.status(500).json({ success: false, error: 'RESEND_API_KEY missing' });
+    }
+
     const data = req.body || {};
     const {
       name = '', email = '', message = '',
@@ -35,10 +40,10 @@ export default async function handler(req, res) {
       transport_local = '', children_ages = ''
     } = data;
 
-   // Alleen vrije notitie (zonder leeftijden) om doublures te voorkomen
-const combinedNotes = (message || '').trim();
+    // Alleen vrije notitie, geen leeftijden (voorkomt dubbele regels in mail)
+    const combinedNotes = (message || '').trim();
 
-    // ---- Supabase insert (mag falen zonder de request te killen) ----
+    /* ---------- DB insert (best-effort) ---------- */
     let dbError = null;
     if (supabase) {
       const row = {
@@ -58,78 +63,100 @@ const combinedNotes = (message || '').trim();
       if (error) dbError = error.message;
     }
 
-    // ---- Resend e-mails ----
-    if (!resend) {
-      // Geen key → geef nette fout terug (dit veroorzaakt vaak 500's)
-      return res.status(500).json({ success: false, error: 'RESEND_API_KEY missing' });
-    }
+    /* ---------- Mail inhoud ---------- */
+    const textSummary = [
+      `Naam: ${name || '-'}`,
+      `E-mail: ${email || '-'}`,
+      `Vertrek: ${date || '-'}  Terug: ${ret || '-'}`,
+      `Vanaf: ${airport || '-'}  Bestemming: ${destination || '-'}`,
+      `Budget: €${budget ?? '-'}`,
+      `Reizigers (volw/kind): ${adults || 0}/${children || 0}`,
+      `Vervoer ter plaatse: ${transport_local || '-'}`,
+      ``,
+      `Notes:`,
+      combinedNotes || '-',
+    ].join('\n');
 
-    // Log waarmee we sturen (geen secrets)
-    console.log('Mail FROM:', FROM_EMAIL, ' TO(admin):', TO_EMAIL, ' reply_to:', email);
+    const htmlSummary = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
+        <h2>Nieuwe intake via TrAIveller.ai</h2>
+        <table cellpadding="6" style="border-collapse:collapse">
+          <tr><td><b>Naam</b></td><td>${escapeHtml(name || '-')}</td></tr>
+          <tr><td><b>E-mail</b></td><td>${escapeHtml(email || '-')}</td></tr>
+          <tr><td><b>Vertrek</b></td><td>${escapeHtml(date || '-')}</td></tr>
+          <tr><td><b>Terug</b></td><td>${escapeHtml(ret || '-')}</td></tr>
+          <tr><td><b>Vanaf</b></td><td>${escapeHtml(airport || '-')}</td></tr>
+          <tr><td><b>Bestemming</b></td><td>${escapeHtml(destination || '-')}</td></tr>
+          <tr><td><b>Budget</b></td><td>€${escapeHtml(String(budget ?? '-'))}</td></tr>
+          <tr><td><b>Reizigers (volw/kind)</b></td><td>${escapeHtml(String(adults || 0))}/${escapeHtml(String(children || 0))}</td></tr>
+          <tr><td><b>Vervoer lokaal</b></td><td>${escapeHtml(transport_local || '-')}</td></tr>
+        </table>
+        <p><b>Notes</b><br>${escapeHtml(combinedNotes || '-').replace(/\n/g,'<br>')}</p>
+      </div>
+    `;
 
-   /* ==== vaste afzender & admin ====
-   Zorg dat je domein/sender in Resend geverifieerd is.
-*/
-const FROM_EMAIL  = 'TrAIveller.ai <noreply@traiveller.ai>';   // altijd vanuit je domein
-const ADMIN_EMAIL = 'traivellerdev@outlook.com';               // waar de intake heen moet
+    const confirmText =
+      `Bedankt, ${name || 'reiziger'}!\n\n` +
+      `We hebben je intake ontvangen en nemen snel contact met je op.\n\n` +
+      (combinedNotes ? `Je opmerking:\n${combinedNotes}\n\n` : '') +
+      `Groeten,\nTrAIveller.ai`;
 
-// 2) Admin-mail (komt in jouw inbox)
-if (resend) {
-  tasks.push(
-    resend.emails.send({
-      from: FROM_EMAIL,                // <-- nooit meer onboarding@resend.dev
-      to: ADMIN_EMAIL,                 // direct adres (ipv TO_EMAIL env kan ook)
-      reply_to: isEmail(email) ? email : undefined, // zodat je direct kunt antwoorden
-      subject: `Nieuwe intake via TrAIveller.ai – ${name || email}`,
-      text: textSummary,
-      html: htmlSummary,
-    })
-  );
-}
+    const confirmHtml = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
+        <p>Bedankt, <b>${escapeHtml(name || 'reiziger')}</b>! We hebben je intake ontvangen en nemen snel contact met je op.</p>
+        ${combinedNotes ? `<p><b>Je opmerking</b><br>${escapeHtml(combinedNotes).replace(/\n/g,'<br>')}</p>` : ''}
+        <p>Groeten,<br>TrAIveller.ai</p>
+      </div>
+    `;
 
-// 3) Klant-bevestiging (alleen sturen als klantmail geldig is)
-if (resend && isEmail(email)) {
-  tasks.push(
-    resend.emails.send({
-      from: FROM_EMAIL,                // ook de bevestiging altijd vanaf je domein
-      to: email,
-      subject: 'Bevestiging: we hebben je intake ontvangen (TrAIveller.ai)',
-      text: confirmText,
-      html: confirmHtml,
-    })
-  );
-}
+    /* ---------- Mails versturen ---------- */
+    const tasks = [];
 
-    } catch (e) {
-      console.error('Resend admin send FAILED:', e?.message || e);
-      return res.status(500).json({ success: false, error: `Resend admin failed: ${e?.message || e}` });
-    }
+    // 1) Admin (altijd)
+    tasks.push(
+      resend.emails.send({
+        from: FROM_EMAIL,
+        to: ADMIN_EMAIL,
+        reply_to: isEmail(email) ? email : undefined,
+        subject: `Nieuwe intake via TrAIveller.ai – ${name || email || 'onbekend'}`,
+        text: textSummary,
+        html: htmlSummary,
+      })
+    );
 
-    // 2) Klant-bevestiging (mag falen zonder 500 te geven)
-    try {
-      if (email) {
-        await resend.emails.send({
+    // 2) Klantbevestiging (alleen als klantmail OK)
+    if (isEmail(email)) {
+      tasks.push(
+        resend.emails.send({
           from: FROM_EMAIL,
           to: email,
           subject: 'Bevestiging: we hebben je intake ontvangen (TrAIveller.ai)',
-          text: `Bedankt, ${name || ''}!\n\nWe hebben je intake ontvangen.\n\n${combinedNotes || ''}\n`,
-        });
-      }
-    } catch (e) {
-      console.warn('Resend customer send WARN (skipped):', e?.message || e);
-      // Niet falen op klantmail
+          text: confirmText,
+          html: confirmHtml,
+        })
+      );
     }
 
-    return res.status(200).json({
-      success: true,
-      mode: 'LIVE',
-      dbError: dbError || null
-    });
+    const results = await Promise.allSettled(tasks);
+    const failures = results.filter(r => r.status === 'rejected');
+
+    if (failures.length) {
+      // Minstens één mail faalde → 500 terug met details
+      return res.status(500).json({
+        success: false,
+        error: 'Mail sending failed',
+        details: failures.map(f => String(f.reason)),
+        dbError: dbError || null,
+      });
+    }
+
+    return res.status(200).json({ success: true, mode: 'LIVE', dbError: dbError || null });
   } catch (err) {
-    console.error('💥 Handler crash:', err);
+    console.error('Handler crash:', err);
     return res.status(500).json({ success: false, error: err?.message || String(err) });
   }
 }
+
 
 
 
