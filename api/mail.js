@@ -96,21 +96,23 @@ export default async function handler(req, res) {
   }
 
   // ===== Velden =====
-  const {
-    name = '',
-    email = '',
-    message = '',
-    date = '',
-    return: ret = '',
-    airport = '',
-    destination = '',
-    budget = '',
-    adults = '',
-    children = '',
-    trip_types = '',
-    accommodation = '',
-    transport_local = '',
-  } = data || {};
+ // ===== Velden =====
+const {
+  name = '',
+  email = '',
+  message = '',
+  date = '',
+  return: ret = '',
+  airport = '',
+  destination = '',
+  budget = '',
+  adults = '',
+  children = '',
+  trip_types = '',
+  accommodation = '',
+  transport_local = '',
+  children_ages = ''    // 👈 NIEUW: CSV "4,7,12" vanuit het formulier
+} = data || {};
 
   // ===== Validatie =====
   if (!isEmail(email)) return res.status(400).json({ success: false, error: 'Ongeldig e-mailadres.' });
