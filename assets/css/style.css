@@ -1,20 +1,125 @@
-body {
+/* ========= TrAIveller base ========= */
+:root{
+  --brand-blue:#0077b6;
+  --brand-blue-dark:#005f87;
+  --brand-yellow:#ffc300;
+  --text:#333;
+  --card-bg: rgba(255,255,255,0.92);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
   font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 2rem;
-  background: #f9f9f9;
-  color: #333;
+  margin:0;
+  color:var(--text);
+
+  /* Hero achtergrond */
+  background: url('/images/beach-hero.jpg') no-repeat center center fixed;
+  background-size: cover;
+  position:relative;
+  min-height:100vh;
+  padding:2rem;
 }
 
-h1 {
-  color: #0070f3;
+/* Subtiele overlay voor leesbaarheid */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,.25) 0%,
+    rgba(0,0,0,.10) 40%,
+    rgba(0,0,0,.25) 100%
+  );
+  pointer-events:none;
+  z-index:0;
 }
 
-a {
-  color: #0070f3;
-  text-decoration: none;
+/* Links */
+a{ color:#0070f3; text-decoration:none; }
+a:hover{ text-decoration:underline; }
+
+/* Kaart/containers (homepage hero + intake formulier) */
+.hero,
+.container{
+  position:relative;  /* boven overlay */
+  z-index:1;
+  background:var(--card-bg);
+  backdrop-filter:saturate(120%) blur(3px);
+  border-radius:1.25rem;
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+  max-width:820px;
+  width:100%;
+  margin:6vh auto 0;
+  padding:2rem;
 }
 
-a:hover {
-  text-decoration: underline;
+/* Homepage extra styling */
+.brand{
+  display:flex; align-items:center; justify-content:center; gap:.8rem; margin-bottom:1rem;
 }
+.brand img{ width:42px; height:42px; }
+.brand h1{ margin:0; color:var(--brand-blue); font-size:1.9rem; letter-spacing:.2px; }
+
+.tagline{ color:#444; margin:.25rem 0 1.25rem; font-size:1.05rem; text-align:center; }
+
+.bullets{
+  display:grid; grid-template-columns:1fr; gap:.6rem;
+  text-align:left; margin:1.2rem auto 1.6rem; max-width:560px;
+}
+.bullets li{ list-style:none; padding-left:1.6rem; position:relative; }
+.bullets li::before{
+  content:"✓"; position:absolute; left:0; top:0; color:var(--brand-blue); font-weight:700;
+}
+
+/* CTA buttons */
+.cta{
+  display:inline-block;
+  background:var(--brand-blue);
+  color:#fff;
+  font-weight:700;
+  padding:1rem 1.25rem;
+  border-radius:.75rem;
+  text-decoration:none;
+  transition:transform .08s, background .2s, box-shadow .2s;
+  box-shadow:0 6px 14px rgba(0,0,0,.12);
+}
+.cta:hover{ background:var(--brand-blue-dark); text-decoration:none; }
+.cta:active{ transform:scale(.98); }
+.cta:focus{ outline:0; box-shadow:0 0 0 3px rgba(0,119,182,.25); }
+
+.cta--yellow{
+  background:var(--brand-yellow);
+  color:#1a1a1a;
+  box-shadow:0 6px 14px rgba(255,195,0,.35);
+}
+.cta--yellow:hover{ background:#e6b200; }
+.cta--yellow:focus{ box-shadow:0 0 0 3px rgba(255,195,0,.35); }
+
+/* Helpers */
+.subcta{ display:block; margin-top:.75rem; font-size:.95rem; color:#333; text-align:center; }
+.btn-full{ display:block; width:100%; text-align:center; }
+
+/* Form elementen (intake) */
+form{ display:flex; flex-direction:column; gap:1rem; }
+label{ font-weight:600; }
+input,select,textarea{
+  padding:.8rem; border:1px solid #ccc; border-radius:.6rem; font-size:1rem;
+  transition:border-color .2s, box-shadow .2s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--brand-blue);
+  outline:none;
+  box-shadow:0 0 0 3px rgba(0,119,182,.2);
+}
+textarea{ min-height:100px; resize:vertical; }
+
+/* Responsive */
+@media (min-width:720px){
+  .brand h1{ font-size:2.1rem; }
+  .tagline{ font-size:1.1rem; }
+}
+
