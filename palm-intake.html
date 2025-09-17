@@ -2,15 +2,21 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intake – TrAIveller.ai</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Palm Intake – TrAIveller.ai</title>
+
+  <!-- Styles & Icons -->
+  <link rel="stylesheet" href="/assets/css/style.css?v=4" />
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/traiveller-logo.png" />
+  <link rel="apple-touch-icon" href="/images/traiveller-logo.png" />
 </head>
 <body>
-  <main class="container">
-    <h1>TrAIveller Intakeformulier</h1>
-    <p>Vul je gegevens in en wij zoeken de beste deals voor je reis! ✈️</p>
+  <main class="center">
+    <h1>TrAIveller</h1>
+    <p class="tagline">jouw slimme AI-reisplanner</p>
 
+    <!-- Intakeformulier -->
     <form id="intakeForm" class="card">
       <!-- Naam -->
       <label for="name">Naam</label>
@@ -47,19 +53,18 @@
 
       <!-- Notities -->
       <label for="notes">Opmerkingen of wensen</label>
-      <textarea id="notes" name="notes" placeholder="Extra info (bv. all-inclusive, kindvriendelijk, autohuur)..."></textarea>
+      <textarea id="notes" name="notes" placeholder="All-inclusive, kindvriendelijk, autohuur…"></textarea>
 
-      <!-- Verstuur knop -->
-      <button type="submit">Verstuur aanvraag</button>
+      <!-- GELE CTA -->
+      <button type="submit" class="cta cta--yellow btn-full">Plan mijn slimme reis</button>
     </form>
   </main>
 
-  <!-- Script voor verzenden -->
+  <!-- Form submit -->
   <script>
     document.getElementById('intakeForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const payload = Object.fromEntries(fd.entries());
+      const payload = Object.fromEntries(new FormData(e.target).entries());
       try {
         const r = await fetch('/api/mail', {
           method: 'POST',
@@ -69,7 +74,7 @@
         const j = await r.json();
         if (j.ok) {
           alert('Dankjewel! We hebben je aanvraag ontvangen.');
-          e.target.reset(); // form leegmaken
+          e.target.reset();
         } else {
           alert('Kon e-mail niet verzenden: ' + (j.error || 'Onbekende fout'));
         }
@@ -80,6 +85,7 @@
   </script>
 </body>
 </html>
+
 
 
 
