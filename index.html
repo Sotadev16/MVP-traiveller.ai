@@ -3,130 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TrAIveller.ai – Jouw slimme reisbuddy</title>
-  <meta name="description" content="TrAIveller.ai zoekt razendsnel de beste reisdeals op basis van jouw wensen. Bespaar tijd, stress en geld." />
+  <title>Intake – TrAIveller.ai</title>
+  <link rel="stylesheet" href="styles.css" />
 
-  <!-- SEO / Social -->
-  <meta property="og:title" content="TrAIveller.ai – Jouw slimme reisbuddy" />
-  <meta property="og:description" content="Vul je intake in en wij speuren naar de beste deals ✈️" />
-  <meta property="og:image" content="/images/traiveller-logo.png" />
-  <meta property="og:type" content="website" />
-
-  <!-- Favicons & logo -->
+  <!-- Favicons -->
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
   <link rel="icon" type="image/png" sizes="32x32" href="/images/traiveller-logo.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/images/traiveller-logo.png" />
   <link rel="apple-touch-icon" href="/images/traiveller-logo.png" />
-  <link rel="mask-icon" href="/images/traiveller-logo.svg" color="#0077b6" />
-
-  <!-- Preload hero assets (optioneel maar snel) -->
-  <link rel="preload" as="image" href="/images/beach-hero.jpg" />
-  <link rel="preload" as="image" href="/images/traiveller-logo.png" />
-
-  <!-- Fonts (Poppins, zoals je styles.css gebruikt) -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    /* Kleine homepage-accenten bovenop jouw styles.css */
-    .hero {
-      background: rgba(255,255,255,0.92);
-      max-width: 820px;
-      width: 100%;
-      margin: 6vh auto 0;
-      padding: 2.2rem;
-      border-radius: 1.25rem;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-      text-align: center;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: .8rem;
-      margin-bottom: 1rem;
-    }
-    .brand img {
-      width: 42px;
-      height: 42px;
-    }
-    .brand h1 {
-      margin: 0;
-      color: #0077b6;
-      font-size: 1.9rem;
-      letter-spacing: .2px;
-    }
-    .tagline {
-      color: #444;
-      margin: .25rem 0 1.25rem;
-      font-size: 1.05rem;
-    }
-    .bullets {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: .6rem;
-      text-align: left;
-      margin: 1.2rem auto 1.6rem;
-      max-width: 560px;
-    }
-    .bullets li {
-      list-style: none;
-      padding-left: 1.6rem;
-      position: relative;
-    }
-    .bullets li::before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      top: 0;
-      color: #0077b6;
-      font-weight: 700;
-    }
-    .cta {
-      display: inline-block;
-      background: #0077b6;
-      color: #fff;
-      font-weight: 700;
-      padding: 1rem 1.25rem;
-      border-radius: .75rem;
-      text-decoration: none;
-      transition: transform .08s, background .2s;
-    }
-    .cta:hover { background: #005f87; }
-    .cta:active { transform: scale(0.98); }
-    .subcta {
-      display: block;
-      margin-top: .75rem;
-      font-size: .95rem;
-      color: #333;
-    }
-    @media (min-width: 720px) {
-      .brand h1 { font-size: 2.1rem; }
-      .tagline { font-size: 1.1rem; }
-    }
-  </style>
 </head>
 <body>
-  <main class="hero">
-    <div class="brand">
-      <img src="/images/traiveller-logo.png" alt="TrAIveller.ai logo" />
-      <h1>TrAIveller.ai</h1>
-    </div>
-    <p class="tagline">Jouw AI-reisbuddy – we speuren realtime naar de beste vluchten & stays, passend bij jouw budget.</p>
+  <main class="hero center">
+    <h1>TrAIveller</h1>
+    <p class="tagline">jouw slimme AI-reisplanner</p>
 
-    <ul class="bullets">
-      <li>Supersnel: vul je intake in, wij doen de rest.</li>
-      <li>Budget-bewust: slimme filters voor deals die echt passen.</li>
-      <li>Flexibel: “verras me” of kies je favoriete bestemming.</li>
-    </ul>
-
-    <a class="cta" href="/intake.html" aria-label="Start je intake">Start je intake</a>
-    <span class="subcta">2 minuten werk • altijd gratis</span>
+    <!-- Gele CTA knop -->
+    <a class="cta cta--yellow" href="/form.html">Plan mijn slimme reis</a>
   </main>
 </body>
 </html>
+
 
 
 
