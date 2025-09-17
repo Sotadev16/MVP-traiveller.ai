@@ -1,4 +1,4 @@
-# FILE: package.json
+// FILE: package.json
 {
   "name": "traveller-ai-site",
   "version": "1.0.0",
@@ -15,24 +15,3 @@
     "resend": "^3.3.0"
   }
 }
-
-# FILE: vercel.json
-{
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x",
-      "memory": 256,
-      "maxDuration": 10
-    }
-  }
-}
-
-# FILE: .env.example
-# Vul deze in Vercel Project Settings → Environment Variables
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE=
-RESEND_API_KEY=
-RESEND_FROM="Traveller AI <no-reply@jouwdomein.nl>"
-ADMIN_EMAIL=admin@jouwdomein.nl
-
-
