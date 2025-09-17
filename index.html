@@ -1,0 +1,307 @@
+# FILE: package.json
+{
+  "name": "traveller-ai-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo \"Static build via Vercel\"",
+    "start": "vercel dev",
+    "lint": "echo \"(add a linter later)\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.46.1",
+    "resend": "^3.3.0"
+  }
+}
+
+# FILE: vercel.json
+{
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x",
+      "memory": 256,
+      "maxDuration": 10
+    }
+  }
+}
+
+# FILE: .env.example
+# Vul deze in Vercel Project Settings → Environment Variables
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE=
+RESEND_API_KEY=
+RESEND_FROM="Traveller AI <no-reply@jouwdomein.nl>"
+ADMIN_EMAIL=admin@jouwdomein.nl
+
+# FILE: index.html
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TrAVeller.ai – jouw slimme AI-reisplanner</title>
+
+  <!-- Styles & Icons -->
+  <link rel="stylesheet" href="assets/css/style.css?v=5" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="images/traiveller-logo.png" />
+  <link rel="apple-touch-icon" href="images/traiveller-logo.png" />
+</head>
+<body>
+  <main class="hero center">
+    <h1>TrAVeller</h1>
+    <p class="tagline">jouw slimme AI-reisplanner</p>
+    <a class="cta cta-yellow" href="palm-intake.html">Plan mijn slimme reis</a>
+  </main>
+</body>
+</html>
+
+# FILE: palm-index.html
+<!-- Optioneel: laat staan voor compat; redirect naar index -->
+<!DOCTYPE html>
+<html lang="nl"><head>
+  <meta http-equiv="refresh" content="0; url=index.html" />
+  <title>Doorverwijzen…</title>
+  <meta name="robots" content="noindex" />
+</head><body>Doorverwijzen naar <a href="index.html">index</a>…</body></html>
+
+# FILE: palm-intake.html
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intake – TrAVeller.ai</title>
+
+  <link rel="stylesheet" href="assets/css/style.css?v=5" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+</head>
+<body>
+  <main class="container">
+    <h1>Plan mijn slimme reis</h1>
+    <p>Vul je gegevens in. We sturen je direct een bevestiging per e-mail.</p>
+
+    <form id="intakeForm" novalidate>
+      <div class="grid">
+        <label>
+          Naam*
+          <input type="text" name="name" placeholder="Voor- en achternaam" required />
+        </label>
+        <label>
+          E-mail*
+          <input type="email" name="email" placeholder="jij@voorbeeld.nl" required />
+        </label>
+      </div>
+
+      <label>
+        Bestemming(en)*
+        <input type="text" name="destinations" placeholder="Tokyo, Kyoto…" required />
+      </label>
+
+      <label>
+        Vertrekdatum
+        <input type="date" name="start_date" />
+      </label>
+
+      <label>
+        Terugkomstdatum
+        <input type="date" name="end_date" />
+      </label>
+
+      <label>
+        Opmerkingen / wensen
+        <textarea name="notes" rows="6" placeholder="Budget, interesses, aantal personen…"></textarea>
+      </label>
+
+      <button type="submit" id="submitBtn" class="cta cta-yellow">Versturen</button>
+      <p id="formMsg" class="muted" role="status" aria-live="polite"></p>
+    </form>
+
+    <p class="small muted">Door te verzenden ga je akkoord met onze privacyverklaring.</p>
+  </main>
+
+  <script src="assets/js/intake.js" defer></script>
+</body>
+</html>
+
+# FILE: assets/css/style.css
+:root {
+  --bg: #0b0f1a;
+  --fg: #e9eef7;
+  --muted: #9fb0c7;
+  --accent: #ffd200;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; color: var(--fg); background: var(--bg); }
+a { color: inherit; text-decoration: none; }
+main.hero { min-height: 100dvh; display: grid; place-items: center; text-align: center; padding: 2rem; }
+.center > * + * { margin-top: 1rem; }
+.tagline { color: var(--muted); font-size: 1.125rem; }
+.cta { display: inline-block; padding: .9rem 1.2rem; font-weight: 700; border-radius: 999px; }
+.cta-yellow { background: var(--accent); color: #222; }
+.cta-yellow:hover { filter: brightness(.95); }
+.container { max-width: 760px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+label { display: grid; gap: .4rem; margin: .75rem 0; font-weight: 600; }
+input, textarea { width: 100%; padding: .8rem .9rem; border-radius: .7rem; border: 1px solid #22304a; background: #0f1524; color: var(--fg); }
+input::placeholder, textarea::placeholder { color: #6f7e95; }
+button[disabled] { opacity: .6; cursor: not-allowed; }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+# FILE: assets/js/intake.js
+(() => {
+  const form = document.getElementById('intakeForm');
+  const msgEl = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+
+  const show = (text, ok=false) => {
+    msgEl.textContent = text;
+    msgEl.style.color = ok ? '#9CFF9C' : '#FFD2D2';
+  };
+
+  const toJSON = (formEl) =>
+    Array.from(new FormData(formEl).entries())
+      .reduce((acc, [k, v]) => ((acc[k] = v), acc), {});
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    show('Verzenden…');
+
+    const data = toJSON(form);
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      show('Vul een geldig e-mailadres in.');
+      btn.disabled = false;
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/submit-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const r = await res.json();
+      if (!res.ok) throw new Error(r.error || 'Onbekende fout');
+
+      show('Bedankt! Je ontvangt zo een bevestiging per e-mail.', true);
+      form.reset();
+    } catch (err) {
+      show(`Kon niet verzenden: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+
+# FILE: api/health.js
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(200).json({ ok: true, time: new Date().toISOString() });
+}
+
+# FILE: api/submit-intake.js
+// Waarom: keys moeten server-side blijven; dit endpoint schrijft naar DB en verstuurt mails.
+import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function bad(res, code, error) { return res.status(code).json({ ok: false, error }); }
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return bad(res, 405, 'Method not allowed');
+
+  const {
+    name = '',
+    email = '',
+    destinations = '',
+    start_date = null,
+    end_date = null,
+    notes = ''
+  } = req.body || {};
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad(res, 400, 'Ongeldig e-mailadres');
+  if (!destinations) return bad(res, 400, 'Bestemming(en) verplicht');
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE; // let op: service role
+  if (!supabaseUrl || !supabaseKey) return bad(res, 500, 'Supabase niet geconfigureerd');
+
+  const sb = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+
+  // Insert in tabel 'intakes' (maak deze in Supabase met passende kolommen)
+  const insertPayload = {
+    name, email, destinations, start_date, end_date, notes,
+    created_at: new Date().toISOString()
+  };
+
+  const { data, error } = await sb.from('intakes').insert(insertPayload).select().single();
+  if (error) return bad(res, 500, `DB insert faalde: ${error.message}`);
+
+  const from = process.env.RESEND_FROM;
+  const admin = process.env.ADMIN_EMAIL;
+  if (!process.env.RESEND_API_KEY || !from || !admin) return bad(res, 500, 'Resend niet geconfigureerd');
+
+  // E-mails apart versturen voor betere deliverability
+  try {
+    // Admin mail
+    await resend.emails.send({
+      from,
+      to: admin,
+      subject: `Nieuwe intake: ${name || email}`,
+      text: [
+        `Naam: ${name || '—'}`,
+        `E-mail: ${email}`,
+        `Bestemming(en): ${destinations}`,
+        `Periode: ${start_date || 'n.t.b.'} t/m ${end_date || 'n.t.b.'}`,
+        `Notities: ${notes || '—'}`,
+        `Ingediend: ${new Date().toLocaleString('nl-NL')}`
+      ].join('\n')
+    });
+
+    // Klant mail
+    await resend.emails.send({
+      from,
+      to: email,
+      subject: 'Bevestiging – we plannen jouw slimme reis',
+      text: [
+        `Hi ${name || 'reiziger'},`,
+        '',
+        'Bedankt voor je aanvraag bij TrAVeller.ai. We gaan voor je aan de slag!',
+        '',
+        `Ontvangen:`,
+        `• Bestemming(en): ${destinations}`,
+        `• Periode: ${start_date || 'n.t.b.'} t/m ${end_date || 'n.t.b.'}`,
+        '',
+        'We nemen spoedig contact met je op.',
+        '',
+        'Groet,',
+        'Team TrAVeller.ai'
+      ].join('\n')
+    });
+  } catch (mailErr) {
+    // Keer wel 200 terug; data is opgeslagen. Meld mailprobleem.
+    return res.status(200).json({ ok: true, saved: data, mailWarning: mailErr.message });
+  }
+
+  return res.status(200).json({ ok: true, saved: data });
+}
+
+# FILE: images/README.txt
+(plaats hier je favicon en logo bestanden: favicon.ico, traiveller-logo.png)
+
+
+
+
+
+
+
+
+
+
