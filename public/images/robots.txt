@@ -1,0 +1,5 @@
+# TrAIveller.ai robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://traiveller.ai/sitemap.xml
