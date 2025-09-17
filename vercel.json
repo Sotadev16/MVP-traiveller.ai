@@ -1,8 +1,5 @@
 {
-  "version": 2,
-  "framework": null,
-  "builds": [
-    { "src": "public/**/*", "use": "@vercel/static" }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
 
