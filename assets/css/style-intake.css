@@ -1,30 +1,23 @@
 /* FILE: assets/css/style-intake.css */
-/* Waarom: intake-specifieke styles, los van algemene style.css */
+/* Intake-specifieke styles; overschrijft algemene style.css waar nodig */
 
-/* --- Pagina-achtergrond voor intake --- */
+/* Achtergrond: pad is vanaf assets/css → ../../images */
 body {
-  background: url("../images/palm-intake.jpg") center/cover no-repeat fixed;
+  background: url("../../images/palm-intake.jpg") center/cover no-repeat fixed;
 }
 
-/* --- Intake card --- */
+/* Intake card */
 .form-card {
   background: rgba(11, 15, 26, 0.92);
   padding: 2rem 2rem 3rem;
   border-radius: 1.25rem;
   box-shadow: 0 6px 20px rgba(0, 0, 0, .55);
-  backdrop-filter: blur(6px); /* waarom: leesbaarheid boven foto */
+  backdrop-filter: blur(6px); /* waarom: tekst leesbaar boven foto */
 }
 
-/* --- Form basestyles --- */
-form label {
-  display: block;
-  margin: 1rem 0;
-  font-weight: 600;
-}
-
-form input,
-form select,
-form textarea {
+/* Form basestyles */
+form label { display: block; margin: 1rem 0; font-weight: 600; }
+form input, form select, form textarea {
   width: 100%;
   padding: .9rem 1rem;
   border-radius: .75rem;
@@ -33,63 +26,29 @@ form textarea {
   color: var(--fg);
   font-size: 1rem;
 }
-
-form input::placeholder,
-form textarea::placeholder {
-  color: #6f7e95;
-}
-
-/* toegankelijk focus */
-form input:focus,
-form select:focus,
-form textarea:focus {
+form input::placeholder, form textarea::placeholder { color: #6f7e95; }
+form input:focus, form select:focus, form textarea:focus {
   outline: 2px solid var(--accent);
   border-color: var(--accent);
 }
 
-/* veldgroep-grid helpers */
-form .grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
+/* Grid helpers */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
 
-form .grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
-}
-
-/* knoppen */
-.cta {
-  display: inline-block;
-  padding: .9rem 1.2rem;
-  font-weight: 700;
-  border-radius: 999px;
-}
+/* Buttons */
+.cta { display: inline-block; padding: .9rem 1.2rem; font-weight: 700; border-radius: 999px; }
 .cta-yellow { background: var(--accent); color: #222; }
 .cta-yellow:hover { filter: brightness(.95); }
 
-button[disabled] { opacity: .6; cursor: not-allowed; }
-
-/* status/afbeelding helpers (optioneel gebruiken) */
-.hero-img {
-  max-width: 100%;
-  border-radius: 1rem;
-  margin-bottom: 1.5rem;
-}
+button[disabled]{ opacity: .6; cursor: not-allowed; }
 
 .muted { color: var(--muted); }
 .small { font-size: .9rem; }
-
-/* honeypot */
 .hidden { display: none; }
 
-/* --- Responsiveness: alleen grid stacken op kleine schermen --- */
+/* Responsive */
 @media (max-width: 640px) {
-  form .grid-2,
-  form .grid-3 {
-    grid-template-columns: 1fr;
-  }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
 }
 
