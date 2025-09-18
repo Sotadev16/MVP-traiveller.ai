@@ -9,7 +9,7 @@
   <!-- algemene styles -->
   <link rel="stylesheet" href="assets/css/style.css?v=5" />
   <!-- intake-specifieke styles -->
-  <link rel="stylesheet" href="assets/css/style-intake.css?v=1" />
+  <link rel="stylesheet" href="assets/css/style-intake.css?v=2" />
 
   <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
   <link rel="icon" type="image/png" sizes="32x32" href="images/traiveller-logo.png" />
@@ -29,125 +29,43 @@
         <input type="text" name="company" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
         <div class="grid-2">
-          <label>
-            Naam*
+          <label>Naam*
             <input type="text" name="name" placeholder="Voor- en achternaam" required />
           </label>
-
-          <label>
-            E-mail*
+          <label>E-mail*
             <input type="email" name="email" placeholder="jij@voorbeeld.nl" required />
           </label>
         </div>
 
-        <label>
-          Bestemming(en)*
-          <input type="text" name="destinations" placeholder=" Aruba,Tokyo…" required />
+        <label>Bestemming(en)*
+          <input type="text" name="destinations" placeholder="Aruba, Tokyo, …" required />
         </label>
 
         <div class="grid-2">
-          <label>
-            Vertrekdatum
+          <label>Vertrekdatum
             <input type="date" name="start_date" />
           </label>
-
-          <label>
-            Terugkomstdatum
+          <label>Terugkomstdatum
             <input type="date" name="end_date" />
           </label>
         </div>
 
-        <label>
-          Opmerkingen / wensen
+        <label>Opmerkingen / wensen
           <textarea name="notes" rows="6" placeholder="Budget, interesses, aantal personen…"></textarea>
         </label>
 
         <button type="submit" id="submitBtn" class="cta cta-yellow">Versturen</button>
-        <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top: .75rem;"></p>
+        <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top:.75rem;"></p>
+        <p class="small muted" style="margin-top:1rem;">Door te verzenden ga je akkoord met onze privacyverklaring.</p>
       </form>
-      <p class="small muted" style="margin-top:1rem">
-        Door te verzenden ga je akkoord met onze privacyverklaring.
-      </p>
     </div>
   </main>
 
+  <!-- precies één script include; GEEN inline JS eronder -->
   <script src="assets/js/intake.js" defer></script>
 </body>
 </html>
 
-<!-- FILE: assets/js/intake.js -->
-(() => {
-  const form = document.getElementById('intakeForm');
-  const msgEl = document.getElementById('formMsg');
-  const btn = document.getElementById('submitBtn');
-  const surpriseBtn = document.getElementById('surpriseBtn');
+<!-- Einde bestand -->
 
-  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const show = (text, ok=false) => {
-    msgEl.textContent = text;
-    msgEl.style.color = ok ? '#9CFF9C' : '#FFD2D2'; // Waarom: snelle visuele feedback
-  };
-
-  const toJSON = (formEl) =>
-    Array.from(new FormData(formEl).entries())
-      .reduce((acc, [k, v]) => ((acc[k] = typeof v === 'string' ? v.trim() : v), acc), {});
-
-  // Demo invullen
-  if (surpriseBtn) {
-    surpriseBtn.addEventListener('click', () => {
-      form.name.value = 'Alex Reiziger';
-      form.email.value = 'alex@example.com';
-      form.destinations.value = 'Tokyo, Kyoto';
-      const today = new Date();
-      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
-      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 44);
-      form.start_date.value = start.toISOString().slice(0,10);
-      form.end_date.value = end.toISOString().slice(0,10);
-      form.notes.value = 'Budget ± €2500 p.p., food & cultuur.';
-      show('Voorbeeld ingevuld — je kunt nu verzenden.', true);
-    });
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Honeypot: als gevuld, blokkeren
-    if (form.company && form.company.value.trim() !== '') {
-      show('Spam gedetecteerd. Niet verzonden.');
-      return;
-    }
-
-    const data = toJSON(form);
-
-    // Client validatie
-    if (!data.name) { show('Vul je naam in.'); return; }
-    if (!data.email || !emailRe.test(data.email)) { show('Vul een geldig e-mailadres in.'); return; }
-    if (!data.destinations) { show('Vul minimaal één bestemming in.'); return; }
-
-    btn.disabled = true;
-    const orig = btn.textContent;
-    btn.textContent = 'Verzenden…';
-    show('Verzenden…');
-
-    try {
-      const res = await fetch('/api/submit-intake', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      const r = await res.json();
-      if (!res.ok || r.ok === false) throw new Error(r.error || 'Onbekende fout');
-
-      show('Bedankt! Je ontvangt zo een bevestiging per e-mail.', true);
-      form.reset();
-    } catch (err) {
-      show(`Kon niet verzenden: ${err.message}`);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = orig;
-    }
-  });
-})();
 
