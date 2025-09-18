@@ -1,3 +1,4 @@
+<!-- FILE: palm-intake.html -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -7,7 +8,6 @@
 
   <!-- algemene styles -->
   <link rel="stylesheet" href="assets/css/style.css?v=5" />
-
   <!-- intake-specifieke styles -->
   <link rel="stylesheet" href="assets/css/style-intake.css?v=1" />
 
@@ -17,206 +17,137 @@
 </head>
 <body>
   <main class="container">
-    <div class="form-card">
-      <h1>Plan mijn slimme reis</h1>
-      <p>Vul de vragen in of kies <button type="button" id="surpriseBtn" class="cta">Verras me</button></p>
+    <div class="form-card" role="form" aria-labelledby="intakeTitle">
+      <h1 id="intakeTitle">Plan mijn slimme reis</h1>
+      <p class="muted">
+        Vul je gegevens in. We sturen je direct een bevestiging per e-mail.
+        <button type="button" id="surpriseBtn" class="cta cta-yellow" style="margin-left:.75rem">Verras me</button>
+      </p>
 
       <form id="intakeForm" novalidate>
-        <!-- Honeypot -->
-        <input type="text" name="company" class="hidden" tabindex="-1" autocomplete="off">
+        <!-- Honeypot (anti-spam) -->
+        <input type="text" name="company" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
-        <!-- 1. Datums -->
-        <label>
-          Vertrekdatum*
-          <input type="date" name="start_date" id="startDate" required>
-        </label>
-        <label>
-          Terugkomstdatum*
-          <input type="date" name="end_date" id="endDate" required>
-        </label>
-        <label>
-          Flexibiliteit
-          <select name="flexibility">
-            <option value="">Geen</option>
-            <option>3-5 dagen</option>
-            <option>7-9 dagen</option>
-            <option>10-14 dagen</option>
-          </select>
-        </label>
-
-        <!-- 2. Bestemming -->
-        <label>
-          Bestemming(en)*
-          <select name="destination" required>
-            <option>Aruba</option>
-            <option>Curacao</option>
-            <option>Bali</option>
-            <option>New York</option>
-            <option>Tokyo</option>
-            <option value="other">Andere (invullen)</option>
-          </select>
-        </label>
-        <input type="text" name="destination_other" placeholder="Andere bestemming" />
-
-        <!-- 3. Vertrek vanaf -->
-        <label>
-          Vertrek vanaf*
-          <select name="departure" required>
-            <option>Amsterdam (AMS)</option>
-            <option>Rotterdam (RTM)</option>
-            <option>Eindhoven (EIN)</option>
-            <option>Düsseldorf (DUS)</option>
-            <option>Brussel (BRU)</option>
-          </select>
-        </label>
-
-        <!-- 4. Aantal personen -->
-        <label>
-          Volwassenen*
-          <input type="number" name="adults" min="1" max="10" required>
-        </label>
-        <label>
-          Kinderen
-          <input type="number" name="children" min="0" max="10">
-        </label>
-        <div id="childrenAges"></div>
-
-        <!-- 5. Vluchtopties -->
-        <label>
-          Vlucht
-          <select name="flight">
-            <option>Direct</option>
-            <option>Tussenstop</option>
-          </select>
-        </label>
-        <label>
-          Klasse
-          <select name="class">
-            <option>Economy</option>
-            <option>Premium Economy</option>
-            <option>Business</option>
-            <option>First Class</option>
-          </select>
-        </label>
-
-        <!-- 6. Huurauto -->
-        <label>
-          Huurauto
-          <select name="car_rental" id="carRental">
-            <option>Nee</option>
-            <option>Ja</option>
-          </select>
-        </label>
-        <div id="carOptions" class="hidden">
-          <label>Type auto
-            <select name="car_type">
-              <option>Hatchback</option>
-              <option>Sedan</option>
-              <option>MPV</option>
-              <option>SUV</option>
-              <option>Terreinwagen</option>
-            </select>
+        <div class="grid-2">
+          <label>
+            Naam*
+            <input type="text" name="name" placeholder="Voor- en achternaam" required />
           </label>
-          <label>Bestuurdersleeftijd
-            <input type="number" name="driver_age" min="18" max="80">
-          </label>
-          <label>Transmissie
-            <select name="transmission">
-              <option>Geen voorkeur</option>
-              <option>Automaat</option>
-              <option>Handgeschakeld</option>
-            </select>
+
+          <label>
+            E-mail*
+            <input type="email" name="email" placeholder="jij@voorbeeld.nl" required />
           </label>
         </div>
 
-        <!-- 7. Accommodatie -->
         <label>
-          Type accommodatie
-          <select name="accommodation">
-            <option>Hotel</option>
-            <option>Appartement</option>
-            <option>Huis</option>
-            <option>Hostel</option>
-            <option>All inclusive</option>
-          </select>
+          Bestemming(en)*
+          <input type="text" name="destinations" placeholder="Tokyo, Kyoto…" required />
         </label>
 
-        <!-- 8. Budget -->
-        <label>
-          Budget
-          <select name="budget">
-            <option value="250">€250</option>
-            <option value="500">€500</option>
-            <option value="750">€750</option>
-            <option value="1000">€1000</option>
-            <option value="custom">Anders</option>
-          </select>
-        </label>
-        <input type="number" name="budget_custom" placeholder="Eigen budget (€)" />
+        <div class="grid-2">
+          <label>
+            Vertrekdatum
+            <input type="date" name="start_date" />
+          </label>
 
-        <!-- 9. Type reis -->
-        <label>
-          Type reis
-          <select name="trip_type">
-            <option>Strand</option>
-            <option>Avontuurlijk</option>
-            <option>Luxe</option>
-            <option>Citytrip</option>
-            <option>Familievakantie</option>
-            <option>Wellness</option>
-            <option>Natuur</option>
-          </select>
-        </label>
+          <label>
+            Terugkomstdatum
+            <input type="date" name="end_date" />
+          </label>
+        </div>
 
-        <!-- 10. Opmerkingen -->
         <label>
-          Opmerkingen
-          <textarea name="notes" rows="4" placeholder="Specifieke wensen"></textarea>
+          Opmerkingen / wensen
+          <textarea name="notes" rows="6" placeholder="Budget, interesses, aantal personen…"></textarea>
         </label>
 
         <button type="submit" id="submitBtn" class="cta cta-yellow">Versturen</button>
-        <p id="formMsg" class="muted" role="status"></p>
+        <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top: .75rem;"></p>
       </form>
+      <p class="small muted" style="margin-top:1rem">
+        Door te verzenden ga je akkoord met onze privacyverklaring.
+      </p>
     </div>
   </main>
 
-  <script>
-    // Datum niet in verleden
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').setAttribute('min', today);
-    document.getElementById('endDate').setAttribute('min', today);
-
-    // Kinderleeftijden tonen
-    const childrenInput = document.querySelector('input[name="children"]');
-    const childrenAges = document.getElementById('childrenAges');
-    childrenInput.addEventListener('input', () => {
-      childrenAges.innerHTML = '';
-      const count = parseInt(childrenInput.value || 0, 10);
-      for (let i=0; i<count; i++) {
-        const lbl = document.createElement('label');
-        lbl.textContent = `Leeftijd kind ${i+1}`;
-        const inp = document.createElement('input');
-        inp.type = 'number'; inp.name = `child_age_${i+1}`; inp.min = 0; inp.max = 17;
-        lbl.appendChild(inp);
-        childrenAges.appendChild(lbl);
-      }
-    });
-
-    // Huurauto opties tonen
-    document.getElementById('carRental').addEventListener('change', e => {
-      document.getElementById('carOptions').classList.toggle('hidden', e.target.value !== 'Ja');
-    });
-
-    // Verras me knop
-    document.getElementById('surpriseBtn').addEventListener('click', () => {
-      const form = document.getElementById('intakeForm');
-      [...form.elements].forEach(el => {
-        if (!['start_date','end_date','adults','children','budget','budget_custom','company'].includes(el.name)) {
-          el.closest('label')?.classList.add('hidden');
-          if(el.tagName === 'DIV') el.classList.add('hidden');
-        }
-      });
-    });
-  </script>
+  <script src="assets/js/intake.js" defer></script>
 </body>
 </html>
+
+<!-- FILE: assets/js/intake.js -->
+(() => {
+  const form = document.getElementById('intakeForm');
+  const msgEl = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+  const surpriseBtn = document.getElementById('surpriseBtn');
+
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const show = (text, ok=false) => {
+    msgEl.textContent = text;
+    msgEl.style.color = ok ? '#9CFF9C' : '#FFD2D2'; // Waarom: snelle visuele feedback
+  };
+
+  const toJSON = (formEl) =>
+    Array.from(new FormData(formEl).entries())
+      .reduce((acc, [k, v]) => ((acc[k] = typeof v === 'string' ? v.trim() : v), acc), {});
+
+  // Demo invullen
+  if (surpriseBtn) {
+    surpriseBtn.addEventListener('click', () => {
+      form.name.value = 'Alex Reiziger';
+      form.email.value = 'alex@example.com';
+      form.destinations.value = 'Tokyo, Kyoto';
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 44);
+      form.start_date.value = start.toISOString().slice(0,10);
+      form.end_date.value = end.toISOString().slice(0,10);
+      form.notes.value = 'Budget ± €2500 p.p., food & cultuur.';
+      show('Voorbeeld ingevuld — je kunt nu verzenden.', true);
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Honeypot: als gevuld, blokkeren
+    if (form.company && form.company.value.trim() !== '') {
+      show('Spam gedetecteerd. Niet verzonden.');
+      return;
+    }
+
+    const data = toJSON(form);
+
+    // Client validatie
+    if (!data.name) { show('Vul je naam in.'); return; }
+    if (!data.email || !emailRe.test(data.email)) { show('Vul een geldig e-mailadres in.'); return; }
+    if (!data.destinations) { show('Vul minimaal één bestemming in.'); return; }
+
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Verzenden…';
+    show('Verzenden…');
+
+    try {
+      const res = await fetch('/api/submit-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const r = await res.json();
+      if (!res.ok || r.ok === false) throw new Error(r.error || 'Onbekende fout');
+
+      show('Bedankt! Je ontvangt zo een bevestiging per e-mail.', true);
+      form.reset();
+    } catch (err) {
+      show(`Kon niet verzenden: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  });
+})();
+
