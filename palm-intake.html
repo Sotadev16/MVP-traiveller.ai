@@ -4,68 +4,230 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Intake – TrAVeller.ai</title>
+  <title>Intake – TrAIveller.ai</title>
 
-  <!-- algemene styles -->
-  <link rel="stylesheet" href="assets/css/style.css?v=5" />
-  <!-- intake-specifieke styles -->
-  <link rel="stylesheet" href="assets/css/style-intake.css?v=2" />
+  <link rel="stylesheet" href="assets/css/style.css?v=6" />
+  <link rel="stylesheet" href="assets/css/style-intake.css?v=6" />
 
   <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-  <link rel="icon" type="image/png" sizes="32x32" href="images/traiveller-logo.png" />
-  <link rel="apple-touch-icon" href="images/traiveller-logo.png" />
 </head>
 <body>
   <main class="container">
     <div class="form-card" role="form" aria-labelledby="intakeTitle">
       <h1 id="intakeTitle">Plan mijn slimme reis</h1>
-      <p class="muted">
-        Vul je gegevens in. We sturen je direct een bevestiging per e-mail.
-        <button type="button" id="surpriseBtn" class="cta cta-yellow" style="margin-left:.75rem">Verras me</button>
-      </p>
+      <button type="button" id="surpriseBtn" class="cta cta-yellow" style="margin-bottom:1rem">Verras me</button>
 
       <form id="intakeForm" novalidate>
-        <!-- Honeypot (anti-spam) -->
-        <input type="text" name="company" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <!-- honeypot anti-spam -->
+        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
-        <div class="grid-2">
-          <label>Naam*
-            <input type="text" name="name" placeholder="Voor- en achternaam" required />
-          </label>
-          <label>E-mail*
-            <input type="email" name="email" placeholder="jij@voorbeeld.nl" required />
-          </label>
-        </div>
-
-        <label>Bestemming(en)*
-          <input type="text" name="destinations" placeholder="Aruba, Tokyo, …" required />
+        <!-- 1. Type vakantie -->
+        <label>Wat wil je boeken?*
+          <select name="trip_mode" id="tripMode" required>
+            <option value="">Maak een keuze</option>
+            <option value="flight">Vlucht</option>
+            <option value="cruise">Cruise</option>
+          </select>
         </label>
 
-        <div class="grid-2">
-          <label>Vertrekdatum
-            <input type="date" name="start_date" />
+        <!-- Cruise-subblok -->
+        <div id="cruiseBlock" class="hidden">
+          <label>Cruisegebied
+            <select name="cruise_region">
+              <option>Caraïben</option>
+              <option>Middellandse Zee</option>
+              <option>Antarctica</option>
+              <option>Noorse fjorden</option>
+              <option>Overige</option>
+            </select>
           </label>
-          <label>Terugkomstdatum
-            <input type="date" name="end_date" />
+          <label>Duur
+            <select name="cruise_nights">
+              <option>3–5 nachten</option>
+              <option>7–10 nachten</option>
+              <option>14+ nachten</option>
+            </select>
+          </label>
+          <label>Hut-type
+            <select name="cruise_cabin">
+              <option>Binnenhut</option>
+              <option>Balkon</option>
+              <option>Suite</option>
+            </select>
+          </label>
+          <label>Vertrekhaven voorkeur
+            <input type="text" name="cruise_port" placeholder="Rotterdam, Barcelona, Miami…" />
           </label>
         </div>
 
+        <!-- Vlucht-subblok -->
+        <div id="flightBlock" class="hidden">
+          <!-- 2. Datums -->
+          <div class="grid-2">
+            <label>Vertrekdatum
+              <input type="date" name="start_date" id="startDate" />
+            </label>
+            <label>Terugkomstdatum
+              <input type="date" name="end_date" id="endDate" />
+            </label>
+          </div>
+          <label>Flexibiliteit
+            <select name="flexibility">
+              <option value="">Geen</option>
+              <option>± 3–5 dagen</option>
+              <option>± 7–9 dagen</option>
+              <option>± 10–14 dagen</option>
+            </select>
+          </label>
+
+          <!-- 3. Bestemming -->
+          <label>Bestemming(en)*
+            <select name="destination">
+              <option>Aruba</option>
+              <option>Curacao</option>
+              <option>Bali</option>
+              <option>New York</option>
+              <option>Tokyo</option>
+              <option value="other">Andere (invullen)</option>
+            </select>
+          </label>
+          <input type="text" name="destination_other" placeholder="Andere bestemming" />
+
+          <!-- 4. Vertrek vanaf -->
+          <label>Vertrek vanaf
+            <select name="departure">
+              <option>Amsterdam (AMS)</option>
+              <option>Rotterdam (RTM)</option>
+              <option>Eindhoven (EIN)</option>
+              <option>Düsseldorf (DUS)</option>
+              <option>Brussel (BRU)</option>
+            </select>
+          </label>
+
+          <!-- 6. Vluchtopties -->
+          <div class="grid-2">
+            <label>Vlucht
+              <select name="flight">
+                <option>Direct</option>
+                <option>Tussenstop</option>
+              </select>
+            </label>
+            <label>Klasse
+              <select name="class">
+                <option>Economy</option>
+                <option>Premium Economy</option>
+                <option>Business</option>
+                <option>First Class</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- 7. Huurauto -->
+          <label>Huurauto
+            <select name="car_rental" id="carRental">
+              <option>Nee</option>
+              <option>Ja</option>
+            </select>
+          </label>
+          <div id="carOptions" class="hidden">
+            <div class="grid-2">
+              <label>Type auto
+                <select name="car_type">
+                  <option>Hatchback</option>
+                  <option>Sedan</option>
+                  <option>MPV</option>
+                  <option>SUV</option>
+                  <option>Terreinwagen</option>
+                </select>
+              </label>
+              <label>Transmissie
+                <select name="transmission">
+                  <option>Geen voorkeur</option>
+                  <option>Automaat</option>
+                  <option>Handgeschakeld</option>
+                </select>
+              </label>
+            </div>
+            <label>Bestuurdersleeftijd
+              <input type="number" name="driver_age" min="18" max="80" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Algemene blokken (geldig voor flight+cruise) -->
+        <!-- 5. Personen -->
+        <div class="grid-2">
+          <label>Volwassenen*
+            <input type="number" name="adults" min="1" max="10" required />
+          </label>
+          <label>Kinderen
+            <input type="number" name="children" id="childrenCount" min="0" max="10" />
+          </label>
+        </div>
+        <div id="childrenAges"></div>
+
+        <!-- 8. Accommodatie -->
+        <label>Accommodatie
+          <select name="accommodation">
+            <option>Hotel</option>
+            <option>Appartement</option>
+            <option>Huis</option>
+            <option>Hostel</option>
+            <option>All inclusive</option>
+          </select>
+        </label>
+
+        <!-- 9. Budget -->
+        <label>Budget
+          <select name="budget" id="budgetSelect">
+            <option value="">Geen voorkeur</option>
+            <option value="250">€250</option>
+            <option value="500">€500</option>
+            <option value="750">€750</option>
+            <option value="1000">€1000</option>
+            <option value="custom">Anders…</option>
+          </select>
+        </label>
+        <label id="budgetCustomWrap" class="hidden">Eigen budget (€)
+          <input type="number" name="budget_custom" min="1" step="1" />
+        </label>
+
+        <!-- 10. Type reis -->
+        <label>Type reis
+          <select name="trip_type">
+            <option>Strand</option>
+            <option>Avontuurlijk</option>
+            <option>Luxe</option>
+            <option>Citytrip</option>
+            <option>Familievakantie</option>
+            <option>Wellness</option>
+            <option>Natuur</option>
+          </select>
+        </label>
+
+        <!-- Contact -->
+        <div class="grid-2">
+          <label>Naam*
+            <input type="text" name="name" required />
+          </label>
+          <label>E-mail*
+            <input type="email" name="email" required />
+          </label>
+        </div>
+
+        <!-- Opmerkingen -->
         <label>Opmerkingen / wensen
-          <textarea name="notes" rows="6" placeholder="Budget, interesses, aantal personen…"></textarea>
+          <textarea name="notes" rows="6"></textarea>
         </label>
 
         <button type="submit" id="submitBtn" class="cta cta-yellow">Versturen</button>
         <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top:.75rem;"></p>
-        <p class="small muted" style="margin-top:1rem;">Door te verzenden ga je akkoord met onze privacyverklaring.</p>
       </form>
     </div>
   </main>
-
-  <!-- precies één script include; GEEN inline JS eronder -->
   <script src="assets/js/intake.js" defer></script>
 </body>
 </html>
 
-<!-- Einde bestand -->
 
 
