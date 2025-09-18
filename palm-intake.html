@@ -1,233 +1,409 @@
-<!-- FILE: palm-intake.html -->
+<!-- =========================
+FILE: palm-intake.html
+Waarom: Intakeformulier -> POST naar /api/intake -> redirect naar result.html?id=<uuid>
+========================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Intake – TrAIveller.ai</title>
-
-  <link rel="stylesheet" href="assets/css/style.css?v=6" />
-  <link rel="stylesheet" href="assets/css/style-intake.css?v=6" />
-
-  <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+  <!-- Minimal inline styling in huisstijl -->
+  <style>
+    :root{--bg:#0b0f1a;--fg:#e9eef7;--muted:#9fb0c7;--accent:#0ea5e9;--cta:#ffd200}
+    *{box-sizing:border-box} html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{color:var(--fg);background:var(--bg)}
+    .container{max-width:900px;margin:0 auto;padding:2rem 1rem}
+    .form-card{background:rgba(11,15,26,.92);border:1px solid #1a2640;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:1.5rem 1.5rem 2rem}
+    h1{margin:.25rem 0 1rem;font-weight:800;letter-spacing:.2px}
+    label{display:block;margin:.8rem 0;font-weight:600}
+    input,select,textarea{width:100%;padding:.9rem 1rem;border-radius:.8rem;border:1px solid #22304a;background:#0f1627;color:var(--fg);font-size:1rem}
+    input::placeholder,textarea::placeholder{color:#6f7e95}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+    .hidden{display:none}
+    .muted{color:var(--muted)}
+    .cta{display:inline-block;padding:.9rem 1.2rem;border-radius:999px;font-weight:800}
+    .cta-primary{background:var(--accent);color:#07111f}
+    .cta-yellow{background:var(--cta);color:#221}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .row{margin-top:.5rem}
+    @media (max-width:720px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
   <main class="container">
-    <div class="form-card" role="form" aria-labelledby="intakeTitle">
-      <h1 id="intakeTitle">Plan mijn slimme reis</h1>
-      <button type="button" id="surpriseBtn" class="cta cta-yellow" style="margin-bottom:1rem">Verras me</button>
+    <div class="form-card" role="form" aria-labelledby="title">
+      <h1 id="title">Plan mijn slimme reis</h1>
+      <!-- Verras-me bovenaan -->
+      <button id="surpriseBtn" type="button" class="cta cta-yellow" style="margin-bottom:.75rem">Verras me</button>
 
       <form id="intakeForm" novalidate>
-        <!-- honeypot anti-spam -->
-        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <!-- Honeypot -->
+        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true"/>
 
-        <!-- 1. Type vakantie -->
+        <!-- Trip mode -->
         <label>Wat wil je boeken?*
           <select name="trip_mode" id="tripMode" required>
-            <option value="">Maak een keuze</option>
+            <option value="">Kies een optie</option>
             <option value="flight">Vlucht</option>
             <option value="cruise">Cruise</option>
           </select>
         </label>
 
-        <!-- Cruise-subblok -->
+        <!-- Cruise blok -->
         <div id="cruiseBlock" class="hidden">
-          <label>Cruisegebied
-            <select name="cruise_region">
-              <option>Caraïben</option>
-              <option>Middellandse Zee</option>
-              <option>Antarctica</option>
-              <option>Noorse fjorden</option>
-              <option>Overige</option>
-            </select>
-          </label>
-          <label>Duur
-            <select name="cruise_nights">
-              <option>3–5 nachten</option>
-              <option>7–10 nachten</option>
-              <option>14+ nachten</option>
-            </select>
-          </label>
-          <label>Hut-type
-            <select name="cruise_cabin">
-              <option>Binnenhut</option>
-              <option>Balkon</option>
-              <option>Suite</option>
-            </select>
-          </label>
-          <label>Vertrekhaven voorkeur
-            <input type="text" name="cruise_port" placeholder="Rotterdam, Barcelona, Miami…" />
-          </label>
+          <div class="grid-2">
+            <label>Cruisegebied
+              <select name="cruise_region">
+                <option>Caraïben</option><option>Middellandse Zee</option>
+                <option>Noorse fjorden</option><option>Antarctica</option><option>Overige</option>
+              </select>
+            </label>
+            <label>Duur
+              <select name="cruise_nights"><option>3–5 nachten</option><option>7–10 nachten</option><option>14+ nachten</option></select>
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>Hut-type
+              <select name="cruise_cabin"><option>Binnenhut</option><option>Balkon</option><option>Suite</option></select>
+            </label>
+            <label>Vertrekhaven voorkeur
+              <input type="text" name="cruise_port" placeholder="Rotterdam, Barcelona, Miami…">
+            </label>
+          </div>
         </div>
 
-        <!-- Vlucht-subblok -->
+        <!-- Flight blok -->
         <div id="flightBlock" class="hidden">
-          <!-- 2. Datums -->
           <div class="grid-2">
             <label>Vertrekdatum
-              <input type="date" name="start_date" id="startDate" />
+              <input type="date" name="start_date" id="startDate">
             </label>
             <label>Terugkomstdatum
-              <input type="date" name="end_date" id="endDate" />
+              <input type="date" name="end_date" id="endDate">
             </label>
           </div>
           <label>Flexibiliteit
-            <select name="flexibility">
-              <option value="">Geen</option>
-              <option>± 3–5 dagen</option>
-              <option>± 7–9 dagen</option>
-              <option>± 10–14 dagen</option>
-            </select>
+            <select name="flexibility"><option value="">Geen</option><option>± 3–5 dagen</option><option>± 7–9 dagen</option><option>± 10–14 dagen</option></select>
           </label>
-
-          <!-- 3. Bestemming -->
           <label>Bestemming(en)*
-            <select name="destination">
-              <option>Aruba</option>
-              <option>Curacao</option>
-              <option>Bali</option>
-              <option>New York</option>
-              <option>Tokyo</option>
-              <option value="other">Andere (invullen)</option>
-            </select>
+            <input type="text" name="destinations" placeholder="Aruba, Tokyo…" />
           </label>
-          <input type="text" name="destination_other" placeholder="Andere bestemming" />
-
-          <!-- 4. Vertrek vanaf -->
           <label>Vertrek vanaf
-            <select name="departure">
-              <option>Amsterdam (AMS)</option>
-              <option>Rotterdam (RTM)</option>
-              <option>Eindhoven (EIN)</option>
-              <option>Düsseldorf (DUS)</option>
-              <option>Brussel (BRU)</option>
-            </select>
+            <select name="departure"><option>Amsterdam (AMS)</option><option>Rotterdam (RTM)</option><option>Eindhoven (EIN)</option><option>Düsseldorf (DUS)</option><option>Brussel (BRU)</option></select>
           </label>
-
-          <!-- 6. Vluchtopties -->
           <div class="grid-2">
             <label>Vlucht
-              <select name="flight">
-                <option>Direct</option>
-                <option>Tussenstop</option>
-              </select>
+              <select name="flight"><option>Geen voorkeur</option><option>Direct</option><option>Tussenstop</option></select>
             </label>
             <label>Klasse
-              <select name="class">
-                <option>Economy</option>
-                <option>Premium Economy</option>
-                <option>Business</option>
-                <option>First Class</option>
-              </select>
+              <select name="class"><option>Economy</option><option>Premium Economy</option><option>Business</option><option>First Class</option></select>
             </label>
           </div>
-
-          <!-- 7. Huurauto -->
           <label>Huurauto
-            <select name="car_rental" id="carRental">
-              <option>Nee</option>
-              <option>Ja</option>
-            </select>
+            <select name="car_rental" id="carRental"><option>Nee</option><option>Ja</option></select>
           </label>
           <div id="carOptions" class="hidden">
             <div class="grid-2">
               <label>Type auto
-                <select name="car_type">
-                  <option>Hatchback</option>
-                  <option>Sedan</option>
-                  <option>MPV</option>
-                  <option>SUV</option>
-                  <option>Terreinwagen</option>
-                </select>
+                <select name="car_type"><option>Hatchback</option><option>Sedan</option><option>MPV</option><option>SUV</option><option>Terreinwagen</option></select>
               </label>
               <label>Transmissie
-                <select name="transmission">
-                  <option>Geen voorkeur</option>
-                  <option>Automaat</option>
-                  <option>Handgeschakeld</option>
-                </select>
+                <select name="transmission"><option>Geen voorkeur</option><option>Automaat</option><option>Handgeschakeld</option></select>
               </label>
             </div>
             <label>Bestuurdersleeftijd
-              <input type="number" name="driver_age" min="18" max="80" />
+              <input type="number" name="driver_age" min="18" max="80">
             </label>
           </div>
         </div>
 
-        <!-- Algemene blokken (geldig voor flight+cruise) -->
-        <!-- 5. Personen -->
+        <!-- Reizigers -->
         <div class="grid-2">
           <label>Volwassenen*
-            <input type="number" name="adults" min="1" max="10" required />
+            <input type="number" name="adults" id="adults" min="1" max="10" value="2" required>
           </label>
           <label>Kinderen
-            <input type="number" name="children" id="childrenCount" min="0" max="10" />
+            <input type="number" name="children" id="childrenCount" min="0" max="10" value="0">
           </label>
         </div>
-        <div id="childrenAges"></div>
+        <div id="childrenAges" class="row"></div>
 
-        <!-- 8. Accommodatie -->
-        <label>Accommodatie
-          <select name="accommodation">
-            <option>Hotel</option>
-            <option>Appartement</option>
-            <option>Huis</option>
-            <option>Hostel</option>
-            <option>All inclusive</option>
-          </select>
-        </label>
-
-        <!-- 9. Budget -->
-        <label>Budget
-          <select name="budget" id="budgetSelect">
-            <option value="">Geen voorkeur</option>
-            <option value="250">€250</option>
-            <option value="500">€500</option>
-            <option value="750">€750</option>
-            <option value="1000">€1000</option>
-            <option value="custom">Anders…</option>
-          </select>
-        </label>
+        <!-- Accommodatie + Budget -->
+        <div class="grid-2">
+          <label>Accommodatie
+            <select name="accommodation"><option>Geen voorkeur</option><option>Hotel</option><option>Appartement</option><option>Huis</option><option>Hostel</option><option>All inclusive</option></select>
+          </label>
+          <label>Budget
+            <select name="budget" id="budgetSelect"><option value="">Geen voorkeur</option><option value="250">€250</option><option value="500">€500</option><option value="750">€750</option><option value="1000">€1000</option><option value="custom">Anders…</option></select>
+          </label>
+        </div>
         <label id="budgetCustomWrap" class="hidden">Eigen budget (€)
-          <input type="number" name="budget_custom" min="1" step="1" />
-        </label>
-
-        <!-- 10. Type reis -->
-        <label>Type reis
-          <select name="trip_type">
-            <option>Strand</option>
-            <option>Avontuurlijk</option>
-            <option>Luxe</option>
-            <option>Citytrip</option>
-            <option>Familievakantie</option>
-            <option>Wellness</option>
-            <option>Natuur</option>
-          </select>
+          <input type="number" name="budget_custom" min="1" step="1">
         </label>
 
         <!-- Contact -->
         <div class="grid-2">
-          <label>Naam*
-            <input type="text" name="name" required />
-          </label>
-          <label>E-mail*
-            <input type="email" name="email" required />
-          </label>
+          <label>Naam* <input type="text" name="name" id="name" placeholder="Voor- en achternaam" required></label>
+          <label>E-mail* <input type="email" name="email" id="email" placeholder="jij@voorbeeld.nl" required></label>
         </div>
 
         <!-- Opmerkingen -->
         <label>Opmerkingen / wensen
-          <textarea name="notes" rows="6"></textarea>
+          <textarea name="notes" rows="6" placeholder="Budget, interesses, aantal personen…"></textarea>
         </label>
 
-        <button type="submit" id="submitBtn" class="cta cta-yellow">Versturen</button>
-        <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top:.75rem;"></p>
+        <button type="submit" id="submitBtn" class="cta cta-primary">Versturen</button>
+        <p id="formMsg" class="muted" role="status" aria-live="polite" style="margin-top:.75rem"></p>
       </form>
     </div>
   </main>
-  <script src="assets/js/intake.js" defer></script>
+
+  <!-- Inline script: toggles, validatie, submit -->
+  <script>
+    // helpers
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+    const emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    const show = (txt, ok=false) => { const el = $('#formMsg'); el.textContent = txt; el.style.color = ok ? '#9CFF9C' : '#FFD2D2'; };
+
+    // blok refs
+    const form = $('#intakeForm');
+    const tripMode = $('#tripMode');
+    const flightBlock = $('#flightBlock');
+    const cruiseBlock = $('#cruiseBlock');
+    const carRental = $('#carRental');
+    const carOptions = $('#carOptions');
+    const budgetSelect = $('#budgetSelect');
+    const budgetCustomWrap = $('#budgetCustomWrap');
+    const childrenInput = $('#childrenCount');
+    const childrenAges = $('#childrenAges');
+    const startDate = $('#startDate');
+    const endDate = $('#endDate');
+    const surpriseBtn = $('#surpriseBtn');
+    const submitBtn = $('#submitBtn');
+
+    // min datums
+    const todayISO = new Date().toISOString().slice(0,10);
+    if(startDate) startDate.min = todayISO;
+    if(endDate) endDate.min = todayISO;
+
+    // trip mode toggle
+    tripMode.addEventListener('change', e => {
+      const v = e.target.value;
+      flightBlock.classList.toggle('hidden', v !== 'flight');
+      cruiseBlock.classList.toggle('hidden', v !== 'cruise');
+    });
+
+    // huurauto toggle
+    if (carRental) carRental.addEventListener('change', e => {
+      carOptions.classList.toggle('hidden', e.target.value !== 'Ja');
+    });
+
+    // budget custom toggle
+    budgetSelect.addEventListener('change', e => {
+      budgetCustomWrap.classList.toggle('hidden', e.target.value !== 'custom');
+    });
+
+    // kinderleeftijden
+    childrenInput.addEventListener('input', () => {
+      childrenAges.innerHTML = '';
+      const n = Math.max(0, Math.min(10, parseInt(childrenInput.value || '0', 10)));
+      for(let i=0;i<n;i++){
+        const wrap = document.createElement('label'); wrap.textContent = 'Leeftijd kind ' + (i+1);
+        const inp = document.createElement('input'); inp.type='number'; inp.name = 'child_age_' + (i+1); inp.min=0; inp.max=17;
+        wrap.appendChild(inp); childrenAges.appendChild(wrap);
+      }
+    });
+
+    // verras me
+    surpriseBtn.addEventListener('click', () => {
+      $('#name').value = 'Alex Reiziger';
+      $('#email').value = 'alex@example.com';
+      tripMode.value = 'flight'; tripMode.dispatchEvent(new Event('change'));
+      if(startDate && endDate){
+        const d=new Date(); const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()+14); const e=new Date(d.getFullYear(),d.getMonth(),d.getDate()+24);
+        startDate.value = s.toISOString().slice(0,10); endDate.value = e.toISOString().slice(0,10);
+      }
+      $('[name="destinations"]').value = 'Aruba';
+      $('[name="departure"]').value = 'Amsterdam (AMS)';
+      $('[name="flight"]').value = 'Direct';
+      $('[name="class"]').value = 'Economy';
+      $('[name="accommodation"]').value = 'Hotel';
+      $('#adults').value = 2; childrenInput.value = 1; childrenInput.dispatchEvent(new Event('input')); const a1 = $('[name="child_age_1"]'); if(a1) a1.value = 7;
+      budgetSelect.value = '1000'; budgetSelect.dispatchEvent(new Event('change'));
+      $('[name="notes"]').value = 'Voorbeeldaanvraag – snelle test.';
+      show('Voorbeeld ingevuld — je kunt nu verzenden.', true);
+    });
+
+    // validatie
+    function validate() {
+      const data = Object.fromEntries(new FormData(form).entries());
+      if (data.website && data.website.trim() !== '') return { ok:true, spam:true }; // honeypot
+      if (!data.name || !data.email || !emailRe.test(data.email)) return { ok:false, msg:'Vul een geldige naam en e-mail in.' };
+      if (!data.trip_mode) return { ok:false, msg:'Kies Vlucht of Cruise.' };
+      if (data.trip_mode === 'flight') {
+        if (data.start_date && data.start_date < todayISO) return { ok:false, msg:'Vertrekdatum kan niet in het verleden liggen.' };
+        if (data.end_date && data.start_date && data.end_date < data.start_date) return { ok:false, msg:'Terugkomstdatum ≥ vertrekdatum.' };
+      }
+      const adults = parseInt(data.adults||'0',10); if (isNaN(adults) || adults < 1) return { ok:false, msg:'Minimaal 1 volwassene.' };
+      for (const [k,v] of Object.entries(data)) {
+        if (k.startsWith('child_age_') && v !== '' && (parseInt(v,10) < 0 || parseInt(v,10) > 17)) return { ok:false, msg:'Leeftijd kinderen 0–17.' };
+      }
+      return { ok:true, data };
+    }
+
+    // submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = validate();
+      if (v.spam) { show('Dank je!'); return; }
+      if (!v.ok) { show(v.msg||'Controleer je invoer.'); return; }
+
+      submitBtn.disabled = true; const orig = submitBtn.textContent; submitBtn.textContent='Verzenden…'; show('Verzenden…');
+      try {
+        const res = await fetch('/api/intake', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(v.data) });
+        const r = await res.json();
+        if (!res.ok || !r.success) throw new Error(r.error || 'Onbekende fout');
+        if (r.spam) { show('Dank je!'); submitBtn.textContent=orig; submitBtn.disabled=false; return; }
+        window.location.href = '/result.html?id=' + encodeURIComponent(r.id);
+      } catch(err) {
+        show('Kon niet verzenden: ' + err.message);
+        submitBtn.disabled=false; submitBtn.textContent=orig;
+      }
+    });
+  </script>
 </body>
 </html>
+
+<!-- =========================
+FILE: result.html
+Waarom: Haal intake via /api/intake?id=<uuid> en toon 3 dummy opties
+========================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resultaten – TrAIveller.ai</title>
+  <style>
+    :root{--bg:#0b0f1a;--fg:#e9eef7;--muted:#9fb0c7;--accent:#0ea5e9;--cta:#ffd200}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;color:var(--fg);background:var(--bg)}
+    .wrap{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+    h1{margin:.25rem 0 1rem} .muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    .card{background:#0f1627;border:1px solid #22304a;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:1rem;display:flex;flex-direction:column}
+    .card h3{margin:.25rem 0 .5rem}
+    .cta{margin-top:auto;align-self:flex-start;background:var(--cta);color:#221;border:none;border-radius:999px;padding:.7rem 1rem;font-weight:800;cursor:pointer}
+    .lead{font-size:1.15rem}
+    @media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:620px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 id="title">Bedankt! We laden je opties…</h1>
+    <p class="muted" id="sub">We hebben je e-mailadres opgeslagen, we sturen je updates met nieuwe deals.</p>
+    <div class="grid" id="cards"></div>
+  </div>
+  <script>
+    // Parse id
+    const params = new URLSearchParams(location.search); const id = params.get('id');
+    async function load(){
+      if(!id){ document.getElementById('title').textContent='Geen aanvraag gevonden.'; return; }
+      try{
+        const res = await fetch('/api/intake?id=' + encodeURIComponent(id));
+        const data = await res.json();
+        if(!res.ok || !data.success || !data.row){ throw new Error(data.error || 'Niet gevonden'); }
+        const name = (data.row.name || (data.row.payload && data.row.payload.name) || 'reiziger');
+        document.getElementById('title').textContent = `Bedankt ${name}, hier zijn 3 opties voor jouw reis`;
+        renderCards();
+      }catch(e){
+        document.getElementById('title').textContent='We konden je aanvraag niet ophalen.';
+      }
+    }
+    function renderCards(){
+      const cards = [
+        {t:'Strandvakantie in Spanje', d:'Geniet van zon, zee en tapas aan de Costa del Sol. Inclusief retourvlucht en 4-sterren hotel op loopafstand van het strand.'},
+        {t:'Luxe trip naar Dubai', d:'Ontdek de skyline, woestijnsafari en fine dining. Verblijf in een 5-sterren hotel met zwembad en spa.'},
+        {t:'Verrassingstrip', d:'Laat ons je verrassen met een unieke bestemming op basis van jouw voorkeuren. Inclusief activiteitenpakket.'}
+      ];
+      const grid = document.getElementById('cards'); grid.innerHTML='';
+      for(const c of cards){
+        const el = document.createElement('div'); el.className='card';
+        el.innerHTML = `<h3>${c.t}</h3><p class="lead">${c.d}</p><button class="cta">Boek nu</button>`;
+        grid.appendChild(el);
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
+
+<!-- =========================
+FILE: api/intake.js
+Waarom: API voor POST (insert) en GET (fetch by id) – geen mails
+========================= -->
+import { createClient } from '@supabase/supabase-js';
+
+const bad = (res, code, error) => res.status(code).json({ success:false, error });
+const ok = (res, payload) => res.status(200).json({ success:true, ...payload });
+
+export default async function handler(req, res) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE; // only server-side
+  if (!url || !key) return bad(res, 500, 'Supabase env ontbreekt');
+  const sb = createClient(url, key, { auth: { persistSession: false } });
+
+  if (req.method === 'GET') {
+    // GET ?id=<uuid> -> haal rij op
+    const id = (req.query?.id || '').toString().trim();
+    if (!/^[0-9a-fA-F-]{36}$/.test(id)) return bad(res, 400, 'Ongeldige id');
+    const { data, error } = await sb.from('intakes').select('*').eq('id', id).single();
+    if (error) return bad(res, 404, 'Niet gevonden');
+    return ok(res, { row: data });
+  }
+
+  if (req.method === 'POST') {
+    const body = req.body || {};
+
+    // Honeypot
+    if (body.website && String(body.website).trim() !== '') {
+      return ok(res, { spam: true }); // niet inserten
+    }
+
+    // Validatie
+    const name = (body.name || '').trim();
+    const email = (body.email || '').trim();
+    const trip_mode = (body.trip_mode || '').trim(); // 'flight'|'cruise'
+    if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad(res, 400, 'Naam/e-mail verplicht en geldig');
+    if (!trip_mode) return bad(res, 400, 'trip_mode verplicht');
+
+    // Datums (optioneel maar logisch)
+    if (body.trip_mode === 'flight') {
+      const start = body.start_date, end = body.end_date;
+      const today = new Date().toISOString().slice(0,10);
+      if (start && start < today) return bad(res, 400, 'Vertrekdatum in verleden');
+      if (start && end && end < start) return bad(res, 400, 'Terugkomstdatum ≥ vertrekdatum');
+    }
+
+    // Normaliseer enkele snelle filtervelden
+    const destination = body.destination || body.destinations || '';
+    const cruise_region = body.cruise_region || '';
+
+    // Insert
+    const insertPayload = {
+      name, email, trip_mode, destination, cruise_region, payload: body
+    };
+    const { data, error } = await sb.from('intakes').insert(insertPayload).select('id').single();
+    if (error) return bad(res, 500, error.message);
+
+    return ok(res, { id: data.id });
+  }
+
+  return bad(res, 405, 'Method not allowed');
+}
 
 
 
