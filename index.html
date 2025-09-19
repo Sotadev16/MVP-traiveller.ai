@@ -5,83 +5,94 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TrAIveller.ai – jouw slimme AI-reisplanner</title>
+  <link rel="icon" type="image/png" href="images/traiveller-logo.png" />
   <style>
-    /* Reset */
-    * { box-sizing: border-box; }
-    html, body { height:100%; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#fff; }
-
     :root{
+      --fg:#ffffff; --muted:#e7edf6;
       --cta:#facc15; --cta-hover:#eab308; --cta-active:#ca8a04;
     }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--fg);background:#000}
 
-    /* Fullscreen hero: geen scroll, altijd gecentreerd */
+    /* Header met logo linksboven */
+    .site-header{
+      position:fixed; inset:auto 0 0 0; top:0; /* sticky boven */
+      padding:clamp(.6rem,2vw,1rem);
+      display:flex; align-items:center; gap:.5rem;
+      z-index:10; /* boven bg */
+      pointer-events:none; /* geen layout ‘druk’; binnenin wel klikbaar */
+    }
+    .site-header a{pointer-events:auto; display:inline-flex; align-items:center; gap:.5rem; text-decoration:none; color:var(--fg)}
+    .brand-logo{height:36px; width:auto}
+    .brand-name{font-weight:800; letter-spacing:.2px; font-size:clamp(1rem,2.2vw,1.125rem)}
+    .brand-name .ai{color:var(--cta)}
+
+    /* Fullscreen hero */
     .hero{
-      /* moderne viewport-eenheden met fallback */
-      min-height: 100svh;
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      padding-inline: clamp(12px, 3vw, 24px);
+      min-height:100svh; display:grid; place-items:center; text-align:center;
+      position:relative; overflow:hidden;
+      padding:clamp(1rem, 3vw, 2rem);
     }
     .hero-bg{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:cover;
-      z-index:-2;
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; z-index:-2;
     }
+    /* Héle subtiele overlay voor contrast (geen zwart vlak/panel) */
     .hero::before{
       content:""; position:absolute; inset:0; z-index:-1;
-      background: linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.22));
+      background:linear-gradient( to bottom, rgba(0,0,0,.12), rgba(0,0,0,.22) );
     }
 
-    .hero-content{
-      width: min(880px, 100%);
-      /* vang te hoge inhoud af, zonder scroll te forceren */
-      padding-block: clamp(16px, 5vh, 32px);
+    /* Content */
+    .hero-content{max-width:900px; padding-top:clamp(2.5rem,8vw,4rem)} /* ruimte voor fixed header op kleine schermen */
+    .title{
+      font-weight:900; line-height:1.05; margin:.25rem 0 .5rem 0;
+      font-size:clamp(2rem, 6vw, 4rem);
+      text-shadow:0 2px 10px rgba(0,0,0,.25);
+    }
+    .title .ai{color:var(--cta)}
+    .subtitle{
+      margin:0 0 1.5rem 0; color:var(--muted);
+      font-size:clamp(1rem, 2.4vw, 1.25rem);
+      text-shadow:0 1px 6px rgba(0,0,0,.2);
     }
 
-    .hero-logo{
-      width: clamp(140px, 22vw, 220px);
-      height:auto; display:block; margin: 0 auto 12px;
-    }
-    .hero-sub{
-      margin: 0 0 16px; 
-      font-size: clamp(1rem, 2.4vw, 1.25rem);
-      opacity:.95;
-      text-shadow: 0 2px 10px rgba(0,0,0,.35);
-    }
-
-    .cta-btn{
+    /* Gele CTA zonder zwarte balk erachter */
+    .cta{
       display:inline-block; text-decoration:none; font-weight:800;
-      background:var(--cta); color:#1a1a1a;
+      background:var(--cta); color:#1b1605;
       padding:.9rem 1.4rem; border-radius:999px;
-      font-size: clamp(1rem, 2.5vw, 1.125rem);
-      transition:.15s ease;
+      font-size:clamp(1rem,2.5vw,1.125rem);
       box-shadow:0 8px 20px rgba(0,0,0,.25);
+      transition:transform .08s ease, background .15s ease, box-shadow .15s ease, filter .15s ease;
     }
-    .cta-btn:hover{ background:var(--cta-hover); transform:translateY(-1px); }
-    .cta-btn:active{ background:var(--cta-active); transform:translateY(0); }
+    .cta:hover{background:var(--cta-hover); transform:translateY(-1px)}
+    .cta:active{background:var(--cta-active); transform:translateY(0)}
+    .cta:focus-visible{outline:none; box-shadow:0 0 0 3px #fff, 0 0 0 6px rgba(250,204,21,.6)}
 
-    .trust{
-      display:flex; justify-content:center; gap:1.25rem;
-      margin-top: clamp(14px, 3vh, 20px);
-      flex-wrap:wrap; opacity:.95;
-    }
-    .trust-item{ display:flex; align-items:center; gap:.5rem; font-size:.95rem; text-shadow:0 1px 6px rgba(0,0,0,.25); }
-    .trust-item img{ height:20px; width:auto; }
+    /* Trust-badges (optioneel) – subtiel */
+    .trust{display:flex; justify-content:center; gap:1.25rem; margin-top:1.5rem; flex-wrap:wrap; opacity:.95}
+    .trust-item{display:flex; align-items:center; gap:.5rem; font-size:.95rem; text-shadow:0 1px 6px rgba(0,0,0,.2)}
+    .trust-item img{height:20px; width:auto}
   </style>
 </head>
 <body>
-  <section class="hero" role="banner" aria-label="TrAIveller hero">
+  <!-- Logo linksboven -->
+  <header class="site-header" aria-label="TrAIveller topbar">
+    <a href="/" aria-label="Home – TrAIveller.ai">
+      <img src="images/traiveller-logo.png" class="brand-logo" alt="TrAIveller.ai logo" />
+      <span class="brand-name">Tr<span class="ai">AI</span>veller.ai</span>
+    </a>
+  </header>
+
+  <!-- Fullscreen hero -->
+  <section class="hero" role="banner">
     <img src="images/palm-intake.jpg" alt="" class="hero-bg" loading="eager" />
     <div class="hero-content">
-      <img src="images/traiveller-logo.png" alt="TrAIveller.ai logo" class="hero-logo" />
-      <p class="hero-sub">Jouw slimme AI-reisplanner</p>
-      <a href="palm-intake.html" class="cta-btn">Plan mijn slimme reis</a>
+      <h1 class="title">Tr<span class="ai">AI</span>veller.ai</h1>
+      <p class="subtitle">jouw slimme AI-reisplanner</p>
+      <a class="cta" href="palm-intake.html" aria-label="Plan mijn slimme reis">Plan mijn slimme reis</a>
       <div class="trust" aria-label="Voordelen">
         <div class="trust-item"><img src="images/icon-secure.png" alt="">Veilig boeken</div>
         <div class="trust-item"><img src="images/icon-fast.png" alt="">Snel geregeld</div>
