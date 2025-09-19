@@ -5,13 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TrAIveller.ai – jouw slimme AI-reisplanner</title>
-
-  <!-- Icons (optioneel) -->
   <link rel="icon" type="image/png" href="images/traiveller-logo.png" />
-
-  <!-- Preload key images -->
-  <link rel="preload" as="image" href="images/beach-hero.jpg" />
-  <link rel="preload" as="image" href="images/traiveller-logo.png" />
 
   <style>
     :root{
@@ -20,64 +14,51 @@
       --cta:#facc15;
       --cta-hover:#eab308;
       --cta-active:#ca8a04;
-      --shadow: 0 8px 30px rgba(0,0,0,.35);
+      --shadow:0 8px 30px rgba(0,0,0,.35);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
     body{
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
       color:var(--fg);
       background:#000;
-      line-height:1.5;
     }
 
     /* ===== HERO ===== */
     .hero{
       position:relative;
-      min-height:100dvh; /* mobiel veilig */
+      min-height:100dvh;
       display:grid;
       place-items:center;
       text-align:center;
-      overflow:hidden;
       isolation:isolate;
+      overflow:hidden;
     }
-    /* Achtergrondfoto */
     .hero::before{
       content:"";
       position:absolute; inset:0;
-      background-image:url("images/beach-hero.jpg");
-      background-size:cover;
-      background-position:center;
-      transform:scale(1.02); /* kleine zoom voor randloze vulling */
+      background:url("images/beach-hero.jpg") center/cover no-repeat;
       z-index:-2;
     }
-    /* Subtiele gradient voor leesbaarheid van tekst */
     .hero::after{
       content:"";
       position:absolute; inset:0;
-      background:linear-gradient(to bottom, rgba(0,0,0,.15), rgba(0,0,0,.25) 40%, rgba(0,0,0,.35));
+      background:linear-gradient(to bottom, rgba(0,0,0,.15), rgba(0,0,0,.35));
       z-index:-1;
     }
 
-    .hero-inner{
-      width:min(1100px, 92vw);
-      margin-inline:auto;
-      padding:clamp(16px, 3vw, 28px);
-    }
+    .hero-inner{padding:clamp(1rem,4vw,2rem);}
 
-    /* LOGO in het midden */
     .brand-logo{
-      width: clamp(120px, 14vw, 220px);
+      width:clamp(120px,14vw,220px);
       height:auto;
       display:block;
-      margin:0 auto 1rem auto;
-      filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
-      user-select:none;
-      pointer-events:none;
+      margin:0 auto 1rem;
+      filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));
     }
 
     .tagline{
-      font-size:clamp(16px, 2.2vw, 22px);
+      font-size:clamp(16px,2.2vw,22px);
       margin:0 0 1.25rem 0;
       color:var(--muted);
       text-shadow:0 2px 8px rgba(0,0,0,.45);
@@ -86,77 +67,55 @@
 
     .cta{
       display:inline-block;
-      border:0;
       border-radius:999px;
       padding:.9rem 1.4rem;
-      font-size:clamp(15px, 2.2vw, 18px);
+      font-size:clamp(15px,2.2vw,18px);
       font-weight:700;
       background:var(--cta);
       color:#1a1a1a;
       box-shadow:var(--shadow);
-      cursor:pointer;
-      transition:transform .15s ease, filter .15s ease, background-color .15s ease;
       text-decoration:none;
+      transition:.15s ease;
     }
-    .cta:hover{ background:var(--cta-hover); transform:translateY(-1px); }
-    .cta:active{ background:var(--cta-active); transform:translateY(0); }
+    .cta:hover{background:var(--cta-hover); transform:translateY(-1px);}
+    .cta:active{background:var(--cta-active); transform:none;}
 
     .benefits{
       margin-top:1rem;
       display:flex;
-      gap:clamp(14px, 4vw, 40px);
+      gap:clamp(14px,4vw,40px);
       justify-content:center;
       flex-wrap:wrap;
-      font-size:clamp(13px, 1.8vw, 16px);
+      font-size:clamp(13px,1.8vw,16px);
       color:rgba(255,255,255,.9);
       text-shadow:0 2px 6px rgba(0,0,0,.35);
     }
-    .benefits span{
-      opacity:.95;
-      white-space:nowrap;
-      position:relative;
-    }
-    .benefits span + span::before{
+    .benefits span+span::before{
       content:"";
-      position:absolute; left:-20px; top:50%;
-      width:6px; height:6px; border-radius:50%;
+      position:absolute;left:-20px;top:50%;
+      width:6px;height:6px;border-radius:50%;
       background:rgba(255,255,255,.75);
       transform:translateY(-50%);
     }
 
-    /* ===== Footer mini ===== */
     footer{
-      position:fixed; inset:auto 0 0 0;
-      display:flex; justify-content:center;
+      position:fixed;bottom:0;left:0;right:0;
+      text-align:center;
       padding:.6rem 1rem;
       font-size:12px;
       color:#e9eef7;
       background:linear-gradient(to top, rgba(0,0,0,.35), transparent);
       text-shadow:0 1px 4px rgba(0,0,0,.5);
     }
-
-    /* Toegankelijkheid: minder beweging */
-    @media (prefers-reduced-motion: reduce){
-      .cta{ transition:none }
-      .hero::before{ transform:none }
-    }
   </style>
 </head>
-
 <body>
-  <main class="hero" role="banner" aria-label="TrAIveller.ai hero">
+  <main class="hero">
     <div class="hero-inner">
-      <!-- Middelste logo -->
       <img src="images/traiveller-logo.png" alt="TrAIveller.ai" class="brand-logo" />
-
-      <!-- Subtitel -->
       <p class="tagline">Jouw slimme AI-reisplanner</p>
-
-      <!-- Call to action -->
-      <a class="cta" href="#intake">Plan mijn slimme reis</a>
-
-      <!-- Kleine benefits -->
-      <div class="benefits" aria-label="Voordelen">
+      <a href="#" class="cta">Plan mijn slimme reis</a>
+      <div class="benefits">
         <span>Veilig boeken</span>
         <span>Snel geregeld</span>
         <span>Exclusieve deals</span>
@@ -164,22 +123,8 @@
     </div>
   </main>
 
-  <!-- (Optioneel) Een anker voor de knop, later jouw intakeformulier hier -->
-  <section id="intake" style="min-height:60vh;background:#fff;color:#111;display:grid;place-items:center;padding:60px 16px;">
-    <div style="max-width:900px;width:100%;text-align:center;">
-      <h2 style="margin:0 0 10px 0;">Intakeformulier</h2>
-      <p style="margin:0 0 24px 0;">Hier komt straks je formulier (Google Sheets, Supabase of eigen API).</p>
-      <!-- Plaats hier later je echte form -->
-      <button class="cta" onclick="alert('Hier komt je intake!')">Voorbeeld-actie</button>
-    </div>
-  </section>
-
   <footer>© <span id="y"></span> TrAIveller.ai — All rights reserved</footer>
-
-  <script>
-    // huidig jaar in footer
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 </body>
 </html>
 
