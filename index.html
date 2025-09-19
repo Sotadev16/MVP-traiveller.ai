@@ -2,155 +2,187 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TrAIveller.ai – jouw slimme AI-reisplanner</title>
+
+  <!-- Icons (optioneel) -->
+  <link rel="icon" type="image/png" href="images/traiveller-logo.png" />
+
+  <!-- Preload key images -->
+  <link rel="preload" as="image" href="images/beach-hero.jpg" />
+  <link rel="preload" as="image" href="images/traiveller-logo.png" />
+
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: system-ui, sans-serif;
-      color: #fff;
-      background: url("images/palm-intake.jpg") center/cover no-repeat fixed;
-      min-height: 100vh;
-    /* Reset */
-    * { box-sizing: border-box; }
-    html, body { height:100%; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#fff; }
-
     :root{
-      --cta:#facc15; --cta-hover:#eab308; --cta-active:#ca8a04;
+      --fg:#ffffff;
+      --muted:#e7edf6;
+      --cta:#facc15;
+      --cta-hover:#eab308;
+      --cta-active:#ca8a04;
+      --shadow: 0 8px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      color:var(--fg);
+      background:#000;
+      line-height:1.5;
     }
 
-    /* Fullscreen hero: geen scroll, altijd gecentreerd */
+    /* ===== HERO ===== */
     .hero{
-      /* moderne viewport-eenheden met fallback */
-      min-height: 100svh;
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      padding-inline: clamp(12px, 3vw, 24px);
+      position:relative;
+      min-height:100dvh; /* mobiel veilig */
+      display:grid;
+      place-items:center;
+      text-align:center;
+      overflow:hidden;
+      isolation:isolate;
     }
-
-    .hero {
-      background: rgba(0,0,0,0.35); /* subtiele overlay */
-      padding: 2rem;
-      border-radius: 1rem;
-    .hero-bg{
+    /* Achtergrondfoto */
+    .hero::before{
+      content:"";
       position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:cover;
+      background-image:url("images/beach-hero.jpg");
+      background-size:cover;
+      background-position:center;
+      transform:scale(1.02); /* kleine zoom voor randloze vulling */
       z-index:-2;
     }
-    .hero::before{
-      content:""; position:absolute; inset:0; z-index:-1;
-      background: linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.22));
+    /* Subtiele gradient voor leesbaarheid van tekst */
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(to bottom, rgba(0,0,0,.15), rgba(0,0,0,.25) 40%, rgba(0,0,0,.35));
+      z-index:-1;
     }
 
-    .hero-logo {
-      width: 180px;
-      height: auto;
-      margin: 0 auto 1rem;
-      display: block;
-    .hero-content{
-      width: min(880px, 100%);
-      /* vang te hoge inhoud af, zonder scroll te forceren */
-      padding-block: clamp(16px, 5vh, 32px);
+    .hero-inner{
+      width:min(1100px, 92vw);
+      margin-inline:auto;
+      padding:clamp(16px, 3vw, 28px);
     }
 
-    .hero-sub {
-      font-size: clamp(1rem, 2vw, 1.25rem);
-      margin: 0 0 1.5rem;
-      opacity: .95;
-    .hero-logo{
-      width: clamp(140px, 22vw, 220px);
-      height:auto; display:block; margin: 0 auto 12px;
+    /* LOGO in het midden */
+    .brand-logo{
+      width: clamp(120px, 14vw, 220px);
+      height:auto;
+      display:block;
+      margin:0 auto 1rem auto;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+      user-select:none;
+      pointer-events:none;
     }
-    .hero-sub{
-      margin: 0 0 16px; 
-      font-size: clamp(1rem, 2.4vw, 1.25rem);
+
+    .tagline{
+      font-size:clamp(16px, 2.2vw, 22px);
+      margin:0 0 1.25rem 0;
+      color:var(--muted);
+      text-shadow:0 2px 8px rgba(0,0,0,.45);
+      font-weight:500;
+    }
+
+    .cta{
+      display:inline-block;
+      border:0;
+      border-radius:999px;
+      padding:.9rem 1.4rem;
+      font-size:clamp(15px, 2.2vw, 18px);
+      font-weight:700;
+      background:var(--cta);
+      color:#1a1a1a;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      transition:transform .15s ease, filter .15s ease, background-color .15s ease;
+      text-decoration:none;
+    }
+    .cta:hover{ background:var(--cta-hover); transform:translateY(-1px); }
+    .cta:active{ background:var(--cta-active); transform:translateY(0); }
+
+    .benefits{
+      margin-top:1rem;
+      display:flex;
+      gap:clamp(14px, 4vw, 40px);
+      justify-content:center;
+      flex-wrap:wrap;
+      font-size:clamp(13px, 1.8vw, 16px);
+      color:rgba(255,255,255,.9);
+      text-shadow:0 2px 6px rgba(0,0,0,.35);
+    }
+    .benefits span{
       opacity:.95;
-      text-shadow: 0 2px 10px rgba(0,0,0,.35);
+      white-space:nowrap;
+      position:relative;
+    }
+    .benefits span + span::before{
+      content:"";
+      position:absolute; left:-20px; top:50%;
+      width:6px; height:6px; border-radius:50%;
+      background:rgba(255,255,255,.75);
+      transform:translateY(-50%);
     }
 
-    .cta-btn {
-      display: inline-block;
-      background: #facc15;
-      color: #1a1a1a;
-      font-weight: 700;
-      padding: .9rem 1.6rem;
-      border-radius: 999px;
-      text-decoration: none;
-      transition: .15s ease;
-    .cta-btn{
-      display:inline-block; text-decoration:none; font-weight:800;
-      background:var(--cta); color:#1a1a1a;
-      padding:.9rem 1.4rem; border-radius:999px;
-      font-size: clamp(1rem, 2.5vw, 1.125rem);
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      transition:.15s ease;
-      box-shadow:0 8px 20px rgba(0,0,0,.25);
+    /* ===== Footer mini ===== */
+    footer{
+      position:fixed; inset:auto 0 0 0;
+      display:flex; justify-content:center;
+      padding:.6rem 1rem;
+      font-size:12px;
+      color:#e9eef7;
+      background:linear-gradient(to top, rgba(0,0,0,.35), transparent);
+      text-shadow:0 1px 4px rgba(0,0,0,.5);
     }
-    .cta-btn:hover { background:#eab308; transform:translateY(-1px); }
-    .cta-btn:active { background:#ca8a04; transform:translateY(0); }
-    .cta-btn:hover{ background:var(--cta-hover); transform:translateY(-1px); }
-    .cta-btn:active{ background:var(--cta-active); transform:translateY(0); }
 
-    .trust {
-      display: flex;
-      justify-content: center;
-      gap: 1.25rem;
-      margin-top: 1.75rem;
-      flex-wrap: wrap;
-      opacity: .95;
+    /* Toegankelijkheid: minder beweging */
+    @media (prefers-reduced-motion: reduce){
+      .cta{ transition:none }
+      .hero::before{ transform:none }
     }
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      font-size: .95rem;
-      text-shadow: 0 1px 6px rgba(0,0,0,.6);
-    .trust{
-      display:flex; justify-content:center; gap:1.25rem;
-      margin-top: clamp(14px, 3vh, 20px);
-      flex-wrap:wrap; opacity:.95;
-    }
-    .trust-item img { height: 20px; width: auto; }
-    .trust-item{ display:flex; align-items:center; gap:.5rem; font-size:.95rem; text-shadow:0 1px 6px rgba(0,0,0,.25); }
-    .trust-item img{ height:20px; width:auto; }
   </style>
 </head>
-<body>
-  <section class="hero" role="banner">
-    <!-- Midden-inhoud -->
-    <img src="images/traiveller-logo.png" alt="TrAIveller.ai logo" class="hero-logo" />
-    <p class="hero-sub">Jouw slimme AI-reisplanner</p>
-    <a href="palm-intake.html" class="cta-btn">Plan mijn slimme reis</a>
 
-    <!-- Trust badges -->
-    <div class="trust" aria-label="Voordelen">
-      <div class="trust-item"><img src="images/icon-secure.png" alt="">Veilig boeken</div>
-      <div class="trust-item"><img src="images/icon-fast.png" alt="">Snel geregeld</div>
-      <div class="trust-item"><img src="images/icon-deals.png" alt="">Exclusieve deals</div>
-  <section class="hero" role="banner" aria-label="TrAIveller hero">
-    <img src="images/palm-intake.jpg" alt="" class="hero-bg" loading="eager" />
-    <div class="hero-content">
-      <img src="images/traiveller-logo.png" alt="TrAIveller.ai logo" class="hero-logo" />
-      <p class="hero-sub">Jouw slimme AI-reisplanner</p>
-      <a href="palm-intake.html" class="cta-btn">Plan mijn slimme reis</a>
-      <div class="trust" aria-label="Voordelen">
-        <div class="trust-item"><img src="images/icon-secure.png" alt="">Veilig boeken</div>
-        <div class="trust-item"><img src="images/icon-fast.png" alt="">Snel geregeld</div>
-        <div class="trust-item"><img src="images/icon-deals.png" alt="">Exclusieve deals</div>
+<body>
+  <main class="hero" role="banner" aria-label="TrAIveller.ai hero">
+    <div class="hero-inner">
+      <!-- Middelste logo -->
+      <img src="images/traiveller-logo.png" alt="TrAIveller.ai" class="brand-logo" />
+
+      <!-- Subtitel -->
+      <p class="tagline">Jouw slimme AI-reisplanner</p>
+
+      <!-- Call to action -->
+      <a class="cta" href="#intake">Plan mijn slimme reis</a>
+
+      <!-- Kleine benefits -->
+      <div class="benefits" aria-label="Voordelen">
+        <span>Veilig boeken</span>
+        <span>Snel geregeld</span>
+        <span>Exclusieve deals</span>
       </div>
     </div>
+  </main>
+
+  <!-- (Optioneel) Een anker voor de knop, later jouw intakeformulier hier -->
+  <section id="intake" style="min-height:60vh;background:#fff;color:#111;display:grid;place-items:center;padding:60px 16px;">
+    <div style="max-width:900px;width:100%;text-align:center;">
+      <h2 style="margin:0 0 10px 0;">Intakeformulier</h2>
+      <p style="margin:0 0 24px 0;">Hier komt straks je formulier (Google Sheets, Supabase of eigen API).</p>
+      <!-- Plaats hier later je echte form -->
+      <button class="cta" onclick="alert('Hier komt je intake!')">Voorbeeld-actie</button>
+    </div>
   </section>
+
+  <footer>© <span id="y"></span> TrAIveller.ai — All rights reserved</footer>
+
+  <script>
+    // huidig jaar in footer
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
+
 
 
 
