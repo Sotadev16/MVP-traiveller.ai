@@ -328,136 +328,71 @@
   </main>
 
   <script>
-    // ===== helpers
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
+  // ... laat alle bestaande helpers staan (budget/kids/type etc.)
+  document.getElementById('f').addEventListener('submit', (e)=>{
+    e.preventDefault();
+
+    // Validatie datums (niet verleden, retour ≥ vertrek)
     const today = new Date().toISOString().slice(0,10);
-    $('#depart').min = today;
-    $('#return').min  = today;
-
-    // budget preset/custom
-    const preset = $('#budgetPreset'), custom = $('#budgetCustom'), budgetHidden = $('#budget');
-    function syncBudget(){
-      if (preset.value === 'custom'){
-        custom.classList.remove('hidden');
-        budgetHidden.value = custom.value || 1000;
-      } else {
-        custom.classList.add('hidden');
-        budgetHidden.value = preset.value;
-      }
-    }
-    preset.addEventListener('change', syncBudget);
-    custom.addEventListener('input',  syncBudget);
-    syncBudget();
-
-    // kids dynamic age fields
-    const kids = $('#children'), kidsAges = $('#kidsAges');
-    function renderKidAges(){
-      const n = Math.max(0, Number(kids.value||0));
-      kidsAges.innerHTML = '';
-      if(!n){ kidsAges.classList.add('hidden'); return; }
-      kidsAges.classList.remove('hidden');
-      for(let i=0;i<n;i++){
-        const div = document.createElement('div'); div.className='col-3';
-        div.innerHTML = `
-          <label>Leeftijd kind ${i+1}</label>
-          <select class="kidAge">
-            ${Array.from({length:18},(_,k)=>`<option value="${k}">${k}</option>`).join('')}
-          </select>`;
-        kidsAges.appendChild(div);
-      }
-    }
-    kids.addEventListener('input', renderKidAges);
-    renderKidAges();
-
-    // blokken wisselen op basis van type
-    const typeRadios = $$('input[name="type"]');
-    const blocks = {
-      surprise: $('#block-surprise'),
-      flight:   $('#block-flight'),
-      cruise:   $('#block-cruise')
-    };
-    function switchType(){
-      const val = typeRadios.find(r => r.checked)?.value || 'surprise';
-      Object.values(blocks).forEach(b => b.classList.add('hidden'));
-      blocks[val].classList.remove('hidden');
-    }
-    typeRadios.forEach(r=>r.addEventListener('change', switchType));
-    switchType();
-
-    // huurauto blok tonen
-    const carYes = $('#car-yes'), carNo = $('#car-no'), carBlock = document.getElementById('carBlock');
-    function toggleCar(){ carBlock.style.display = (carYes?.checked?'block':'none'); }
-    carYes?.addEventListener('change', toggleCar);
-    carNo?.addEventListener('change', toggleCar);
-    toggleCar();
-
-    // datumvalidatie
-    function validDates(){
-      const d1 = new Date($('#depart').value);
-      const d2 = new Date($('#return').value);
-      const now = new Date(today);
-      if(isNaN(d1)||isNaN(d2)) return false;
-      if(d1 < now) return false;
-      if(d2 < d1) return false;
-      return true;
+    const d1 = new Date(document.getElementById('depart').value);
+    const d2 = new Date(document.getElementById('return').value);
+    if (isNaN(d1) || isNaN(d2) || d1 < new Date(today) || d2 < d1) {
+      const err = document.getElementById('baseErr');
+      if (err) { err.textContent = 'Datums ongeldig (niet in verleden, retour ≥ vertrek).'; err.style.display='block'; }
+      return;
     }
 
-    // submit → results.html?...
-    $('#f').addEventListener('submit', (e)=>{
-      e.preventDefault();
-      if(!validDates()){ $('#baseErr').textContent='Datums ongeldig (niet in verleden, retour ≥ vertrek).'; $('#baseErr').style.display='block'; return; }
-      $('#baseErr').style.display='none';
+    const type = (new FormData(document.getElementById('f')).get('type')) || 'surprise';
+    const getCheckedValues = (sel) => Array.from(document.querySelectorAll(sel)).filter(x=>x.checked).map(x=>x.value).join(',');
 
-      const type = (new FormData($('#f')).get('type')) || 'surprise';
-      const getCheckedValues = (sel) => $$(sel).filter(x=>x.checked).map(x=>x.value).join(',');
-
-      const params = new URLSearchParams({
-        type,
-        depart: $('#depart').value,
-        return: $('#return').value,
-        flex: $('#flex').value,
-        adults: $('#adults').value,
-        children: $('#children').value,
-        budget: $('#budget').value,
-      });
-
-      // kinderen leeftijden
-      const ages = $$('.kidAge').map(s=>s.value).join(',');
-      if(ages) params.set('kids', ages);
-
-      if(type==='surprise'){
-        params.set('from', $('#surp-origin').value);
-        const prefs = getCheckedValues('#block-surprise input[type="checkbox"]');
-        if(prefs) params.set('prefs', prefs);
-      }
-
-      if(type==='flight'){
-        params.set('from', $('#f-origin').value);
-        params.set('to', $('#f-dest').value);
-        params.set('stops', getCheckedValues('#block-flight #direct, #block-flight #stop'));
-        params.set('class', (document.querySelector('#block-flight input[name="cls"]:checked')||{}).value || 'economy');
-        params.set('acc', getCheckedValues('#block-flight input[type="checkbox"]'));
-        const wantsCar = (document.querySelector('input[name="car"]:checked')||{}).value === 'yes';
-        params.set('car', wantsCar ? 'yes' : 'no');
-        if(wantsCar){
-          params.set('carType', (document.querySelector('input[name="carType"]:checked')||{}).value || '');
-          params.set('trans', (document.querySelector('input[name="trans"]:checked')||{}).value || '');
-          params.set('driverAge', document.getElementById('driverAge').value);
-        }
-      }
-
-      if(type==='cruise'){
-        params.set('area', $('#cruise-area').value);
-        params.set('port', $('#cruise-port').value);
-        params.set('duration', $('#cruise-duration').value);
-        params.set('cabin', $('#cruise-cabin').value);
-      }
-
-      // Redirect naar resultaten (pakt jouw mock-API)
-      location.href = 'results.html?' + params.toString();
+    const params = new URLSearchParams({
+      type,
+      depart: document.getElementById('depart').value,
+      return: document.getElementById('return').value,
+      flex: document.getElementById('flex').value,
+      adults: document.getElementById('adults').value,
+      children: document.getElementById('children').value,
+      budget: document.getElementById('budget').value,
     });
-  </script>
+
+    // kinderen leeftijden
+    const agesEls = document.querySelectorAll('.kidAge');
+    if (agesEls.length) params.set('kids', Array.from(agesEls).map(s=>s.value).join(','));
+
+    if (type === 'surprise') {
+      params.set('from', document.getElementById('surp-origin').value);
+      const prefs = getCheckedValues('#block-surprise input[type="checkbox"]');
+      if (prefs) params.set('prefs', prefs);
+    }
+
+    if (type === 'flight') {
+      params.set('from', document.getElementById('f-origin').value);
+      params.set('to',   document.getElementById('f-dest').value);
+      params.set('stops', getCheckedValues('#block-flight #direct, #block-flight #stop'));
+      const cls = document.querySelector('#block-flight input[name="cls"]:checked');
+      if (cls) params.set('class', cls.value);
+      params.set('acc', getCheckedValues('#block-flight input[type="checkbox"]'));
+      const car = document.querySelector('input[name="car"]:checked')?.value || 'no';
+      params.set('car', car);
+      if (car === 'yes') {
+        params.set('carType', document.querySelector('input[name="carType"]:checked')?.value || '');
+        params.set('trans',   document.querySelector('input[name="trans"]:checked')?.value || '');
+        params.set('driverAge', document.getElementById('driverAge').value);
+      }
+    }
+
+    if (type === 'cruise') {
+      params.set('area',     document.getElementById('cruise-area').value);
+      params.set('port',     document.getElementById('cruise-port').value);
+      params.set('duration', document.getElementById('cruise-duration').value);
+      params.set('cabin',    document.getElementById('cruise-cabin').value);
+    }
+
+    // Doorsturen naar resultaten
+    location.href = 'results.html?' + params.toString();
+  });
+</script>
+
 </body>
 </html>
 
