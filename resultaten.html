@@ -1,3 +1,4 @@
+<!-- FILE: results.html -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -6,30 +7,35 @@
   <title>Resultaten — TrAIveller.ai</title>
   <link rel="icon" type="image/png" href="images/traiveller-logo.png" />
   <style>
-    :root{ --fg:#111; --bg:#f6f7fb; --brand:#facc15; --muted:#516079 }
+    :root{ --fg:#111; --bg:#f6f7fb; --muted:#516079; --brand:#facc15; --line:#e8edf5 }
     *{box-sizing:border-box} html,body{margin:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg)}
     header{
       position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px;
-      padding:10px 14px; background:rgba(255,255,255,.85); backdrop-filter:blur(8px);
-      border-bottom:1px solid #e8edf5
+      padding:10px 14px; background:rgba(255,255,255,.85); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)
     }
     header img{height:32px}
     header .home{margin-left:auto; text-decoration:none; font-weight:700; color:#111;
       background:var(--brand); padding:.55rem 1rem; border-radius:999px}
+
     .wrap{width:min(1100px,92vw); margin:18px auto 60px}
     h1{font-size:clamp(20px,2.2vw,28px); margin:6px 0}
-    .qline{color:var(--muted); font-size:14px; margin-bottom:14px}
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 16px}
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:.45rem .7rem; border:1px solid var(--line); background:#fff; border-radius:999px;
+      font-size:13px; color:#2c3b52
+    }
 
     .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 18px}
-    .field{display:flex; gap:8px; align-items:center; background:#fff; border:1px solid #e8edf5; border-radius:10px; padding:8px 10px}
+    .field{display:flex; gap:8px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px 10px}
     .field input{border:0; outline:0; min-width:90px}
     .btn{border:0; background:#111; color:#fff; border-radius:10px; padding:.6rem 1rem; font-weight:700; cursor:pointer}
 
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
     .card{
-      grid-column:span 12; background:#fff; border:1px solid #e8edf5; border-radius:16px; overflow:hidden;
-      box-shadow:0 12px 28px rgba(0,0,0,.06); display:grid; grid-template-columns: 170px 1fr; min-height:150px
+      grid-column:span 12; background:#fff; border:1px solid var(--line); border-radius:16px; overflow:hidden;
+      box-shadow:0 12px 28px rgba(0,0,0,.06); display:grid; grid-template-columns:170px 1fr; min-height:150px
     }
     .thumb{width:100%; height:100%; object-fit:cover}
     .body{padding:14px 16px}
@@ -39,8 +45,8 @@
     .price{font-size:22px; font-weight:900}
     .deal{background:#111; color:#fff; text-decoration:none; padding:.6rem 1rem; border-radius:999px; font-weight:700}
     .score{font-size:13px; color:#2f855a; font-weight:700}
-    @media (max-width:780px){ .card{grid-template-columns:1fr} .thumb{height:190px} }
 
+    @media (max-width:780px){ .card{grid-template-columns:1fr} .thumb{height:190px} }
     .state{padding:24px; text-align:center; color:#5e6b85}
   </style>
 </head>
@@ -53,7 +59,9 @@
 
   <main class="wrap">
     <h1>Resultaten</h1>
-    <div id="qline" class="qline"></div>
+
+    <!-- Query chips -->
+    <div id="chips" class="chips"></div>
 
     <!-- eenvoudige filters -->
     <div class="toolbar">
@@ -67,33 +75,60 @@
   </main>
 
   <script>
+    /* ===== Query ophalen en samenvatting tonen ===== */
     const qs = new URLSearchParams(location.search);
-    // demo defaults voor directe test
-    if(!qs.has("from")) qs.set("from","AMS");
-    if(!qs.has("to")) qs.set("to","AGP");
+    // Defaults voor directe test als je rechtstreeks naar results.html gaat
+    if(!qs.has("type"))   qs.set("type","surprise");
     if(!qs.has("depart")) qs.set("depart","2025-10-01");
     if(!qs.has("return")) qs.set("return","2025-10-08");
     if(!qs.has("adults")) qs.set("adults","2");
     if(!qs.has("children")) qs.set("children","0");
     if(!qs.has("budget")) qs.set("budget","1500");
-    if(!qs.has("stay")) qs.set("stay","hotel");
+    if(qs.get("type")==="surprise" && !qs.has("from")) qs.set("from","AMS");
+    if(qs.get("type")==="flight"   && !qs.has("from")) qs.set("from","AMS");
+    if(qs.get("type")==="flight"   && !qs.has("to"))   qs.set("to","AUA");
 
-    // UI refs
-    const qline = document.getElementById('qline');
+    const chips = document.getElementById('chips');
+    function addChip(text){ const s=document.createElement('span'); s.className='chip'; s.textContent=text; chips.appendChild(s); }
+    function renderChips(){
+      chips.innerHTML='';
+      addChip(`Type: ${qs.get('type')}`);
+      addChip(`Datums: ${qs.get('depart')} → ${qs.get('return')}`);
+      addChip(`Volw: ${qs.get('adults')}${qs.get('children')?`, Kind: ${qs.get('children')}`:''}`);
+      if(qs.get('kids')) addChip(`Leeftijden kinderen: ${qs.get('kids')}`);
+      addChip(`Budget: €${qs.get('budget')}`);
+      if(qs.get('type')==='surprise'){
+        addChip(`Vertrek: ${qs.get('from')}`);
+        if(qs.get('prefs')) addChip(`Voorkeuren: ${qs.get('prefs')}`);
+      }
+      if(qs.get('type')==='flight'){
+        addChip(`Vertrek: ${qs.get('from')}`);
+        if(qs.get('to')) addChip(`Bestemming: ${qs.get('to')}`);
+        if(qs.get('class')) addChip(`Klasse: ${qs.get('class')}`);
+        if(qs.get('stops')) addChip(`Stops: ${qs.get('stops')}`);
+        if(qs.get('car')) addChip(`Auto: ${qs.get('car')}`);
+        if(qs.get('car')==='yes'){
+          if(qs.get('carType')) addChip(`Type auto: ${qs.get('carType')}`);
+          if(qs.get('trans')) addChip(`Transmissie: ${qs.get('trans')}`);
+          if(qs.get('driverAge')) addChip(`Leeftijd bestuurder: ${qs.get('driverAge')}`);
+        }
+        if(qs.get('acc')) addChip(`Accommodatie: ${qs.get('acc')}`);
+      }
+      if(qs.get('type')==='cruise'){
+        if(qs.get('area')) addChip(`Gebied: ${qs.get('area')}`);
+        if(qs.get('port')) addChip(`Vertrekhaven: ${qs.get('port')}`);
+        if(qs.get('duration')) addChip(`Duur: ${qs.get('duration')} nachten`);
+        if(qs.get('cabin')) addChip(`Hut: ${qs.get('cabin')}`);
+      }
+      if(qs.get('flex')) addChip(`Flex: ±${qs.get('flex')} dagen`);
+    }
+    renderChips();
+
+    /* ===== Data laden van mock API ===== */
     const state = document.getElementById('state');
     const grid  = document.getElementById('grid');
-    const maxEl = document.getElementById('max');
-    const nightsEl = document.getElementById('nights');
-    document.getElementById('apply').addEventListener('click', applyFilters);
-
-    // toon query samenvatting
-    function refreshSummary(){
-      qline.textContent = `Van ${qs.get("from")} naar ${qs.get("to")} · ${qs.get("depart")} → ${qs.get("return")} · ${qs.get("adults")} volw, ${qs.get("children")} kind · Budget €${qs.get("budget")} · ${qs.get("stay")}`;
-    }
-    refreshSummary();
-
-    // load data
     let fullResults = [];
+
     async function load(){
       try{
         const res = await fetch('/api/search?'+qs.toString());
@@ -111,19 +146,20 @@
 
     function render(list){
       grid.innerHTML = '';
-      for(const r of list){
-        grid.insertAdjacentHTML('beforeend', cardHTML(r));
-      }
+      for(const r of list){ grid.insertAdjacentHTML('beforeend', cardHTML(r)); }
     }
 
-    function applyFilters(){
+    /* ===== Eenvoudige filters (client-side) ===== */
+    const maxEl = document.getElementById('max');
+    const nightsEl = document.getElementById('nights');
+    document.getElementById('apply').addEventListener('click', ()=>{
       const max = Number(maxEl.value || Infinity);
       const nights = Number(nightsEl.value || 0);
       const filtered = fullResults.filter(r =>
         (r.price <= max) && (!nights || (r.nights === nights))
       );
       render(filtered);
-    }
+    });
 
     function cardHTML(r){
       const price = new Intl.NumberFormat('nl-NL',{style:'currency',currency:r.currency||'EUR'}).format(r.price);
@@ -132,7 +168,11 @@
         <img class="thumb" src="${r.image || 'images/beach-hero.jpg'}" alt="${r.title}">
         <div class="body">
           <h3 class="title">${r.title}</h3>
-          <p class="meta">✈️ ${r.origin} → ${r.destination} · ${r.nights || '?'} nachten · 🏨 ${r.hotel?.name || 'Hotel'} (${r.hotel?.rating ?? '–'}★)</p>
+          <p class="meta">
+            ✈️ ${r.origin} → ${r.destination}
+            · ${r.nights || '?'} nachten
+            · 🏨 ${r.hotel?.name || 'Hotel'} (${r.hotel?.rating ?? '–'}★)
+          </p>
           <div class="row">
             <div>
               <div class="price">${price}</div>
@@ -148,3 +188,4 @@
   </script>
 </body>
 </html>
+
