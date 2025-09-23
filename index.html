@@ -5,128 +5,295 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TrAIveller.ai – jouw slimme AI-reisplanner</title>
-  <link rel="icon" type="image/png" href="images/traiveller-logo.png" />
+
+  <!-- Icons (pas paden aan indien nodig) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="images/traiveller-logo.png" />
+  <link rel="apple-touch-icon" href="images/traiveller-logo.png" />
+
+  <!-- Basic SEO -->
+  <meta name="description" content="TrAIveller.ai vergelijkt razendsnel vluchten, cruises en stays. Vul je intake in en krijg 3 slimme opties: beste prijs, beste kwaliteit, handigst." />
+  <meta name="theme-color" content="#0b0f1a" />
 
   <style>
     :root{
-      --fg:#ffffff;
-      --muted:#e7edf6;
+      --bg:#0b0f1a;
+      --fg:#e9eef7;
+      --muted:#a9b7cd;
+      --card:#0f172a;
       --cta:#facc15;
       --cta-hover:#eab308;
       --cta-active:#ca8a04;
-      --shadow:0 8px 30px rgba(0,0,0,.35);
+      --ring: 0 0 0 3px rgba(250,204,21,.35);
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --radius: 16px;
+      --maxw: 1200px;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
+    *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      color:var(--fg);
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      color:var(--fg); background:var(--bg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    a{color:inherit; text-decoration:none}
+    img{max-width:100%; height:auto; display:block}
+
+    /* Header */
+    .site-header{
+      position:fixed; inset:0 0 auto 0; z-index:50;
+      backdrop-filter:saturate(140%) blur(6px);
+      background:linear-gradient(180deg, rgba(2,6,23,.75), rgba(2,6,23,.35) 60%, transparent);
+    }
+    .nav{
+      max-width:var(--maxw); margin:0 auto; padding:.8rem 1rem;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    }
+    .brand{display:flex; align-items:center; gap:.6rem}
+    .brand img{width:36px; height:36px; border-radius:8px}
+    .brand span{font-weight:700; letter-spacing:.2px}
+    .nav-links{display:flex; gap:1rem; align-items:center}
+    .nav-links a{opacity:.9}
+    .nav-links a:hover{opacity:1}
+
+    .cta-mini{
+      display:inline-flex; align-items:center; gap:.5rem;
+      background:var(--cta); color:#1a1a1a; font-weight:700;
+      padding:.55rem .9rem; border-radius:12px;
+      box-shadow:var(--shadow);
+    }
+    .cta-mini:focus-visible{outline:none; box-shadow:var(--ring)}
+    .cta-mini:hover{background:var(--cta-hover)}
+    .cta-mini:active{background:var(--cta-active)}
+
+    /* Hero */
+    .hero{
+      position:relative; min-height:100dvh; display:grid; place-items:center; overflow:hidden;
       background:#000;
     }
-
-    /* ===== HERO ===== */
-    .hero{
-      position:relative;
-      min-height:100dvh;
-      display:grid;
-      place-items:center;
-      text-align:center;
-      isolation:isolate;
-      overflow:hidden;
-    }
     .hero::before{
-      content:"";
-      position:absolute; inset:0;
-      background:url("images/beach-hero.jpg") center/cover no-repeat;
-      z-index:-2;
+      content:""; position:absolute; inset:0;
+      background:url('images/hero-beach.jpg') center/cover no-repeat fixed;
+      filter: saturate(110%) contrast(105%);
+      transform:scale(1.02);
     }
     .hero::after{
-      content:"";
-      position:absolute; inset:0;
-      background:linear-gradient(to bottom, rgba(0,0,0,.15), rgba(0,0,0,.35));
-      z-index:-1;
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(2,6,23,.75), rgba(2,6,23,.35) 40%, rgba(2,6,23,.85));
     }
-
-    .hero-inner{padding:clamp(1rem,4vw,2rem);}
-
+    .hero-inner{
+      position:relative; z-index:1; width:min(100%, 880px);
+      padding:6rem 1rem 3rem; text-align:center;
+    }
     .brand-logo{
-      width:clamp(120px,14vw,220px);
-      height:auto;
-      display:block;
-      margin:0 auto 1rem;
-      filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));
+      width: clamp(120px, 12vw, 180px);
+      height:auto; margin-inline:auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,.45));
     }
-
-    .tagline{
-      font-size:clamp(16px,2.2vw,22px);
-      margin:0 0 1.25rem 0;
-      color:var(--muted);
-      text-shadow:0 2px 8px rgba(0,0,0,.45);
-      font-weight:500;
+    .hero-title{
+      margin:1rem auto .75rem; font-size:clamp(1.6rem, 3.6vw, 2.6rem); line-height:1.15;
+      font-weight:800; letter-spacing:.2px;
+      text-shadow: 0 2px 16px rgba(0,0,0,.35);
     }
-
-    .cta{
-      display:inline-block;
-      border-radius:999px;
-      padding:.9rem 1.4rem;
-      font-size:clamp(15px,2.2vw,18px);
-      font-weight:700;
-      background:var(--cta);
-      color:#1a1a1a;
-      box-shadow:var(--shadow);
-      text-decoration:none;
-      transition:.15s ease;
+    .hero-sub{
+      margin:0 auto 1.4rem; max-width:48ch; color:var(--muted);
+      font-size:clamp(.95rem, 1.6vw, 1.05rem);
     }
-    .cta:hover{background:var(--cta-hover); transform:translateY(-1px);}
-    .cta:active{background:var(--cta-active); transform:none;}
-
-    .benefits{
+    .hero-cta{
+      display:inline-flex; gap:.8rem; align-items:center; flex-wrap:wrap; justify-content:center;
       margin-top:1rem;
-      display:flex;
-      gap:clamp(14px,4vw,40px);
-      justify-content:center;
-      flex-wrap:wrap;
-      font-size:clamp(13px,1.8vw,16px);
-      color:rgba(255,255,255,.9);
-      text-shadow:0 2px 6px rgba(0,0,0,.35);
     }
-    .benefits span+span::before{
-      content:"";
-      position:absolute;left:-20px;top:50%;
-      width:6px;height:6px;border-radius:50%;
-      background:rgba(255,255,255,.75);
-      transform:translateY(-50%);
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
+      padding: .9rem 1.2rem; border-radius:14px; font-weight:700;
+      box-shadow:var(--shadow); transition:transform .12s ease;
+    }
+    .btn-primary{background:var(--cta); color:#1a1a1a}
+    .btn-primary:hover{background:var(--cta-hover); transform:translateY(-1px)}
+    .btn-primary:active{background:var(--cta-active); transform:translateY(0)}
+    .btn-ghost{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:#fff}
+    .btn-ghost:hover{background:rgba(255,255,255,.12)}
+
+    /* Trust */
+    .trust{
+      max-width:var(--maxw); margin:-1.2rem auto 0; padding:0 1rem;
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem;
+    }
+    .trust .chip{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px; padding:.55rem .9rem; text-align:center; font-size:.92rem;
+    }
+    @media (min-width:700px){
+      .trust{grid-template-columns:repeat(4,minmax(0,1fr))}
     }
 
+    /* Feature cards */
+    .section{padding:3rem 1rem}
+    .container{max-width:var(--maxw); margin:0 auto}
+    .grid{
+      display:grid; gap:1rem;
+      grid-template-columns:1fr;
+    }
+    @media (min-width:860px){
+      .grid{grid-template-columns:repeat(3, minmax(0,1fr))}
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:var(--radius); padding:1.1rem; box-shadow:var(--shadow);
+      min-height: 180px; display:flex; flex-direction:column; gap:.6rem;
+    }
+    .card h3{margin:.2rem 0; font-size:1.1rem}
+    .card p{margin:0; color:var(--muted); font-size:.98rem}
+
+    /* Newsletter (met honeypot) */
+    .newsletter{
+      margin-top:1rem; display:grid; gap:.6rem;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:var(--radius); padding:1rem;
+    }
+    .row{display:flex; gap:.6rem; flex-wrap:wrap}
+    .input{
+      flex:1 1 220px; min-width:0;
+      padding:.9rem 1rem; border-radius:12px; border:1px solid rgba(255,255,255,.18);
+      background:rgba(2,6,23,.65); color:var(--fg);
+    }
+    .input::placeholder{color:#9bb1c7}
+    .submit{padding:.9rem 1.1rem; border-radius:12px; border:0; font-weight:700;
+      background:var(--cta); color:#1a1a1a}
+    .submit:hover{background:var(--cta-hover)}
+    .hint{color:var(--muted); font-size:.9rem}
+
+    /* Footer */
     footer{
-      position:fixed;bottom:0;left:0;right:0;
-      text-align:center;
-      padding:.6rem 1rem;
-      font-size:12px;
-      color:#e9eef7;
-      background:linear-gradient(to top, rgba(0,0,0,.35), transparent);
-      text-shadow:0 1px 4px rgba(0,0,0,.5);
+      padding:2rem 1rem; color:#c3cfdf; background:#060b16; border-top:1px solid rgba(255,255,255,.08)
+    }
+    .foot{
+      max-width:var(--maxw); margin:0 auto; display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;
+    }
+
+    /* A11y prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce){
+      .btn, .btn-primary:hover{transition:none; transform:none}
+      .hero::before{background-attachment:scroll}
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
+  <header class="site-header" role="banner">
+    <nav class="nav" aria-label="Hoofdnavigatie">
+      <a class="brand" href="./" aria-label="TrAIveller.ai">
+        <img src="images/traiveller-logo.png" alt="TrAIveller.ai logo" width="36" height="36" loading="eager" />
+        <span>TrAIveller.ai</span>
+      </a>
+      <div class="nav-links">
+        <a href="intake.html">Intake</a>
+        <a href="resultaten.html">Resultaten</a>
+        <a href="over-ons.html">Over ons</a>
+        <a href="privacy.html">Privacy</a>
+        <a class="cta-mini" href="intake.html" aria-label="Start nu je slimme intake">Start nu</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
   <main class="hero">
     <div class="hero-inner">
-  <img src="images/traiveller-logo.png" alt="TrAIveller.ai" class="brand-logo" />
-  <p class="tagline">Jouw slimme AI-reisplanner</p>
-  <a class="cta" href="palm-intake.html">Plan mijn slimme reis</a>
-  <div class="benefits">
-    <span>Veilig boeken</span>
-    <span>Snel geregeld</span>
-    <span>Exclusieve deals</span>
-  </div>
-</div>
+      <img class="brand-logo" src="images/traiveller-logo.png" alt="TrAIveller.ai" />
+      <h1 class="hero-title">Slimme reisopties in seconden</h1>
+      <p class="hero-sub">
+        Eén intake. Drie opties: <strong>beste prijs</strong>, <strong>handigst</strong>, <strong>beste kwaliteit</strong>. 
+        Vluchten, cruises en accommodaties — klaar voor boeking.
+      </p>
+      <div class="hero-cta" role="group" aria-label="Belangrijke acties">
+        <a class="btn btn-primary" href="intake.html">Plan mijn slimme reis</a>
+        <a class="btn btn-ghost" href="resultaten.html">Bekijk voorbeeldresultaten</a>
+      </div>
+
+      <!-- Social proof / trust -->
+      <div class="trust" aria-label="Kernvoordelen">
+        <div class="chip">🇳🇱 AMS / RTM / EIN</div>
+        <div class="chip">🔒 Privacy-first</div>
+        <div class="chip">⚡ Supersnel</div>
+        <div class="chip">🧠 AI-aangedreven</div>
+      </div>
+    </div>
   </main>
 
-  <footer>© <span id="y"></span> TrAIveller.ai — All rights reserved</footer>
-  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+  <!-- Features -->
+  <section class="section">
+    <div class="container">
+      <div class="grid" aria-label="Functies">
+        <article class="card">
+          <h3>Verras me-modus</h3>
+          <p>Kies budget, data en flexibiliteit — wij kiezen drie gave matches die bij je vibes passen.</p>
+        </article>
+        <article class="card">
+          <h3>Vluchten & Cruise</h3>
+          <p>Filters op direct/tussenstop, klasse & cruise-specifieke voorkeuren (regio, duur, hut-type, vertrekhaven).</p>
+        </article>
+        <article class="card">
+          <h3>Klaar voor uitbreiding</h3>
+          <p>Gebouwd voor API-koppelingen (Kiwi/Skyscanner/Booking/Amadeus) en database logging in volgende fases.</p>
+        </article>
+      </div>
+
+      <!-- Newsletter/Contact met honeypot -->
+      <form class="newsletter" id="nlForm" method="post" action="/api/mail">
+        <div class="row" role="group" aria-label="Aanmelden">
+          <input class="input" type="email" name="email" placeholder="Jouw e-mail voor updates (optioneel)" autocomplete="email" inputmode="email" />
+          <button class="submit" type="submit">Hou me op de hoogte</button>
+        </div>
+        <p class="hint">We sturen alleen relevante updates. Uitschrijven kan altijd.</p>
+
+        <!-- Honeypot (anti-bot) -->
+        <div style="position:absolute; left:-9999px" aria-hidden="true">
+          <label>Laat dit veld leeg:
+            <input type="text" name="company" tabindex="-1" autocomplete="off" />
+          </label>
+        </div>
+        <!-- Timestamp (basic spam check) -->
+        <input type="hidden" name="ts" id="tsField" />
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot">
+      <small>© <span id="y"></span> TrAIveller.ai — Alle rechten voorbehouden.</small>
+      <small><a href="privacy.html">Privacy</a> · <a href="over-ons.html">Over ons</a></small>
+    </div>
+  </footer>
+
+  <script>
+    // Footer jaartal + honeypot timestamp
+    (function(){
+      const y = document.getElementById('y');
+      if(y) y.textContent = new Date().getFullYear();
+      const ts = document.getElementById('tsField');
+      if(ts) ts.value = Date.now().toString();
+    })();
+
+    // Basic client-side anti-spam: blokkeer als honeypot gevuld of te snel ingestuurd (< 2s)
+    const nlForm = document.getElementById('nlForm');
+    if(nlForm){
+      nlForm.addEventListener('submit', function(e){
+        const hp = nlForm.querySelector('input[name="company"]');
+        const ts = nlForm.querySelector('input[name="ts"]');
+        const started = ts && Number(ts.value || "0");
+        const tooFast = started > 0 && (Date.now() - started) < 2000;
+        if(hp && hp.value.trim().length > 0 || tooFast){
+          e.preventDefault();
+          alert('Inzending geweigerd.');
+        }
+      });
+    }
+  </script>
 </body>
 </html>
+
 
 
 
