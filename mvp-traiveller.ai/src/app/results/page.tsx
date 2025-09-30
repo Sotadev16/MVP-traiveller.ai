@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Head from "next/head";
 import Image from "next/image";
@@ -194,7 +194,7 @@ const getMockTravelOptions = (): TravelOption[] => [
   },
 ];
 
-export default function ResultsPage() {
+function ResultsContent() {
   const searchParams = useSearchParams();
   const [results, setResults] = useState<TravelOption[]>([]);
   const [filteredResults, setFilteredResults] = useState<TravelOption[]>([]);
@@ -407,7 +407,6 @@ export default function ResultsPage() {
           name="description"
           content="Jouw gepersonaliseerde reisopties op basis van je intake"
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/png" href="/images/traiveller-logo.png" />
       </Head>
 
@@ -788,5 +787,21 @@ export default function ResultsPage() {
         </main>
       </div>
     </>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-white text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-yellow-400 rounded-full animate-spin mx-auto"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <ResultsContent />
+    </Suspense>
   );
 }

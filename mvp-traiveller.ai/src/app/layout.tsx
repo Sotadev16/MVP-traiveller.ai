@@ -1,11 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TrAIveller.ai - Jouw slimme AI-reisplanner",
   description:
     "TrAIveller.ai vergelijkt razendsnel vluchten, cruises en stays. Vul je intake in en krijg 3 slimme opties: beste prijs, beste kwaliteit, handigst.",
-  viewport: "width=device-width, initial-scale=1.0",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1.0,
 };
 
 export default function RootLayout({
