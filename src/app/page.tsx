@@ -23,7 +23,6 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
-import homeScreenWallpaper from "../../public/images/homeScreenWallpaper.png";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -52,7 +51,7 @@ export default function Home() {
       {/* Parallax Background - Fixed */}
       <div className="fixed inset-0 z-0">
         <Image
-          src={homeScreenWallpaper}
+          src="/images/homeScreenWallpaper.png"
           alt="Beautiful Beach Paradise"
           fill
           className="object-cover object-center"
