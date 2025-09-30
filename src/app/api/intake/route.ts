@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a unique ID for this submission
-    const submissionId = `intake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const submissionId = `intake_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
     // In a real implementation, you would:
     // 1. Save to database
