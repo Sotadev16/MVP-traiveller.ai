@@ -63,7 +63,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <main className="relative z-10 min-h-screen flex items-center justify-center pt-16 sm:pt-20">
+      <main className="mt-16 relative z-10 min-h-screen flex items-center justify-center pt-16 sm:pt-20">
         {/* Content Container */}
         <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Main Title with Gaming-Inspired Typography */}
