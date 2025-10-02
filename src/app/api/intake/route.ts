@@ -93,4 +93,5 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({ message: 'Use POST method to submit intake data' });
+  
 }
