@@ -82,7 +82,7 @@ export interface IntakeData {
   trip_mode?: string
   destination?: string
   cruise_region?: string
-  payload?: any
+  payload?: Record<string, unknown>
 
   // Status & admin (for admin use)
   status?: 'new' | 'in_progress' | 'completed' | 'cancelled'
@@ -96,7 +96,7 @@ export interface EventLog {
   event_type: string
   intake_id?: string
   user_id?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   ip_address?: string
   user_agent?: string
 }

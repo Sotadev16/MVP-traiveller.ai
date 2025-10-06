@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { IntakeData } from '@/lib/supabase';
 
@@ -17,80 +17,7 @@ export default function AdminDashboard() {
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [destinationFilter, setDestinationFilter] = useState<string>('');
 
-  useEffect(() => {
-    checkAuth();
-
-    // Handle auth state changes (magic link callback)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        setIsAuthenticated(true);
-        setLoginMessage('Successfully logged in!');
-      } else if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchIntakes();
-    }
-  }, [isAuthenticated, statusFilter, dateFilter, destinationFilter]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (session?.user) {
-      // Check if user is admin
-      const { data: adminUser } = await supabase
-        .from('users_admin')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      setIsAuthenticated(!!adminUser);
-    } else {
-      setIsAuthenticated(false);
-    }
-
-    setLoading(false);
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    setLoginMessage('');
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false, // Only allow existing users
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (error) {
-        setLoginMessage('Login failed: ' + error.message);
-      } else {
-        setLoginMessage('Magic link sent! Check your email.');
-      }
-    } catch (error) {
-      setLoginMessage('An error occurred during login.');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
-    setIntakes([]);
-  };
-
-  const fetchIntakes = async () => {
+  const fetchIntakes = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -140,11 +67,84 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  }, [statusFilter, dateFilter, destinationFilter]);
+
+  useEffect(() => {
+    checkAuth();
+
+    // Handle auth state changes (magic link callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
+        setLoginMessage('Successfully logged in!');
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchIntakes();
+    }
+  }, [isAuthenticated, fetchIntakes]);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      // Check if user is admin
+      const { data: adminUser } = await supabase
+        .from('users_admin')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      setIsAuthenticated(!!adminUser);
+    } else {
+      setIsAuthenticated(false);
+    }
+
+    setLoading(false);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false, // Only allow existing users
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        setLoginMessage('Login failed: ' + error.message);
+      } else {
+        setLoginMessage('Magic link sent! Check your email.');
+      }
+    } catch {
+      setLoginMessage('An error occurred during login.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setIntakes([]);
   };
 
   const updateIntakeStatus = async (id: string, status: string, notes?: string) => {
     try {
-      const updates: any = { status };
+      const updates: { status: string; admin_notes?: string } = { status };
       if (notes !== undefined) {
         updates.admin_notes = notes;
       }
@@ -159,20 +159,12 @@ export default function AdminDashboard() {
       } else {
         fetchIntakes(); // Refresh the list
       }
-    } catch (error) {
+    } catch {
       alert('Error updating intake');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('nl-NL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // formatDate function moved to IntakeRow component where it's used
 
   const exportToCSV = () => {
     const headers = [

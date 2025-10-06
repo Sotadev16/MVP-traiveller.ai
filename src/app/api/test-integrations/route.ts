@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runAPITest, TravelAPIClient } from '@/lib/api-integrations';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Run the API integration test
     console.log('Starting API integration test...');

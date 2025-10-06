@@ -20,6 +20,32 @@ export interface HotelSearchParams {
   rooms: number;
 }
 
+export interface FlightData {
+  flights: Array<{
+    id: string;
+    airline: string;
+    price: number;
+    currency: string;
+    duration: string;
+    stops: number;
+    departure: string;
+    return: string;
+  }>;
+  searchParams: FlightSearchParams;
+}
+
+export interface HotelData {
+  hotels: Array<{
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+    rating: number;
+    location: string;
+  }>;
+  searchParams: HotelSearchParams;
+}
+
 export interface APIResponse<T> {
   success: boolean;
   data?: T;
@@ -37,7 +63,7 @@ export class TravelAPIClient {
     this.apiKey = process.env.TRAVEL_API_KEY || '';
   }
 
-  async searchFlights(params: FlightSearchParams): Promise<APIResponse<any>> {
+  async searchFlights(params: FlightSearchParams): Promise<APIResponse<FlightData>> {
     try {
       // Mock implementation - replace with real API call
       const mockResponse = {
@@ -77,7 +103,7 @@ export class TravelAPIClient {
     }
   }
 
-  async searchHotels(params: HotelSearchParams): Promise<APIResponse<any>> {
+  async searchHotels(params: HotelSearchParams): Promise<APIResponse<HotelData>> {
     try {
       // Mock implementation - replace with real API call
       const mockResponse = {
@@ -115,7 +141,7 @@ export class TravelAPIClient {
     }
   }
 
-  async testConnection(): Promise<APIResponse<{ status: string }>> {
+  async testConnection(): Promise<APIResponse<{ status: string; timestamp: string; version: string }>> {
     try {
       console.log('Testing API connection...');
 
