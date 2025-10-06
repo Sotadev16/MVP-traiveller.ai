@@ -1,8 +1,105 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import type { IntakeData } from '@/lib/supabase';
+import { sendTripOptionsEmail } from '@/lib/email';
+import crypto from 'crypto';
+
+function hashIP(ip: string): string {
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+}
+
+function getClientIP(request: NextRequest): string {
+  // Check various headers for the real IP
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIP = request.headers.get('x-real-ip');
+  const cfIP = request.headers.get('cf-connecting-ip');
+
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  if (realIP) {
+    return realIP;
+  }
+  if (cfIP) {
+    return cfIP;
+  }
+
+  return 'unknown';
+}
+
+function mapTravelerType(travelerType: string): 'adults' | 'family' | 'solo' | 'couple' | 'group' {
+  switch (travelerType) {
+    case 'jongeren':
+    case 'honeymoon':
+    case 'couples':
+      return 'couple';
+    case 'familievakantie':
+      return 'family';
+    default:
+      return 'adults';
+  }
+}
+
+function mapCabinClass(cabinClass: string): 'economy' | 'premium_economy' | 'business' | 'first' {
+  switch (cabinClass) {
+    case 'premium':
+      return 'premium_economy';
+    case 'economy':
+    case 'business':
+    case 'first':
+      return cabinClass as 'economy' | 'business' | 'first';
+    default:
+      return 'economy';
+  }
+}
+
+function mapCarType(carType: string): 'economy' | 'compact' | 'intermediate' | 'standard' | 'full_size' | 'premium' | 'luxury' | 'suv' | undefined {
+  switch (carType) {
+    case 'hatchback':
+      return 'compact';
+    case 'sedan':
+      return 'standard';
+    case 'mpv':
+      return 'full_size';
+    case '4x4':
+      return 'suv';
+    case 'economy':
+    case 'compact':
+    case 'intermediate':
+    case 'standard':
+    case 'full_size':
+    case 'premium':
+    case 'luxury':
+    case 'suv':
+      return carType as 'economy' | 'compact' | 'intermediate' | 'standard' | 'full_size' | 'premium' | 'luxury' | 'suv';
+    default:
+      return undefined;
+  }
+}
+
+function mapAccommodationType(accommodationType: string): 'hotel' | 'apartment' | 'hostel' | 'resort' | 'villa' | 'bnb' | 'mixed' | undefined {
+  switch (accommodationType) {
+    case 'house':
+      return 'villa';
+    case 'all-inclusive':
+      return 'resort';
+    case 'hotel':
+    case 'apartment':
+    case 'hostel':
+    case 'resort':
+    case 'villa':
+    case 'bnb':
+    case 'mixed':
+      return accommodationType as 'hotel' | 'apartment' | 'hostel' | 'resort' | 'villa' | 'bnb' | 'mixed';
+    default:
+      return undefined;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.json();
+    console.log('Received form data:', JSON.stringify(formData, null, 2));
 
     // Honeypot validation
     if (formData.website && formData.website.trim() !== '') {
@@ -22,7 +119,7 @@ export async function POST(request: NextRequest) {
     if (!formData.returnDate) errors.push('Return date is required');
     if (!formData.budget && !formData.customBudget) errors.push('Budget is required');
     if (!formData.flexibility) errors.push('Flexibility is required');
-    if (!formData.travelType) errors.push('Travel type is required');
+    if (!formData.travelType && !formData.tripType) errors.push('Travel type is required');
 
     // Date validation
     const today = new Date();
@@ -41,7 +138,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Budget validation
-    if (formData.customBudget && parseInt(formData.customBudget) < 100) {
+    const budget = formData.budget || formData.customBudget;
+    if (budget && parseInt(budget) < 100) {
       errors.push('Minimum budget is €100');
     }
 
@@ -49,41 +147,148 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errors }, { status: 400 });
     }
 
-    // Generate a unique ID for this submission
-    const submissionId = `intake_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    // Get client info
+    const clientIP = getClientIP(request);
+    const userAgent = request.headers.get('user-agent') || '';
 
-    // In a real implementation, you would:
-    // 1. Save to database
-    // 2. Send to external APIs
-    // 3. Trigger email notifications
-    // 4. Process data for matching algorithm
-
-    console.log('Intake submission received:', {
-      id: submissionId,
+    // Prepare intake data for Supabase
+    const intakeData: Partial<IntakeData> = {
+      // Contact info
+      full_name: formData.fullName || formData.email || 'Anonymous', // fallback since fullName not in wizard
       email: formData.email,
-      travelType: formData.travelType,
-      budget: formData.budget || formData.customBudget,
-      dates: {
-        departure: formData.departureDate,
-        return: formData.returnDate
+      phone: formData.phone || null,
+
+      // Traveler info
+      traveler_type: mapTravelerType(formData.travelerType || ''),
+      adults: parseInt(formData.adults) || 1,
+      children: parseInt(formData.children) || 0,
+      children_ages: formData.childrenAges || [],
+
+      // Dates
+      vertrek_datum: formData.departureDate,
+      terug_datum: formData.returnDate,
+      flexible: formData.flexibility !== 'exact',
+
+      // Destination & departure
+      bestemming: formData.destination || '',
+      vertrek_vanaf: formData.departureAirport || formData.departureFrom || '',
+
+      // Flight preferences
+      direct_only: formData.flightType === 'direct',
+      stops_ok: formData.flightType !== 'direct',
+      cabin_class: mapCabinClass(formData.flightClass || formData.cabinClass || ''),
+
+      // Car rental
+      car_needed: formData.carRental === true || formData.carRental === 'yes',
+      car_type: mapCarType(formData.carType || ''),
+      gearbox: formData.carGearbox || formData.gearbox || null,
+      driver_age: formData.driverAge ? parseInt(formData.driverAge) : undefined,
+
+      // Accommodation
+      accommodation_type: mapAccommodationType(formData.accommodation || formData.accommodationType || ''),
+
+      // Budget
+      budget: parseInt(budget),
+
+      // Extra
+      notes: formData.notes || null,
+      utm_source: formData.utm_source || null,
+      user_agent: userAgent,
+      ip_hash: hashIP(clientIP),
+
+      // Status
+      status: 'new'
+    };
+
+    // Insert into Supabase
+    console.log('Attempting to insert data:', JSON.stringify(intakeData, null, 2));
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing');
+    console.log('Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
+
+    // Using admin client which bypasses RLS
+    console.log('Using supabaseAdmin client (service role)');
+
+    const { data: intake, error: insertError } = await supabaseAdmin
+      .from('intakes')
+      .insert(intakeData)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Supabase insert error:', insertError);
+      console.error('Insert data was:', JSON.stringify(intakeData, null, 2));
+      return NextResponse.json(
+        { error: 'Failed to save intake data', details: insertError.message },
+        { status: 500 }
+      );
+    }
+
+    // Log the event
+    await supabaseAdmin.from('event_logs').insert({
+      event_type: 'intake_submitted',
+      intake_id: intake.id,
+      metadata: {
+        user_agent: userAgent,
+        ip_hash: hashIP(clientIP),
+        form_data: {
+          travel_type: intakeData.traveler_type,
+          budget: intakeData.budget,
+          destination: intakeData.bestemming
+        }
       },
-      travelers: {
-        adults: formData.adults,
-        children: formData.children,
-        childrenAges: formData.childrenAges
-      },
-      flexibility: formData.flexibility
+      ip_address: clientIP,
+      user_agent: userAgent
     });
 
-    // Mock success response
+    // Send email with trip options
+    const customerName = formData.fullName || formData.email.split('@')[0] || 'Reiziger';
+    const emailResult = await sendTripOptionsEmail({
+      customerName,
+      email: formData.email,
+      tripOptions: [], // Will use default options from email service
+      language: 'nl' // Default to Dutch
+    });
+
+    if (!emailResult.success) {
+      console.error('Failed to send email:', emailResult.error);
+      // Log email failure but don't fail the entire request
+      await supabaseAdmin.from('event_logs').insert({
+        event_type: 'email_failed',
+        intake_id: intake.id,
+        metadata: {
+          error: emailResult.error,
+          email: formData.email
+        }
+      });
+    } else {
+      // Log successful email
+      await supabaseAdmin.from('event_logs').insert({
+        event_type: 'email_sent',
+        intake_id: intake.id,
+        metadata: {
+          email: formData.email,
+          customer_name: customerName
+        }
+      });
+    }
+
+    // Success response
     return NextResponse.json({
       success: true,
-      id: submissionId,
-      message: 'Intake successfully submitted'
+      id: intake.id,
+      message: 'Intake successfully submitted. We will send you 3 trip options within 24-48 hours.',
+      emailSent: emailResult.success
     });
 
   } catch (error) {
     console.error('API Error:', error);
+
+    // Log error event
+    await supabaseAdmin.from('event_logs').insert({
+      event_type: 'intake_error',
+      metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+    });
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -93,5 +298,4 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({ message: 'Use POST method to submit intake data' });
-  
 }

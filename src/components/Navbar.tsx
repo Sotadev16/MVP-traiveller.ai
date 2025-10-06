@@ -59,9 +59,9 @@ export default function Navbar() {
           <Image
             src="/images/traiveller-logo.png"
             alt="TrAIveller.ai logo"
-            width={50}
-            height={50}
-            className="h-12 w-auto transition-all duration-500 group-hover:scale-110 drop-shadow-lg"
+            width={100}
+            height={100}
+            className="w-auto transition-all duration-500 group-hover:scale-110 drop-shadow-lg"
             priority
           />
         </Link>
