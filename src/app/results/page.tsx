@@ -28,177 +28,142 @@ interface TravelOption {
   highlights: string[];
 }
 
-// Mock API function - simulates database/API call
-const getMockTravelOptions = (): TravelOption[] => [
+// Mock API function - simulates database/API call based on user intake
+const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
   {
     id: "1",
-    title: "🏝️ Zonnige Aruba Strandvakantie",
-    price: 1450,
+    title: "✈️ Amsterdam → Barcelona",
+    price: 299,
     currency: "EUR",
-    duration: 7,
-    rating: 4.8,
-    description:
-      "Perfect strandparadijs met kristalhelder water en witte stranden. Inclusief vlucht, hotel en ontbijt.",
-    image:
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "AMS",
-    destination: "Aruba",
+    duration: 5,
+    rating: 4.6,
+    description: "5 nachten, Hotel 3★ - Perfecte stedentrip naar het bruisende Barcelona met Gothic Quarter verkenning.",
+    image: "https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    origin: "Amsterdam",
+    destination: "Barcelona",
     hotel: {
-      name: "Palm Beach Resort & Spa",
-      rating: 4.5,
+      name: "Hotel Barcelona Center",
+      rating: 4.3,
     },
     score: 0.92,
     bookUrl: "#",
     type: "flight",
     highlights: [
       "🛫 Direct vlucht",
-      "🏖️ Strandlocatie",
+      "🏰 Centrale locatie",
       "🍳 Ontbijt inbegrepen",
-      "💎 Beste prijs",
+      "💰 Beste prijs",
     ],
   },
   {
     id: "2",
-    title: "🚢 Mediterrane Cruise Ervaring",
-    price: 1200,
+    title: "✈️ Amsterdam → Rome",
+    price: 399,
     currency: "EUR",
-    duration: 8,
-    rating: 4.6,
-    description:
-      "Ontdek de prachtige havensteden van de Middellandse Zee op deze luxe cruise met balkonhut.",
-    image:
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Barcelona",
-    destination: "Middellandse Zee",
-    hotel: {
-      name: "MSC Seaside",
-      rating: 4.3,
-    },
-    score: 0.87,
-    bookUrl: "#",
-    type: "cruise",
-    highlights: [
-      "🛳️ Balkonhut",
-      "🍽️ All-inclusive",
-      "🌍 5 bestemmingen",
-      "⭐ Populair",
-    ],
-  },
-  {
-    id: "3",
-    title: "🗼 Romantisch Parijs Weekend",
-    price: 650,
-    currency: "EUR",
-    duration: 3,
+    duration: 7,
     rating: 4.7,
-    description:
-      "Perfecte stedentrip naar de stad van de liefde. Centraal gelegen boutique hotel in Le Marais.",
-    image:
-      "https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "AMS",
-    destination: "Parijs",
+    description: "7 nachten, Appartement - Ontdek de eeuwige stad Rome met eigen appartement in Trastevere.",
+    image: "https://images.unsplash.com/photo-1552832230-c0197047daf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    origin: "Amsterdam",
+    destination: "Rome",
     hotel: {
-      name: "Hotel Le Marais Boutique",
+      name: "Rome Trastevere Apartments",
       rating: 4.4,
-    },
-    score: 0.85,
-    bookUrl: "#",
-    type: "flight",
-    highlights: [
-      "🏰 Centrale locatie",
-      "💕 Romantisch",
-      "⚡ Korte vlucht",
-      "🏆 Handigst",
-    ],
-  },
-  {
-    id: "4",
-    title: "🏛️ Avontuurlijke Thaise Verkenning",
-    price: 1800,
-    currency: "EUR",
-    duration: 12,
-    rating: 4.9,
-    description:
-      "Ontdek het betoverende Thailand: van Bangkok's tempels tot de paradijselijke eilanden van het zuiden.",
-    image:
-      "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "AMS",
-    destination: "Thailand",
-    hotel: {
-      name: "Premium Mixed Accommodaties",
-      rating: 4.2,
-    },
-    score: 0.91,
-    bookUrl: "#",
-    type: "surprise",
-    highlights: [
-      "🌴 3 bestemmingen",
-      "🛕 Culturele ervaring",
-      "🏖️ Strand + Stad",
-      "🌟 Beste kwaliteit",
-    ],
-  },
-  {
-    id: "5",
-    title: "🏺 Luxe Griekse Eilanden Tour",
-    price: 2100,
-    currency: "EUR",
-    duration: 10,
-    rating: 4.8,
-    description:
-      "Verken de prachtige Griekse eilanden Santorini en Mykonos in luxe stijl met zeezicht villa's.",
-    image:
-      "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "AMS",
-    destination: "Griekenland",
-    hotel: {
-      name: "Santorini Villa Collections",
-      rating: 4.7,
     },
     score: 0.89,
     bookUrl: "#",
     type: "flight",
     highlights: [
-      "🏛️ Luxe accommodatie",
-      "🌊 Zeezicht",
-      "🚗 Privé transfers",
-      "💰 Premium deal",
+      "🏠 Eigen appartement",
+      "🍝 Lokale ervaring",
+      "🏛️ Historisch centrum",
+      "⭐ Populair",
     ],
   },
   {
-    id: "6",
-    title: "🌺 Caribbean Cruise Adventure",
-    price: 1650,
+    id: "3",
+    title: "✈️ Amsterdam → Gran Canaria",
+    price: 699,
     currency: "EUR",
-    duration: 9,
-    rating: 4.5,
-    description:
-      "Ontdek de Caribische eilanden op deze spectaculaire cruise vanuit Miami met suite accommodatie.",
-    image:
-      "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Miami",
-    destination: "Caribbean",
+    duration: 10,
+    rating: 4.8,
+    description: "10 nachten, All-Inclusive - Tropisch paradijs met kristalheldere stranden en eindloze zon.",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    origin: "Amsterdam",
+    destination: "Gran Canaria",
     hotel: {
-      name: "Royal Caribbean Explorer",
-      rating: 4.4,
+      name: "Gran Canaria Beach Resort",
+      rating: 4.5,
     },
-    score: 0.83,
+    score: 0.91,
     bookUrl: "#",
-    type: "cruise",
+    type: "flight",
     highlights: [
-      "🛏️ Suite hut",
-      "🏝️ 6 eilanden",
-      "🎭 Entertainment",
-      "☀️ Tropisch",
+      "🏖️ All-Inclusive",
+      "☀️ Gegarandeerd zon",
+      "🏊 Zwembadcomplex",
+      "🌟 Beste kwaliteit",
     ],
   },
-];
+  {
+    id: "4",
+    title: "✈️ Amsterdam → Athene",
+    price: 549,
+    currency: "EUR",
+    duration: 7,
+    rating: 4.6,
+    description: "7 nachten, Boutique Hotel - Verken de bakermat van de democratie met moderne luxe.",
+    image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    origin: "Amsterdam",
+    destination: "Athene",
+    hotel: {
+      name: "Athens Boutique Suites",
+      rating: 4.7,
+    },
+    score: 0.87,
+    bookUrl: "#",
+    type: "flight",
+    highlights: [
+      "🏛️ Boutique hotel",
+      "🌊 Dichtbij Akropolis",
+      "🍷 Lokale culinair",
+      "💎 Cultureel",
+    ],
+  },
+  {
+    id: "5",
+    title: "✈️ Amsterdam → Aruba",
+    price: 1299,
+    currency: "EUR",
+    duration: 14,
+    rating: 4.9,
+    description: "14 nachten, Strandresort - Ultimate Caribbean escape met wit zand en turkooisblauw water.",
+    image: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    origin: "Amsterdam",
+    destination: "Aruba",
+    hotel: {
+      name: "Aruba Eagle Beach Resort",
+      rating: 4.8,
+    },
+    score: 0.94,
+    bookUrl: "#",
+    type: "flight",
+    highlights: [
+      "🏝️ Eagle Beach",
+      "🛫 Direct vlucht",
+      "🌺 Strandresort",
+      "🏆 Premium ervaring",
+    ],
+  },
+].slice(0, 5); // Always return exactly 5 options
 
 function ResultsContent() {
   const searchParams = useSearchParams();
+  const submissionId = searchParams.get("id");
   const [results, setResults] = useState<TravelOption[]>([]);
   const [filteredResults, setFilteredResults] = useState<TravelOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showThankYou, setShowThankYou] = useState(false);
   const [filters, setFilters] = useState({
     maxPrice: "",
     duration: "",
@@ -240,12 +205,10 @@ function ResultsContent() {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Get mock data
-      const options = getMockTravelOptions();
-
-      // Filter based on query parameters if needed
+      // Get mock data based on intake
       const intakeId = searchParams.get("id");
       console.log("Loading results for intake:", intakeId);
+      const options = getMockTravelOptions(intakeId || undefined);
 
       setResults(options);
       setFilteredResults(options);
@@ -254,6 +217,16 @@ function ResultsContent() {
 
     fetchResults();
   }, [searchParams]);
+
+  useEffect(() => {
+    // Show thank you message if this is from a fresh submission
+    if (submissionId && submissionId !== 'demo') {
+      setShowThankYou(true);
+      // Hide after 8 seconds
+      const timer = setTimeout(() => setShowThankYou(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [submissionId]);
 
   useEffect(() => {
     applyFilters();
@@ -437,6 +410,27 @@ function ResultsContent() {
         </div>
 
         <Navbar />
+
+        {/* Thank You Banner */}
+        {showThankYou && (
+          <div className="fixed top-20 left-4 right-4 z-50 max-w-md mx-auto">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-lg shadow-lg animate-bounce">
+              <div className="flex items-center space-x-3">
+                <div className="text-2xl">🎉</div>
+                <div>
+                  <h3 className="font-bold">Bedankt voor je intake!</h3>
+                  <p className="text-sm opacity-90">Hier zijn je 5 gepersonaliseerde reisopties. Check ook je email!</p>
+                </div>
+                <button
+                  onClick={() => setShowThankYou(false)}
+                  className="text-white/80 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <main
           className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8"
