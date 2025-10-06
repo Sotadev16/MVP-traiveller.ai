@@ -29,7 +29,7 @@ interface TravelOption {
 }
 
 // Mock API function - simulates database/API call based on user intake
-const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
+const getMockTravelOptions = (): TravelOption[] => [
   {
     id: "1",
     title: "✈️ Amsterdam → Barcelona",
@@ -47,7 +47,7 @@ const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
     },
     score: 0.92,
     bookUrl: "#",
-    type: "flight",
+    type: "flight" as const,
     highlights: [
       "🛫 Direct vlucht",
       "🏰 Centrale locatie",
@@ -72,7 +72,7 @@ const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
     },
     score: 0.89,
     bookUrl: "#",
-    type: "flight",
+    type: "flight" as const,
     highlights: [
       "🏠 Eigen appartement",
       "🍝 Lokale ervaring",
@@ -97,7 +97,7 @@ const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
     },
     score: 0.91,
     bookUrl: "#",
-    type: "flight",
+    type: "flight" as const,
     highlights: [
       "🏖️ All-Inclusive",
       "☀️ Gegarandeerd zon",
@@ -122,7 +122,7 @@ const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
     },
     score: 0.87,
     bookUrl: "#",
-    type: "flight",
+    type: "flight" as const,
     highlights: [
       "🏛️ Boutique hotel",
       "🌊 Dichtbij Akropolis",
@@ -147,7 +147,7 @@ const getMockTravelOptions = (intakeId?: string): TravelOption[] => [
     },
     score: 0.94,
     bookUrl: "#",
-    type: "flight",
+    type: "flight" as const,
     highlights: [
       "🏝️ Eagle Beach",
       "🛫 Direct vlucht",
@@ -208,7 +208,7 @@ function ResultsContent() {
       // Get mock data based on intake
       const intakeId = searchParams.get("id");
       console.log("Loading results for intake:", intakeId);
-      const options = getMockTravelOptions(intakeId || undefined);
+      const options = getMockTravelOptions();
 
       setResults(options);
       setFilteredResults(options);
