@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -15,14 +14,22 @@ export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Admin client that bypasses RLS (for server-side operations)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-    detectSessionInUrl: false
+// Admin client that bypasses RLS (for server-side operations only)
+export const createSupabaseAdmin = () => {
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
   }
-})
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  })
+}
 
 // Types for our database
 export interface IntakeData {
@@ -88,6 +95,8 @@ export interface IntakeData {
   status?: 'new' | 'in_progress' | 'completed' | 'cancelled'
   assignee?: string
   admin_notes?: string
+  ai_mode?: boolean
+  ai_destination?: string
 }
 
 export interface EventLog {

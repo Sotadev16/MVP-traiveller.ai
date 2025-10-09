@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createSupabaseAdmin } from '@/lib/supabase';
 import type { IntakeData } from '@/lib/supabase';
 import { sendTripOptionsEmail } from '@/lib/email';
 import crypto from 'crypto';
@@ -97,6 +97,8 @@ function mapAccommodationType(accommodationType: string): 'hotel' | 'apartment' 
 }
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = createSupabaseAdmin();
+
   try {
     const formData = await request.json();
     console.log('Received form data:', JSON.stringify(formData, null, 2));
