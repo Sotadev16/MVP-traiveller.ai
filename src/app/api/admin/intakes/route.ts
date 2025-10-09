@@ -7,7 +7,8 @@ const ADMIN_EMAILS = [
   'admin@traiveller.ai',
   'adziyodevops@gmail.com',
   'harry@traiveller.ai',
-  'mrharmain9@gmail.com'
+  'mrharmain9@gmail.com',
+  'briankock@hotmail.nl'
 ];
 
 async function checkAdminAuth(request: NextRequest) {
