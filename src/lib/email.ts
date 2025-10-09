@@ -275,7 +275,7 @@ export async function sendTripOptionsEmail(emailData: EmailData): Promise<{ succ
       : generateEnglishEmailContent(customerName, tripOptions);
 
     const result = await resend.emails.send({
-      from: 'TrAIveller.ai <onboarding@resend.dev>',
+      from: 'TrAIveller.ai <info@traiveller.ai>',
       to: [email],
       subject,
       html,
