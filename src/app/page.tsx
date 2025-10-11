@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FaBolt,
   FaLock,
@@ -25,6 +26,7 @@ import {
 import Navbar from "@/components/Navbar";
 
 export default function Home() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [timestamp, setTimestamp] = useState(0);
@@ -42,7 +44,12 @@ export default function Home() {
 
   useEffect(() => {
     setTimestamp(Date.now());
-  }, []);
+
+    // Check for auth tokens in URL hash and redirect to admin
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+      router.push('/admin' + window.location.hash);
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-dark-bg text-dark-fg overflow-x-hidden">

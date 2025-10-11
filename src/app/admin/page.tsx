@@ -195,7 +195,31 @@ export default function AdminDashboard() {
   }, [statusFilter, dateFilter, debouncedDestinationFilter]);
 
   useEffect(() => {
-    checkAuth();
+    // Handle hash fragments from magic link redirects
+    const handleHashFragment = async () => {
+      if (window.location.hash) {
+        try {
+          // Let Supabase handle the hash fragment
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            setIsAuthenticated(true);
+            setLoginMessage("Successfully logged in!");
+            // Clean up the URL
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+            return;
+          }
+        } catch (error) {
+          console.error("Hash fragment auth error:", error);
+        }
+      }
+      checkAuth();
+    };
+
+    handleHashFragment();
 
     // Handle auth state changes (magic link callback)
     const {
@@ -226,12 +250,7 @@ export default function AdminDashboard() {
     if (session?.user) {
       // For now, check if email contains "admin" or is in allowed list
       // In production, you'd want proper role-based access control
-      const allowedEmails = [
-        "admin@traiveller.ai",
-        "adziyodevops@gmail.com",
-        "harry@traiveller.ai",
-        "mrharmain9@gmail.com",
-      ];
+      const allowedEmails = ["briankock@hotmail.nl", "adziyodevops@gmail.com", "mrharmain9@gmail.com"];
 
       const isAdmin =
         allowedEmails.includes(session.user.email || "") ||
@@ -255,7 +274,9 @@ export default function AdminDashboard() {
         email,
         options: {
           shouldCreateUser: false, // Only allow existing users
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${
+            process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+          }/auth/callback`,
         },
       });
 
