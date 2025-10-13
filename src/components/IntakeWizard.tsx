@@ -40,7 +40,7 @@ interface WizardData {
 
   // Step 3: Destination
   destination: string;
-  destinationType: "popular" | "worldwide" | "";
+  destinationType: "popular" | "worldwide" | "custom" | "ai-anywhere" | "ai-decide" | "";
 
   // Step 4: Dates & Flexibility
   departureDate: string;
@@ -70,7 +70,7 @@ interface WizardData {
   driverAge: number;
 
   // Step 9: Accommodation
-  accommodation: "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "";
+  accommodation: "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "";
 
   // Step 10: Budget
   budget: string;
@@ -137,13 +137,15 @@ export default function IntakeWizard() {
   const [wizardData, setWizardData] = useState<WizardData>(INITIAL_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customDestination, setCustomDestination] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const router = useRouter();
 
   const getTotalSteps = () => {
-    if (wizardData.tripType === "surprise") return 4;
+    if (wizardData.tripType === "surprise") return 6; // Added accommodation Y/N step + contact step
     if (wizardData.tripType === "flight") return 12;
     if (wizardData.tripType === "accommodation-only") return 9; // Skip flight-related steps
-    if (wizardData.tripType === "flight-only") return 10; // Skip accommodation-related steps
+    if (wizardData.tripType === "flight-only") return 9; // Skip accommodation and trip style steps
     if (wizardData.tripType === "cruise") return 5;
     return 12; // Default to flight steps for initial calculation
   };
@@ -178,14 +180,20 @@ export default function IntakeWizard() {
         }
         break;
 
-      case 3: // Trip Style (All trip types except surprise and cruise)
-        if (["flight", "flight-only", "accommodation-only"].includes(wizardData.tripType) && !wizardData.tripStyle) {
+      case 3: // Trip Style (All trip types except surprise, cruise, and flight-only)
+        if (["flight", "accommodation-only"].includes(wizardData.tripType) && !wizardData.tripStyle) {
           newErrors.tripStyle = "Selecteer een reisstijl";
         }
         break;
 
       case 4: // Destination (All trip types except surprise and cruise)
-        if (["flight", "flight-only", "accommodation-only"].includes(wizardData.tripType) && !wizardData.destination) {
+        if (["flight", "accommodation-only"].includes(wizardData.tripType) && !wizardData.destination) {
+          newErrors.destination = "Selecteer een bestemming";
+        }
+        break;
+
+      case 3: // Destination for flight-only (skip trip style step)
+        if (wizardData.tripType === "flight-only" && !wizardData.destination) {
           newErrors.destination = "Selecteer een bestemming";
         }
         break;
@@ -198,53 +206,134 @@ export default function IntakeWizard() {
         }
         break;
 
-      case 6: // Dates & Flexibility
-        if (!wizardData.departureDate)
-          newErrors.departureDate = "Vertrekdatum is verplicht";
-
-        if (wizardData.useDuration) {
-          if (!wizardData.tripDuration)
-            newErrors.returnDate = "Reisduur is verplicht";
-        } else {
-          if (!wizardData.returnDate)
-            newErrors.returnDate = "Terugkomstdatum is verplicht";
-        }
-
-        if (!wizardData.flexibility)
-          newErrors.flexibility = "Flexibiliteit is verplicht";
-
-        // Date validation
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const depDate = new Date(wizardData.departureDate);
-
-        if (depDate < today)
-          newErrors.departureDate =
-            "Vertrekdatum kan niet in het verleden liggen";
-
-        if (!wizardData.useDuration && wizardData.returnDate) {
-          const retDate = new Date(wizardData.returnDate);
-          if (retDate < today)
-            newErrors.returnDate =
-              "Terugkomstdatum kan niet in het verleden liggen";
-          if (retDate <= depDate)
-            newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+      case 4: // Departure Airport for flight-only (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
+          if (!wizardData.flexibleAirport && (!wizardData.departureAirports || wizardData.departureAirports.length === 0)) {
+            newErrors.departureAirport = "Selecteer een vertrekreiport of kies voor flexibel";
+          }
         }
         break;
 
-      case 7: // Passengers
-        if (wizardData.adults < 1) newErrors.adults = "Minimaal 1 volwassene";
+      case 6: // Dates & Flexibility (flight and accommodation-only)
+        if (["flight", "accommodation-only"].includes(wizardData.tripType)) {
+          if (!wizardData.departureDate)
+            newErrors.departureDate = "Vertrekdatum is verplicht";
+
+          if (wizardData.useDuration) {
+            if (!wizardData.tripDuration)
+              newErrors.returnDate = "Reisduur is verplicht";
+          } else {
+            if (!wizardData.returnDate)
+              newErrors.returnDate = "Terugkomstdatum is verplicht";
+          }
+
+          if (!wizardData.flexibility)
+            newErrors.flexibility = "Flexibiliteit is verplicht";
+
+          // Date validation
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const depDate = new Date(wizardData.departureDate);
+
+          if (depDate < today)
+            newErrors.departureDate =
+              "Vertrekdatum kan niet in het verleden liggen";
+
+          if (!wizardData.useDuration && wizardData.returnDate) {
+            const retDate = new Date(wizardData.returnDate);
+            if (retDate < today)
+              newErrors.returnDate =
+                "Terugkomstdatum kan niet in het verleden liggen";
+            if (retDate <= depDate)
+              newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+          }
+        }
         break;
 
-      case 8: // Flight Options (Flight types only)
-        if (["flight", "flight-only"].includes(wizardData.tripType)) {
+      case 5: // Dates & Flexibility for flight-only (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
+          if (!wizardData.departureDate)
+            newErrors.departureDate = "Vertrekdatum is verplicht";
+
+          if (wizardData.useDuration) {
+            if (!wizardData.tripDuration)
+              newErrors.returnDate = "Reisduur is verplicht";
+          } else {
+            if (!wizardData.returnDate)
+              newErrors.returnDate = "Terugkomstdatum is verplicht";
+          }
+
+          if (!wizardData.flexibility)
+            newErrors.flexibility = "Flexibiliteit is verplicht";
+
+          // Date validation
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const depDate = new Date(wizardData.departureDate);
+
+          if (depDate < today)
+            newErrors.departureDate =
+              "Vertrekdatum kan niet in het verleden liggen";
+
+          if (!wizardData.useDuration && wizardData.returnDate) {
+            const retDate = new Date(wizardData.returnDate);
+            if (retDate < today)
+              newErrors.returnDate =
+                "Terugkomstdatum kan niet in het verleden liggen";
+            if (retDate <= depDate)
+              newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+          }
+        }
+        break;
+
+      case 7: // Passengers (flight and accommodation-only)
+        if (["flight", "accommodation-only"].includes(wizardData.tripType)) {
+          if (wizardData.adults < 1) newErrors.adults = "Minimaal 1 volwassene";
+        }
+        break;
+
+      case 6: // Passengers for flight-only (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
+          if (wizardData.adults < 1) newErrors.adults = "Minimaal 1 volwassene";
+        }
+        break;
+
+      case 8: // Flight Options (flight only)
+        if (wizardData.tripType === "flight") {
           if (!wizardData.flightType) newErrors.flightType = "Selecteer vluchttype";
           if (!wizardData.flightClass) newErrors.flightClass = "Selecteer vluchtklasse";
         }
         break;
 
-      case 9: // Budget (flight-only and accommodation-only)
-        if (["flight-only", "accommodation-only"].includes(wizardData.tripType)) {
+      case 7: // Flight Options for flight-only (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
+          if (!wizardData.flightType) newErrors.flightType = "Selecteer vluchttype";
+          if (!wizardData.flightClass) newErrors.flightClass = "Selecteer vluchtklasse";
+        }
+        break;
+
+      case 9: // Budget (accommodation-only)
+        if (wizardData.tripType === "accommodation-only") {
+          if (!wizardData.budget && !wizardData.customBudget)
+            newErrors.budget = "Budget is verplicht";
+
+          // Budget validation
+          if (wizardData.budget === "custom") {
+            if (!wizardData.customBudget) {
+              newErrors.customBudget = "Aangepast budget is verplicht";
+            } else {
+              const budget = parseInt(wizardData.customBudget);
+              if (budget < 100)
+                newErrors.customBudget = "Minimum €100 per persoon";
+              if (budget > 50000)
+                newErrors.customBudget = "Maximum €50.000 per persoon";
+            }
+          }
+        }
+        break;
+
+      case 8: // Budget for flight-only (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
           if (!wizardData.budget && !wizardData.customBudget)
             newErrors.budget = "Budget is verplicht";
 
@@ -289,7 +378,7 @@ export default function IntakeWizard() {
         }
         break;
 
-      case 9: // Contact (accommodation-only flow) or Budget (flight-only flow)
+      case 9: // Contact for accommodation-only flow
         if (wizardData.tripType === "accommodation-only") {
           if (!wizardData.fullName) newErrors.fullName = "Naam is verplicht";
           if (!wizardData.email) newErrors.email = "Email is verplicht";
@@ -298,29 +387,11 @@ export default function IntakeWizard() {
           if (wizardData.email && !emailRegex.test(wizardData.email)) {
             newErrors.email = "Ongeldig email adres";
           }
-        } else if (wizardData.tripType === "flight-only") {
-          if (!wizardData.budget && !wizardData.customBudget)
-            newErrors.budget = "Budget is verplicht";
-
-          // Budget validation
-          if (wizardData.budget === "custom") {
-            if (!wizardData.customBudget) {
-              newErrors.customBudget = "Aangepast budget is verplicht";
-            } else {
-              const budget = parseInt(wizardData.customBudget);
-              if (budget < 100)
-                newErrors.customBudget = "Minimum €100 per persoon";
-              if (budget > 50000)
-                newErrors.customBudget = "Maximum €50.000 per persoon";
-            }
-          }
         }
         break;
 
-      case 10: // Accommodation (flight flow) or Contact (flight-only flow)
-        if (wizardData.tripType === "flight" && !wizardData.accommodation) {
-          newErrors.accommodation = "Selecteer accommodatie";
-        } else if (wizardData.tripType === "flight-only") {
+      case 9: // Contact for flight-only flow (adjusted step number)
+        if (wizardData.tripType === "flight-only") {
           if (!wizardData.fullName) newErrors.fullName = "Naam is verplicht";
           if (!wizardData.email) newErrors.email = "Email is verplicht";
           // Email validation
@@ -328,6 +399,12 @@ export default function IntakeWizard() {
           if (wizardData.email && !emailRegex.test(wizardData.email)) {
             newErrors.email = "Ongeldig email adres";
           }
+        }
+        break;
+
+      case 10: // Accommodation (flight flow)
+        if (wizardData.tripType === "flight" && !wizardData.accommodation) {
+          newErrors.accommodation = "Selecteer accommodatie";
         }
         break;
 
@@ -382,16 +459,9 @@ export default function IntakeWizard() {
               if (retDate <= depDate) newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
               break;
 
-            case 3: // Budget & Passengers
-              if (!wizardData.email) newErrors.email = "Email is verplicht";
+            case 3: // Budget & Passengers for surprise trips
               if (!wizardData.budget && !wizardData.customBudget) newErrors.budget = "Budget is verplicht";
               if (wizardData.adults < 1) newErrors.adults = "Minimaal 1 volwassene";
-
-              // Email validation
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (wizardData.email && !emailRegex.test(wizardData.email)) {
-                newErrors.email = "Ongeldig email adres";
-              }
 
               // Budget validation for surprise me
               if (wizardData.budget === "custom") {
@@ -405,10 +475,24 @@ export default function IntakeWizard() {
               }
               break;
 
-            case 4: // Accommodation Level
+            case 4: // Accommodation Y/N
               if (!wizardData.accommodationLevel) {
                 newErrors.accommodationLevel = "Selecteer accommodatieniveau";
               }
+              break;
+
+            case 5: // Contact details for Surprise Me
+              if (!wizardData.fullName) newErrors.fullName = "Naam is verplicht";
+              if (!wizardData.email) newErrors.email = "Email is verplicht";
+              // Email validation
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (wizardData.email && !emailRegex.test(wizardData.email)) {
+                newErrors.email = "Ongeldig email adres";
+              }
+              break;
+
+            case 6: // Final step for Surprise Me
+              // No validation needed for final step
               break;
           }
         }
@@ -674,68 +758,157 @@ export default function IntakeWizard() {
     </div>
   );
 
-  const renderDestinationStep = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
-          Waar wil je naartoe?
-        </h2>
-        <p className="text-white drop-shadow-sm">
-          Kies je droombestemming
-        </p>
-      </div>
+  const handleCustomDestinationSubmit = () => {
+    if (customDestination.trim()) {
+      updateData({ destination: customDestination.trim(), destinationType: "custom" });
+      setShowCustomInput(false);
+      setCustomDestination("");
+    }
+  };
 
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-            <FaStar className="text-yellow-400" />
-            Populaire bestemmingen
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              "Aruba",
-              "Spanje",
-              "Griekenland",
-              "Italië",
-              "Gran Canaria",
-              "Turkije"
-            ].map((dest) => (
+  const renderDestinationStep = () => {
+
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+            Waar wil je naartoe?
+          </h2>
+          <p className="text-white drop-shadow-sm">
+            Kies je droombestemming
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+              <FaStar className="text-yellow-400" />
+              Populaire bestemmingen
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                "Aruba",
+                "Spanje",
+                "Griekenland",
+                "Italië",
+                "Frankrijk",
+                "Turkije"
+              ].map((dest) => (
+                <button
+                  key={dest}
+                  onClick={() => {
+                    updateData({ destination: dest, destinationType: "popular" });
+                    setShowCustomInput(false);
+                    setCustomDestination("");
+                  }}
+                  className={`p-4 rounded-xl text-left transition-all ${
+                    wizardData.destination === dest
+                      ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                      : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                  }`}
+                >
+                  {dest}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-white/60 text-sm mb-3">of kies een andere bestemming</div>
+            </div>
+
+            {/* Custom Destination Input */}
+            {showCustomInput ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customDestination}
+                  onChange={(e) => setCustomDestination(e.target.value)}
+                  placeholder="Typ je gewenste bestemming..."
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+                  onKeyDown={(e) => e.key === 'Enter' && handleCustomDestinationSubmit()}
+                />
+                <button
+                  onClick={handleCustomDestinationSubmit}
+                  className="px-4 py-3 bg-yellow-400 text-black rounded-xl font-medium hover:bg-yellow-300 transition-colors"
+                >
+                  OK
+                </button>
+                <button
+                  onClick={() => setShowCustomInput(false)}
+                  className="px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
               <button
-                key={dest}
-                onClick={() => updateData({ destination: dest, destinationType: "popular" })}
-                className={`p-4 rounded-xl text-left transition-all ${
-                  wizardData.destination === dest
+                onClick={() => setShowCustomInput(true)}
+                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
+                  wizardData.destinationType === "custom"
                     ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                     : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
                 }`}
               >
-                {dest}
+                <FaGlobe className="text-yellow-400" />
+                🔍 Zoek een andere bestemming
               </button>
-            ))}
+            )}
+
+            {/* Display selected custom destination */}
+            {wizardData.destinationType === "custom" && wizardData.destination && (
+              <div className="text-center">
+                <span className="inline-flex items-center gap-2 bg-yellow-400/20 border border-yellow-400 text-white px-4 py-2 rounded-xl">
+                  <FaMapMarkerAlt className="text-yellow-400" />
+                  {wizardData.destination}
+                </span>
+              </div>
+            )}
+
+            {/* Special AI Options */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  updateData({ destination: "anywhere-world", destinationType: "ai-anywhere" });
+                  setShowCustomInput(false);
+                  setCustomDestination("");
+                }}
+                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
+                  wizardData.destinationType === "ai-anywhere"
+                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                    : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                }`}
+              >
+                <span className="text-xl">🌍</span>
+                Anywhere in the world – let me decide
+              </button>
+
+              <button
+                onClick={() => {
+                  updateData({ destination: "ai-decide", destinationType: "ai-decide" });
+                  setShowCustomInput(false);
+                  setCustomDestination("");
+                }}
+                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
+                  wizardData.destinationType === "ai-decide"
+                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                    : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                }`}
+              >
+                <span className="text-xl">🤖</span>
+                A.I decide
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="text-center">
-          <div className="text-white/60 text-sm mb-3">of</div>
-          <button
-            onClick={() => updateData({ destination: "worldwide", destinationType: "worldwide" })}
-            className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-              wizardData.destinationType === "worldwide"
-                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-            }`}
-          >
-            <FaGlobe className="text-yellow-400" />
-            Overal ter wereld - laat mij kiezen
-          </button>
+          {errors.destination && (
+            <p className="text-red-400 text-sm mt-1">{errors.destination}</p>
+          )}
         </div>
-
-        {errors.destination && (
-          <p className="text-red-400 text-sm mt-1">{errors.destination}</p>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderStep2 = () => (
     <div className="space-y-6">
@@ -1623,30 +1796,14 @@ export default function IntakeWizard() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
-          Vertel ons over jezelf
+          Budget en reizigers
         </h2>
         <p className="text-white drop-shadow-sm">
-          Basis informatie voor je surprise reis
+          Vertel ons over je budget en reisgezelschap
         </p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <label className="flex items-center gap-3 text-white font-medium mb-3">
-            <FaEnvelope className="text-yellow-400" />
-            Email adres <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="email"
-            value={wizardData.email}
-            onChange={(e) => updateData({ email: e.target.value })}
-            className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
-            placeholder="jouw@email.com"
-          />
-          {errors.email && (
-            <p className="text-red-400 text-sm mt-1">{errors.email}</p>
-          )}
-        </div>
 
         <div>
           <label className="flex items-center gap-3 text-white font-medium mb-3">
@@ -1830,6 +1987,63 @@ export default function IntakeWizard() {
         {errors.accommodationLevel && (
           <p className="text-red-400 text-sm mt-4">{errors.accommodationLevel}</p>
         )}
+      </div>
+    </div>
+  );
+
+  const renderSurpriseAccommodationConfirmStep = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+          Wil je accommodatie bij je surprise reis?
+        </h2>
+        <p className="text-white/80 drop-shadow-sm">
+          Kies of je accommodatie wilt toevoegen aan je surprise pakket
+        </p>
+      </div>
+
+      <div className="max-w-2xl mx-auto">
+        <div className="space-y-4">
+          <button
+            onClick={() => updateData({ accommodation: "included" as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "" })}
+            className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
+              wizardData.accommodation === "included"
+                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+            }`}
+          >
+            <div className={`p-3 rounded-lg ${
+              wizardData.accommodation === "included" ? "bg-yellow-400/30" : "bg-white/20"
+            }`}>
+              <FaHotel className="text-yellow-400 text-xl" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-lg mb-1">Ja, inclusief accommodatie</div>
+              <div className="text-sm mb-2">Volledige surprise reis met verblijf</div>
+              <div className="text-xs opacity-70">Wij zorgen voor de perfecte accommodatie bij je bestemming</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => updateData({ accommodation: "not-included" as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "" })}
+            className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
+              wizardData.accommodation === "not-included"
+                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+            }`}
+          >
+            <div className={`p-3 rounded-lg ${
+              wizardData.accommodation === "not-included" ? "bg-yellow-400/30" : "bg-white/20"
+            }`}>
+              <FaPlane className="text-yellow-400 text-xl" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-lg mb-1">Nee, alleen de ervaring</div>
+              <div className="text-sm mb-2">Surprise bestemming zonder accommodatie</div>
+              <div className="text-xs opacity-70">Je regelt zelf je verblijf ter plaatse</div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2037,17 +2251,16 @@ export default function IntakeWizard() {
                 </>
               )}
 
-              {/* Flight Only Flow */}
+              {/* Flight Only Flow - Skip trip style step */}
               {wizardData.tripType === "flight-only" && (
                 <>
-                  {currentStep === 3 && renderTripStyleStep()}
-                  {currentStep === 4 && renderDestinationStep()}
-                  {currentStep === 5 && renderDepartureAirportStep()}
-                  {currentStep === 6 && renderStep3()}
-                  {currentStep === 7 && renderPassengersStep()}
-                  {currentStep === 8 && renderFlightOptionsStep()}
-                  {currentStep === 9 && renderBudgetStep()}
-                  {currentStep === 10 && renderEmailStep()}
+                  {currentStep === 3 && renderDestinationStep()}
+                  {currentStep === 4 && renderDepartureAirportStep()}
+                  {currentStep === 5 && renderStep3()}
+                  {currentStep === 6 && renderPassengersStep()}
+                  {currentStep === 7 && renderFlightOptionsStep()}
+                  {currentStep === 8 && renderBudgetStep()}
+                  {currentStep === 9 && renderEmailStep()}
                 </>
               )}
 
@@ -2064,12 +2277,14 @@ export default function IntakeWizard() {
                 </>
               )}
 
-              {/* Surprise Me Flow */}
+              {/* Surprise Me Flow - Added accommodation Y/N step + contact step */}
               {wizardData.tripType === "surprise" && (
                 <>
                   {currentStep === 2 && renderSurpriseDatesStep()}
                   {currentStep === 3 && renderSurpriseInfoStep()}
                   {currentStep === 4 && renderSurpriseAccommodationStep()}
+                  {currentStep === 5 && renderSurpriseAccommodationConfirmStep()}
+                  {currentStep === 6 && renderEmailStep()}
                 </>
               )}
 

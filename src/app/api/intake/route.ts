@@ -83,6 +83,10 @@ function mapAccommodationType(accommodationType: string): 'hotel' | 'apartment' 
       return 'villa';
     case 'all-inclusive':
       return 'resort';
+    case 'included':
+      return 'mixed'; // For surprise trips with accommodation
+    case 'not-included':
+      return undefined; // For surprise trips without accommodation
     case 'hotel':
     case 'apartment':
     case 'hostel':
@@ -115,23 +119,38 @@ export async function POST(request: NextRequest) {
 
     // Server-side validation
     const errors = [];
+    const tripType = formData.travelType || formData.tripType;
 
     if (!formData.email) errors.push('Email is required');
     if (!formData.departureDate) errors.push('Departure date is required');
-    if (!formData.returnDate) errors.push('Return date is required');
+
+    // Return date validation - not required for surprise trips as they handle dates differently
+    if (tripType !== 'surprise' && !formData.returnDate) {
+      errors.push('Return date is required');
+    }
+
     if (!formData.budget && !formData.customBudget) errors.push('Budget is required');
-    if (!formData.flexibility) errors.push('Flexibility is required');
-    if (!formData.travelType && !formData.tripType) errors.push('Travel type is required');
+
+    // Flexibility validation - not required for surprise trips
+    if (tripType !== 'surprise' && !formData.flexibility) {
+      errors.push('Flexibility is required');
+    }
+
+    if (!tripType) errors.push('Travel type is required');
 
     // Date validation
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const depDate = new Date(formData.departureDate);
-    const retDate = new Date(formData.returnDate);
 
     if (depDate < today) errors.push('Departure date cannot be in the past');
-    if (retDate < today) errors.push('Return date cannot be in the past');
-    if (retDate <= depDate) errors.push('Return date must be after departure date');
+
+    // Return date validation only for non-surprise trips
+    if (tripType !== 'surprise' && formData.returnDate) {
+      const retDate = new Date(formData.returnDate);
+      if (retDate < today) errors.push('Return date cannot be in the past');
+      if (retDate <= depDate) errors.push('Return date must be after departure date');
+    }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -154,9 +173,10 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || '';
 
     // Prepare intake data for Supabase
+    // Note: tripType already declared above for validation
     const intakeData: Partial<IntakeData> = {
       // Contact info
-      full_name: formData.fullName || formData.email || 'Anonymous', // fallback since fullName not in wizard
+      full_name: formData.fullName || formData.email.split('@')[0] || 'Anonymous',
       email: formData.email,
       phone: formData.phone || null,
 
@@ -168,12 +188,12 @@ export async function POST(request: NextRequest) {
 
       // Dates
       vertrek_datum: formData.departureDate,
-      terug_datum: formData.returnDate,
-      flexible: formData.flexibility !== 'exact',
+      terug_datum: formData.returnDate || formData.departureDate, // For surprise trips, use departure date as fallback
+      flexible: tripType === 'surprise' ? true : formData.flexibility !== 'exact',
 
-      // Destination & departure
-      bestemming: formData.destination || '',
-      vertrek_vanaf: formData.departureAirport || formData.departureFrom || '',
+      // Destination & departure - handle special AI destinations
+      bestemming: getDestinationForStorage(formData.destination || '', formData.destinationType || ''),
+      vertrek_vanaf: formData.departureAirport || formData.departureFrom || (tripType === 'surprise' ? 'flexible' : ''),
 
       // Flight preferences
       direct_only: formData.flightType === 'direct',
@@ -186,14 +206,14 @@ export async function POST(request: NextRequest) {
       gearbox: formData.carGearbox || formData.gearbox || null,
       driver_age: formData.driverAge ? parseInt(formData.driverAge) : undefined,
 
-      // Accommodation
+      // Accommodation - handle surprise trip accommodation choices
       accommodation_type: mapAccommodationType(formData.accommodation || formData.accommodationType || ''),
 
       // Budget
       budget: parseInt(budget),
 
-      // Extra
-      notes: formData.notes || null,
+      // Extra - include trip-specific notes
+      notes: buildNotesForTripType(formData, tripType),
       utm_source: formData.utm_source || null,
       user_agent: userAgent,
       ip_hash: hashIP(clientIP),
@@ -244,12 +264,16 @@ export async function POST(request: NextRequest) {
 
     // Send email with trip options
     const customerName = formData.fullName || formData.email.split('@')[0] || 'Reiziger';
-    const emailResult = await sendTripOptionsEmail({
+
+    // Customize email based on trip type
+    const emailOptions = {
       customerName,
       email: formData.email,
       tripOptions: [], // Will use default options from email service
-      language: 'nl' // Default to Dutch
-    });
+      language: 'nl' as const // Default to Dutch
+    };
+
+    const emailResult = await sendTripOptionsEmail(emailOptions);
 
     if (!emailResult.success) {
       console.error('Failed to send email:', emailResult.error);
@@ -298,6 +322,52 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+// Helper function to get destination for storage
+function getDestinationForStorage(destination: string, destinationType: string): string {
+  switch (destinationType) {
+    case 'ai-anywhere':
+      return 'AI: Anywhere in the world';
+    case 'ai-decide':
+      return 'AI: Let AI decide';
+    case 'custom':
+      return `Custom: ${destination}`;
+    case 'popular':
+    default:
+      return destination || '';
+  }
+}
+
+// Helper function to build notes based on trip type
+function buildNotesForTripType(formData: Record<string, unknown>, tripType: string): string {
+  const notes = [];
+
+  if (tripType === 'surprise') {
+    notes.push('🎁 SURPRISE TRIP REQUEST');
+
+    if (formData.destinationType === 'ai-anywhere') {
+      notes.push('• Destination: Anywhere in the world - let user decide');
+    } else if (formData.destinationType === 'ai-decide') {
+      notes.push('• Destination: AI decide based on preferences');
+    }
+
+    if (formData.accommodation === 'included') {
+      notes.push(`• Accommodation: Yes, ${formData.accommodationLevel || 'unspecified'} level`);
+    } else if (formData.accommodation === 'not-included') {
+      notes.push('• Accommodation: No, just the experience');
+    }
+
+    if (formData.tripStyle) {
+      notes.push(`• Trip style: ${formData.tripStyle}`);
+    }
+  }
+
+  if (formData.notes) {
+    notes.push(formData.notes);
+  }
+
+  return notes.join('\n');
+}
+
+export async function GET() { 
   return NextResponse.json({ message: 'Use POST method to submit intake data' });
 }
