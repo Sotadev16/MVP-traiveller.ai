@@ -30,17 +30,35 @@ import {
   FaGlobe,
   FaCog,
 } from "react-icons/fa";
+import SimpleDestinationStep from "@/components/SimpleDestinationStep";
 
 interface WizardData {
   // Step 1: Traveler Type
   travelerType: "jongeren" | "couples" | "honeymoon" | "familievakantie" | "";
 
   // Step 2: Trip Type
-  tripType: "flight" | "cruise" | "surprise" | "accommodation-only" | "flight-only" | "";
+  tripType:
+    | "flight"
+    | "cruise"
+    | "surprise"
+    | "accommodation-only"
+    | "flight-only"
+    | "";
 
   // Step 3: Destination
   destination: string;
-  destinationType: "popular" | "worldwide" | "custom" | "ai-anywhere" | "ai-decide" | "";
+  destinationType:
+    | "popular"
+    | "worldwide"
+    | "custom"
+    | "ai-anywhere"
+    | "ai-decide"
+    | "country"
+    | "city"
+    | "manual"
+    | "";
+  selectedCountry: string;
+  selectedCity: string;
 
   // Step 4: Dates & Flexibility
   departureDate: string;
@@ -70,14 +88,31 @@ interface WizardData {
   driverAge: number;
 
   // Step 9: Accommodation
-  accommodation: "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "";
+  accommodation:
+    | "hotel"
+    | "apartment"
+    | "house"
+    | "hostel"
+    | "all-inclusive"
+    | "included"
+    | "not-included"
+    | "";
 
   // Step 10: Budget
   budget: string;
   customBudget: string;
 
   // Step 11: Trip Type
-  tripStyle: "beach" | "adventure" | "luxury" | "city-trip" | "family" | "wellness" | "nature" | "surprise-me" | "";
+  tripStyle:
+    | "beach"
+    | "adventure"
+    | "luxury"
+    | "city-trip"
+    | "family"
+    | "wellness"
+    | "nature"
+    | "surprise-me"
+    | "";
 
   // Contact & Surprise Me Flow
   fullName: string;
@@ -100,6 +135,8 @@ const INITIAL_DATA: WizardData = {
   travelerType: "",
   destination: "",
   destinationType: "",
+  selectedCountry: "",
+  selectedCity: "",
   departureDate: "",
   returnDate: "",
   tripDuration: "",
@@ -137,8 +174,6 @@ export default function IntakeWizard() {
   const [wizardData, setWizardData] = useState<WizardData>(INITIAL_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customDestination, setCustomDestination] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
   const router = useRouter();
 
   const getTotalSteps = () => {
@@ -181,13 +216,19 @@ export default function IntakeWizard() {
         break;
 
       case 3: // Trip Style (All trip types except surprise, cruise, and flight-only)
-        if (["flight", "accommodation-only"].includes(wizardData.tripType) && !wizardData.tripStyle) {
+        if (
+          ["flight", "accommodation-only"].includes(wizardData.tripType) &&
+          !wizardData.tripStyle
+        ) {
           newErrors.tripStyle = "Selecteer een reisstijl";
         }
         break;
 
       case 4: // Destination (All trip types except surprise and cruise)
-        if (["flight", "accommodation-only"].includes(wizardData.tripType) && !wizardData.destination) {
+        if (
+          ["flight", "accommodation-only"].includes(wizardData.tripType) &&
+          !wizardData.destination
+        ) {
           newErrors.destination = "Selecteer een bestemming";
         }
         break;
@@ -200,16 +241,26 @@ export default function IntakeWizard() {
 
       case 5: // Departure Airport (Flight types only)
         if (["flight", "flight-only"].includes(wizardData.tripType)) {
-          if (!wizardData.flexibleAirport && (!wizardData.departureAirports || wizardData.departureAirports.length === 0)) {
-            newErrors.departureAirport = "Selecteer een vertrekreiport of kies voor flexibel";
+          if (
+            !wizardData.flexibleAirport &&
+            (!wizardData.departureAirports ||
+              wizardData.departureAirports.length === 0)
+          ) {
+            newErrors.departureAirport =
+              "Selecteer een vertrekreiport of kies voor flexibel";
           }
         }
         break;
 
       case 4: // Departure Airport for flight-only (adjusted step number)
         if (wizardData.tripType === "flight-only") {
-          if (!wizardData.flexibleAirport && (!wizardData.departureAirports || wizardData.departureAirports.length === 0)) {
-            newErrors.departureAirport = "Selecteer een vertrekreiport of kies voor flexibel";
+          if (
+            !wizardData.flexibleAirport &&
+            (!wizardData.departureAirports ||
+              wizardData.departureAirports.length === 0)
+          ) {
+            newErrors.departureAirport =
+              "Selecteer een vertrekreiport of kies voor flexibel";
           }
         }
         break;
@@ -245,7 +296,8 @@ export default function IntakeWizard() {
               newErrors.returnDate =
                 "Terugkomstdatum kan niet in het verleden liggen";
             if (retDate <= depDate)
-              newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+              newErrors.returnDate =
+                "Terugkomstdatum moet na vertrekdatum liggen";
           }
         }
         break;
@@ -281,7 +333,8 @@ export default function IntakeWizard() {
               newErrors.returnDate =
                 "Terugkomstdatum kan niet in het verleden liggen";
             if (retDate <= depDate)
-              newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+              newErrors.returnDate =
+                "Terugkomstdatum moet na vertrekdatum liggen";
           }
         }
         break;
@@ -300,15 +353,19 @@ export default function IntakeWizard() {
 
       case 8: // Flight Options (flight only)
         if (wizardData.tripType === "flight") {
-          if (!wizardData.flightType) newErrors.flightType = "Selecteer vluchttype";
-          if (!wizardData.flightClass) newErrors.flightClass = "Selecteer vluchtklasse";
+          if (!wizardData.flightType)
+            newErrors.flightType = "Selecteer vluchttype";
+          if (!wizardData.flightClass)
+            newErrors.flightClass = "Selecteer vluchtklasse";
         }
         break;
 
       case 7: // Flight Options for flight-only (adjusted step number)
         if (wizardData.tripType === "flight-only") {
-          if (!wizardData.flightType) newErrors.flightType = "Selecteer vluchttype";
-          if (!wizardData.flightClass) newErrors.flightClass = "Selecteer vluchtklasse";
+          if (!wizardData.flightType)
+            newErrors.flightType = "Selecteer vluchttype";
+          if (!wizardData.flightClass)
+            newErrors.flightClass = "Selecteer vluchtklasse";
         }
         break;
 
@@ -353,7 +410,10 @@ export default function IntakeWizard() {
         break;
 
       case 7: // Accommodation (accommodation-only flow)
-        if (wizardData.tripType === "accommodation-only" && !wizardData.accommodation) {
+        if (
+          wizardData.tripType === "accommodation-only" &&
+          !wizardData.accommodation
+        ) {
           newErrors.accommodation = "Selecteer accommodatie";
         }
         break;
@@ -445,8 +505,10 @@ export default function IntakeWizard() {
         if (wizardData.tripType === "surprise") {
           switch (currentStep) {
             case 2: // Dates
-              if (!wizardData.departureDate) newErrors.departureDate = "Vertrekdatum is verplicht";
-              if (!wizardData.returnDate) newErrors.returnDate = "Terugkomstdatum is verplicht";
+              if (!wizardData.departureDate)
+                newErrors.departureDate = "Vertrekdatum is verplicht";
+              if (!wizardData.returnDate)
+                newErrors.returnDate = "Terugkomstdatum is verplicht";
 
               // Date validation for surprise me
               const today = new Date();
@@ -454,14 +516,22 @@ export default function IntakeWizard() {
               const depDate = new Date(wizardData.departureDate);
               const retDate = new Date(wizardData.returnDate);
 
-              if (depDate < today) newErrors.departureDate = "Vertrekdatum kan niet in het verleden liggen";
-              if (retDate < today) newErrors.returnDate = "Terugkomstdatum kan niet in het verleden liggen";
-              if (retDate <= depDate) newErrors.returnDate = "Terugkomstdatum moet na vertrekdatum liggen";
+              if (depDate < today)
+                newErrors.departureDate =
+                  "Vertrekdatum kan niet in het verleden liggen";
+              if (retDate < today)
+                newErrors.returnDate =
+                  "Terugkomstdatum kan niet in het verleden liggen";
+              if (retDate <= depDate)
+                newErrors.returnDate =
+                  "Terugkomstdatum moet na vertrekdatum liggen";
               break;
 
             case 3: // Budget & Passengers for surprise trips
-              if (!wizardData.budget && !wizardData.customBudget) newErrors.budget = "Budget is verplicht";
-              if (wizardData.adults < 1) newErrors.adults = "Minimaal 1 volwassene";
+              if (!wizardData.budget && !wizardData.customBudget)
+                newErrors.budget = "Budget is verplicht";
+              if (wizardData.adults < 1)
+                newErrors.adults = "Minimaal 1 volwassene";
 
               // Budget validation for surprise me
               if (wizardData.budget === "custom") {
@@ -469,8 +539,10 @@ export default function IntakeWizard() {
                   newErrors.customBudget = "Aangepast budget is verplicht";
                 } else {
                   const budget = parseInt(wizardData.customBudget);
-                  if (budget < 100) newErrors.customBudget = "Minimum €100 per persoon";
-                  if (budget > 50000) newErrors.customBudget = "Maximum €50.000 per persoon";
+                  if (budget < 100)
+                    newErrors.customBudget = "Minimum €100 per persoon";
+                  if (budget > 50000)
+                    newErrors.customBudget = "Maximum €50.000 per persoon";
                 }
               }
               break;
@@ -482,7 +554,8 @@ export default function IntakeWizard() {
               break;
 
             case 5: // Contact details for Surprise Me
-              if (!wizardData.fullName) newErrors.fullName = "Naam is verplicht";
+              if (!wizardData.fullName)
+                newErrors.fullName = "Naam is verplicht";
               if (!wizardData.email) newErrors.email = "Email is verplicht";
               // Email validation
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -708,7 +781,9 @@ export default function IntakeWizard() {
         ].map((option) => (
           <button
             key={option.type}
-            onClick={() => !option.comingSoon && updateData({ tripType: option.type })}
+            onClick={() =>
+              !option.comingSoon && updateData({ tripType: option.type })
+            }
             disabled={option.comingSoon}
             className={`group relative p-8 rounded-2xl border-2 transition-all duration-300 text-left backdrop-blur-sm ${
               option.comingSoon
@@ -731,18 +806,36 @@ export default function IntakeWizard() {
                     : wizardData.tripType === option.type
                     ? "bg-yellow-400/30"
                     : "bg-white"
-                } ${!option.comingSoon ? "group-hover:scale-110" : ""} transition-all duration-300`}
+                } ${
+                  !option.comingSoon ? "group-hover:scale-110" : ""
+                } transition-all duration-300`}
               >
-                <option.icon className={`text-3xl ${option.comingSoon ? "text-red-400" : "text-yellow-400"}`} />
+                <option.icon
+                  className={`text-3xl ${
+                    option.comingSoon ? "text-red-400" : "text-yellow-400"
+                  }`}
+                />
               </div>
             </div>
-            <h3 className={`text-xl font-bold mb-2 ${option.comingSoon ? "text-white/70" : "text-white"}`}>
+            <h3
+              className={`text-xl font-bold mb-2 ${
+                option.comingSoon ? "text-white/70" : "text-white"
+              }`}
+            >
               {option.title}
             </h3>
-            <p className={`text-sm mb-3 font-medium ${option.comingSoon ? "text-red-400/70" : "text-yellow-400/90"}`}>
+            <p
+              className={`text-sm mb-3 font-medium ${
+                option.comingSoon ? "text-red-400/70" : "text-yellow-400/90"
+              }`}
+            >
               {option.subtitle}
             </p>
-            <p className={`text-sm leading-relaxed ${option.comingSoon ? "text-white/50" : "text-white"}`}>
+            <p
+              className={`text-sm leading-relaxed ${
+                option.comingSoon ? "text-white/50" : "text-white"
+              }`}
+            >
               {option.description}
             </p>
           </button>
@@ -757,158 +850,6 @@ export default function IntakeWizard() {
       )}
     </div>
   );
-
-  const handleCustomDestinationSubmit = () => {
-    if (customDestination.trim()) {
-      updateData({ destination: customDestination.trim(), destinationType: "custom" });
-      setShowCustomInput(false);
-      setCustomDestination("");
-    }
-  };
-
-  const renderDestinationStep = () => {
-
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
-            Waar wil je naartoe?
-          </h2>
-          <p className="text-white drop-shadow-sm">
-            Kies je droombestemming
-          </p>
-        </div>
-
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div>
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-              <FaStar className="text-yellow-400" />
-              Populaire bestemmingen
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[
-                "Aruba",
-                "Spanje",
-                "Griekenland",
-                "Italië",
-                "Frankrijk",
-                "Turkije"
-              ].map((dest) => (
-                <button
-                  key={dest}
-                  onClick={() => {
-                    updateData({ destination: dest, destinationType: "popular" });
-                    setShowCustomInput(false);
-                    setCustomDestination("");
-                  }}
-                  className={`p-4 rounded-xl text-left transition-all ${
-                    wizardData.destination === dest
-                      ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                      : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-                  }`}
-                >
-                  {dest}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-white/60 text-sm mb-3">of kies een andere bestemming</div>
-            </div>
-
-            {/* Custom Destination Input */}
-            {showCustomInput ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customDestination}
-                  onChange={(e) => setCustomDestination(e.target.value)}
-                  placeholder="Typ je gewenste bestemming..."
-                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
-                  onKeyDown={(e) => e.key === 'Enter' && handleCustomDestinationSubmit()}
-                />
-                <button
-                  onClick={handleCustomDestinationSubmit}
-                  className="px-4 py-3 bg-yellow-400 text-black rounded-xl font-medium hover:bg-yellow-300 transition-colors"
-                >
-                  OK
-                </button>
-                <button
-                  onClick={() => setShowCustomInput(false)}
-                  className="px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowCustomInput(true)}
-                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-                  wizardData.destinationType === "custom"
-                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                    : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-                }`}
-              >
-                <FaGlobe className="text-yellow-400" />
-                🔍 Zoek een andere bestemming
-              </button>
-            )}
-
-            {/* Display selected custom destination */}
-            {wizardData.destinationType === "custom" && wizardData.destination && (
-              <div className="text-center">
-                <span className="inline-flex items-center gap-2 bg-yellow-400/20 border border-yellow-400 text-white px-4 py-2 rounded-xl">
-                  <FaMapMarkerAlt className="text-yellow-400" />
-                  {wizardData.destination}
-                </span>
-              </div>
-            )}
-
-            {/* Special AI Options */}
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  updateData({ destination: "anywhere-world", destinationType: "ai-anywhere" });
-                  setShowCustomInput(false);
-                  setCustomDestination("");
-                }}
-                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-                  wizardData.destinationType === "ai-anywhere"
-                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                    : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-                }`}
-              >
-                <span className="text-xl">🌍</span>
-                Anywhere in the world – let me decide
-              </button>
-
-              <button
-                onClick={() => {
-                  updateData({ destination: "ai-decide", destinationType: "ai-decide" });
-                  setShowCustomInput(false);
-                  setCustomDestination("");
-                }}
-                className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-                  wizardData.destinationType === "ai-decide"
-                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                    : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-                }`}
-              >
-                <span className="text-xl">🤖</span>
-                A.I decide
-              </button>
-            </div>
-          </div>
-
-          {errors.destination && (
-            <p className="text-red-400 text-sm mt-1">{errors.destination}</p>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   const renderStep2 = () => (
     <div className="space-y-6">
@@ -1097,14 +1038,23 @@ export default function IntakeWizard() {
             <div className="flex items-center justify-between mb-3">
               <label className="flex items-center gap-3 text-white font-medium">
                 <FaCalendarAlt className="text-yellow-400" />
-                {wizardData.useDuration ? "Reisduur" : "Terugkomstdatum"} <span className="text-red-400">*</span>
+                {wizardData.useDuration ? "Reisduur" : "Terugkomstdatum"}{" "}
+                <span className="text-red-400">*</span>
               </label>
               <button
                 type="button"
-                onClick={() => updateData({ useDuration: !wizardData.useDuration, returnDate: "", tripDuration: "" })}
+                onClick={() =>
+                  updateData({
+                    useDuration: !wizardData.useDuration,
+                    returnDate: "",
+                    tripDuration: "",
+                  })
+                }
                 className="text-yellow-400 text-sm hover:text-yellow-300 transition-colors"
               >
-                {wizardData.useDuration ? "Gebruik einddatum" : "Gebruik reisduur"}
+                {wizardData.useDuration
+                  ? "Gebruik einddatum"
+                  : "Gebruik reisduur"}
               </button>
             </div>
 
@@ -1119,7 +1069,11 @@ export default function IntakeWizard() {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => updateData({ tripDuration: option.value as "5" | "7" | "10" | "14" })}
+                    onClick={() =>
+                      updateData({
+                        tripDuration: option.value as "5" | "7" | "10" | "14",
+                      })
+                    }
                     className={`w-full p-3 rounded-xl text-left transition-all ${
                       wizardData.tripDuration === option.value
                         ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1170,7 +1124,11 @@ export default function IntakeWizard() {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => updateData({ flexibility: option.value as "exact" | "2days" | "3days" })}
+                onClick={() =>
+                  updateData({
+                    flexibility: option.value as "exact" | "2days" | "3days",
+                  })
+                }
                 className={`w-full p-4 rounded-xl text-left transition-all flex items-center gap-4 backdrop-blur-sm ${
                   wizardData.flexibility === option.value
                     ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1205,14 +1163,17 @@ export default function IntakeWizard() {
 
       let newAirports;
       if (isSelected) {
-        newAirports = currentAirports.filter(code => code !== airportCode);
+        newAirports = currentAirports.filter((code) => code !== airportCode);
       } else {
         newAirports = [...currentAirports, airportCode];
       }
 
       updateData({
         departureAirports: newAirports,
-        departureAirport: newAirports.length > 0 ? newAirports[0] as "AMS" | "RTM" | "EIN" | "DUS" | "BRU" | "" : "" // Keep single selection for compatibility
+        departureAirport:
+          newAirports.length > 0
+            ? (newAirports[0] as "AMS" | "RTM" | "EIN" | "DUS" | "BRU" | "")
+            : "", // Keep single selection for compatibility
       });
     };
 
@@ -1231,21 +1192,29 @@ export default function IntakeWizard() {
           {/* Flexible Option */}
           <div>
             <button
-              onClick={() => updateData({ flexibleAirport: !wizardData.flexibleAirport })}
+              onClick={() =>
+                updateData({ flexibleAirport: !wizardData.flexibleAirport })
+              }
               className={`w-full p-4 rounded-xl text-left transition-all flex items-center gap-4 ${
                 wizardData.flexibleAirport
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                   : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
               }`}
             >
-              <div className={`p-3 rounded-lg ${
-                wizardData.flexibleAirport ? "bg-yellow-400/30" : "bg-white/20"
-              }`}>
+              <div
+                className={`p-3 rounded-lg ${
+                  wizardData.flexibleAirport
+                    ? "bg-yellow-400/30"
+                    : "bg-white/20"
+                }`}
+              >
                 <FaGlobe className="text-yellow-400" />
               </div>
               <div>
                 <div className="font-bold text-lg">Ik ben flexibel</div>
-                <div className="text-sm opacity-80">Alle luchthavens zijn goed</div>
+                <div className="text-sm opacity-80">
+                  Alle luchthavens zijn goed
+                </div>
               </div>
             </button>
           </div>
@@ -1259,7 +1228,8 @@ export default function IntakeWizard() {
               { code: "DUS", name: "Düsseldorf", city: "Düsseldorf" },
               { code: "BRU", name: "Brussel", city: "Brussel" },
             ].map((airport) => {
-              const isSelected = wizardData.departureAirports?.includes(airport.code) || false;
+              const isSelected =
+                wizardData.departureAirports?.includes(airport.code) || false;
               return (
                 <button
                   key={airport.code}
@@ -1270,9 +1240,11 @@ export default function IntakeWizard() {
                       : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
                   }`}
                 >
-                  <div className={`p-3 rounded-lg ${
-                    isSelected ? "bg-yellow-400/30" : "bg-white/20"
-                  }`}>
+                  <div
+                    className={`p-3 rounded-lg ${
+                      isSelected ? "bg-yellow-400/30" : "bg-white/20"
+                    }`}
+                  >
                     <FaPlane className="text-yellow-400" />
                   </div>
                   <div className="flex-1">
@@ -1288,7 +1260,9 @@ export default function IntakeWizard() {
           </div>
 
           {errors.departureAirport && (
-            <p className="text-red-400 text-sm mt-4">{errors.departureAirport}</p>
+            <p className="text-red-400 text-sm mt-4">
+              {errors.departureAirport}
+            </p>
           )}
         </div>
       </div>
@@ -1385,9 +1359,7 @@ export default function IntakeWizard() {
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
           Vliegvoorkeuren
         </h2>
-        <p className="text-white/80 drop-shadow-sm">
-          Kies je vliegopties
-        </p>
+        <p className="text-white/80 drop-shadow-sm">Kies je vliegopties</p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
@@ -1398,12 +1370,24 @@ export default function IntakeWizard() {
           </label>
           <div className="space-y-3">
             {[
-              { value: "direct", label: "Direct vlucht", description: "Geen tussenstops" },
-              { value: "stopover", label: "Met tussenstop", description: "Goedkoper, langere reistijd" },
+              {
+                value: "direct",
+                label: "Direct vlucht",
+                description: "Geen tussenstops",
+              },
+              {
+                value: "stopover",
+                label: "Met tussenstop",
+                description: "Goedkoper, langere reistijd",
+              },
             ].map((option) => (
               <button
                 key={option.value}
-                onClick={() => updateData({ flightType: option.value as "direct" | "stopover" })}
+                onClick={() =>
+                  updateData({
+                    flightType: option.value as "direct" | "stopover",
+                  })
+                }
                 className={`w-full p-4 rounded-xl text-left transition-all ${
                   wizardData.flightType === option.value
                     ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1427,14 +1411,38 @@ export default function IntakeWizard() {
           </label>
           <div className="space-y-3">
             {[
-              { value: "economy", label: "Economy", description: "Standaard comfort" },
-              { value: "premium", label: "Premium Economy", description: "Extra beenruimte" },
-              { value: "business", label: "Business", description: "Luxe ervaring" },
-              { value: "first", label: "First Class", description: "Ultieme luxe" },
+              {
+                value: "economy",
+                label: "Economy",
+                description: "Standaard comfort",
+              },
+              {
+                value: "premium",
+                label: "Premium Economy",
+                description: "Extra beenruimte",
+              },
+              {
+                value: "business",
+                label: "Business",
+                description: "Luxe ervaring",
+              },
+              {
+                value: "first",
+                label: "First Class",
+                description: "Ultieme luxe",
+              },
             ].map((option) => (
               <button
                 key={option.value}
-                onClick={() => updateData({ flightClass: option.value as "economy" | "premium" | "business" | "first" })}
+                onClick={() =>
+                  updateData({
+                    flightClass: option.value as
+                      | "economy"
+                      | "premium"
+                      | "business"
+                      | "first",
+                  })
+                }
                 className={`w-full p-4 rounded-xl text-left transition-all ${
                   wizardData.flightClass === option.value
                     ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1483,7 +1491,9 @@ export default function IntakeWizard() {
               Ja
             </button>
             <button
-              onClick={() => updateData({ carRental: false, carType: "", carGearbox: "" })}
+              onClick={() =>
+                updateData({ carRental: false, carType: "", carGearbox: "" })
+              }
               className={`flex-1 p-4 rounded-xl transition-all ${
                 !wizardData.carRental
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1503,16 +1513,19 @@ export default function IntakeWizard() {
                 Type auto
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {[
-                  "hatchback",
-                  "sedan",
-                  "mpv",
-                  "suv",
-                  "4x4"
-                ].map((type) => (
+                {["hatchback", "sedan", "mpv", "suv", "4x4"].map((type) => (
                   <button
                     key={type}
-                    onClick={() => updateData({ carType: type as "hatchback" | "sedan" | "mpv" | "suv" | "4x4" })}
+                    onClick={() =>
+                      updateData({
+                        carType: type as
+                          | "hatchback"
+                          | "sedan"
+                          | "mpv"
+                          | "suv"
+                          | "4x4",
+                      })
+                    }
                     className={`p-3 rounded-xl text-center transition-all capitalize ${
                       wizardData.carType === type
                         ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1564,7 +1577,9 @@ export default function IntakeWizard() {
                 min="18"
                 max="99"
                 value={wizardData.driverAge}
-                onChange={(e) => updateData({ driverAge: parseInt(e.target.value) || 25 })}
+                onChange={(e) =>
+                  updateData({ driverAge: parseInt(e.target.value) || 25 })
+                }
                 className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
               />
             </div>
@@ -1580,32 +1595,68 @@ export default function IntakeWizard() {
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
           Waar wil je verblijven?
         </h2>
-        <p className="text-white/80 drop-shadow-sm">
-          Kies je accommodatietype
-        </p>
+        <p className="text-white/80 drop-shadow-sm">Kies je accommodatietype</p>
       </div>
 
       <div className="max-w-2xl mx-auto">
         <div className="space-y-3">
           {[
-            { value: "hotel", label: "Hotel", icon: FaHotel, description: "Service en comfort" },
-            { value: "apartment", label: "Appartement", icon: FaHome, description: "Zelfstandig verblijf" },
-            { value: "house", label: "Vakantiehuis", icon: FaHome, description: "Veel ruimte en privacy" },
-            { value: "hostel", label: "Hostel", icon: FaUsers, description: "Budget-vriendelijk" },
-            { value: "all-inclusive", label: "All-Inclusive Resort", icon: FaStar, description: "Alles inbegrepen" },
+            {
+              value: "hotel",
+              label: "Hotel",
+              icon: FaHotel,
+              description: "Service en comfort",
+            },
+            {
+              value: "apartment",
+              label: "Appartement",
+              icon: FaHome,
+              description: "Zelfstandig verblijf",
+            },
+            {
+              value: "house",
+              label: "Vakantiehuis",
+              icon: FaHome,
+              description: "Veel ruimte en privacy",
+            },
+            {
+              value: "hostel",
+              label: "Hostel",
+              icon: FaUsers,
+              description: "Budget-vriendelijk",
+            },
+            {
+              value: "all-inclusive",
+              label: "All-Inclusive Resort",
+              icon: FaStar,
+              description: "Alles inbegrepen",
+            },
           ].map((option) => (
             <button
               key={option.value}
-              onClick={() => updateData({ accommodation: option.value as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" })}
+              onClick={() =>
+                updateData({
+                  accommodation: option.value as
+                    | "hotel"
+                    | "apartment"
+                    | "house"
+                    | "hostel"
+                    | "all-inclusive",
+                })
+              }
               className={`w-full p-4 rounded-xl text-left transition-all flex items-center gap-4 ${
                 wizardData.accommodation === option.value
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                   : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
               }`}
             >
-              <div className={`p-3 rounded-lg ${
-                wizardData.accommodation === option.value ? "bg-yellow-400/30" : "bg-white/20"
-              }`}>
+              <div
+                className={`p-3 rounded-lg ${
+                  wizardData.accommodation === option.value
+                    ? "bg-yellow-400/30"
+                    : "bg-white/20"
+                }`}
+              >
                 <option.icon className="text-yellow-400" />
               </div>
               <div>
@@ -1646,7 +1697,11 @@ export default function IntakeWizard() {
               { value: "500", label: "€500", description: "Comfortabele reis" },
               { value: "750", label: "€750", description: "Luxere ervaring" },
               { value: "1000", label: "€1000", description: "Premium reis" },
-              { value: "custom", label: "Ander bedrag...", description: "Aangepast budget" },
+              {
+                value: "custom",
+                label: "Ander bedrag...",
+                description: "Aangepast budget",
+              },
             ].map((option) => (
               <button
                 key={option.value}
@@ -1702,18 +1757,70 @@ export default function IntakeWizard() {
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { value: "beach", label: "Beach", icon: FaUmbrellaBeach, description: "Zon, zee en strand" },
-            { value: "adventure", label: "Adventure", icon: FaMountain, description: "Actie en avontuur" },
-            { value: "luxury", label: "Luxury", icon: FaStar, description: "Ultieme luxe ervaring" },
-            { value: "city-trip", label: "City Trip", icon: FaCity, description: "Stedelijke verkenning" },
-            { value: "family", label: "Family", icon: FaBaby, description: "Gezinsvriendelijk" },
-            { value: "wellness", label: "Wellness", icon: FaSpa, description: "Ontspanning en wellness" },
-            { value: "nature", label: "Nature", icon: FaLeaf, description: "Natuur en wildlife" },
-            { value: "surprise-me", label: "Surprise Me", icon: FaGift, description: "Laat ons kiezen" },
+            {
+              value: "beach",
+              label: "Beach",
+              icon: FaUmbrellaBeach,
+              description: "Zon, zee en strand",
+            },
+            {
+              value: "adventure",
+              label: "Adventure",
+              icon: FaMountain,
+              description: "Actie en avontuur",
+            },
+            {
+              value: "luxury",
+              label: "Luxury",
+              icon: FaStar,
+              description: "Ultieme luxe ervaring",
+            },
+            {
+              value: "city-trip",
+              label: "City Trip",
+              icon: FaCity,
+              description: "Stedelijke verkenning",
+            },
+            {
+              value: "family",
+              label: "Family",
+              icon: FaBaby,
+              description: "Gezinsvriendelijk",
+            },
+            {
+              value: "wellness",
+              label: "Wellness",
+              icon: FaSpa,
+              description: "Ontspanning en wellness",
+            },
+            {
+              value: "nature",
+              label: "Nature",
+              icon: FaLeaf,
+              description: "Natuur en wildlife",
+            },
+            {
+              value: "surprise-me",
+              label: "Surprise Me",
+              icon: FaGift,
+              description: "Laat ons kiezen",
+            },
           ].map((option) => (
             <button
               key={option.value}
-              onClick={() => updateData({ tripStyle: option.value as "beach" | "adventure" | "luxury" | "city-trip" | "family" | "wellness" | "nature" | "surprise-me" })}
+              onClick={() =>
+                updateData({
+                  tripStyle: option.value as
+                    | "beach"
+                    | "adventure"
+                    | "luxury"
+                    | "city-trip"
+                    | "family"
+                    | "wellness"
+                    | "nature"
+                    | "surprise-me",
+                })
+              }
               className={`p-6 rounded-2xl text-center transition-all ${
                 wizardData.tripStyle === option.value
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white transform scale-105"
@@ -1721,20 +1828,28 @@ export default function IntakeWizard() {
               }`}
             >
               <div className="flex justify-center mb-3">
-                <div className={`p-3 rounded-xl ${
-                  wizardData.tripStyle === option.value ? "bg-yellow-400/30" : "bg-white/20"
-                }`}>
+                <div
+                  className={`p-3 rounded-xl ${
+                    wizardData.tripStyle === option.value
+                      ? "bg-yellow-400/30"
+                      : "bg-white/20"
+                  }`}
+                >
                   <option.icon className="text-2xl text-yellow-400" />
                 </div>
               </div>
               <div className="font-medium text-sm">{option.label}</div>
-              <div className="text-xs opacity-70 mt-1">{option.description}</div>
+              <div className="text-xs opacity-70 mt-1">
+                {option.description}
+              </div>
             </button>
           ))}
         </div>
 
         {errors.tripStyle && (
-          <p className="text-red-400 text-sm mt-4 text-center">{errors.tripStyle}</p>
+          <p className="text-red-400 text-sm mt-4 text-center">
+            {errors.tripStyle}
+          </p>
         )}
       </div>
     </div>
@@ -1747,9 +1862,7 @@ export default function IntakeWizard() {
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
           Wanneer wil je gaan?
         </h2>
-        <p className="text-white/80 drop-shadow-sm">
-          Kies je reisperiode
-        </p>
+        <p className="text-white/80 drop-shadow-sm">Kies je reisperiode</p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
@@ -1767,7 +1880,9 @@ export default function IntakeWizard() {
               className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
             />
             {errors.departureDate && (
-              <p className="text-red-400 text-sm mt-1">{errors.departureDate}</p>
+              <p className="text-red-400 text-sm mt-1">
+                {errors.departureDate}
+              </p>
             )}
           </div>
 
@@ -1778,7 +1893,10 @@ export default function IntakeWizard() {
             </label>
             <input
               type="date"
-              min={wizardData.departureDate || new Date().toISOString().split("T")[0]}
+              min={
+                wizardData.departureDate ||
+                new Date().toISOString().split("T")[0]
+              }
               value={wizardData.returnDate}
               onChange={(e) => updateData({ returnDate: e.target.value })}
               className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
@@ -1804,7 +1922,6 @@ export default function IntakeWizard() {
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
-
         <div>
           <label className="flex items-center gap-3 text-white font-medium mb-3">
             <FaEuroSign className="text-yellow-400" />
@@ -1816,7 +1933,11 @@ export default function IntakeWizard() {
               { value: "500", label: "€500", description: "Comfortabele reis" },
               { value: "750", label: "€750", description: "Luxere ervaring" },
               { value: "1000", label: "€1000", description: "Premium reis" },
-              { value: "custom", label: "Ander bedrag...", description: "Aangepast budget" },
+              {
+                value: "custom",
+                label: "Ander bedrag...",
+                description: "Aangepast budget",
+              },
             ].map((option) => (
               <button
                 key={option.value}
@@ -1866,7 +1987,9 @@ export default function IntakeWizard() {
               min="1"
               max="10"
               value={wizardData.adults}
-              onChange={(e) => updateData({ adults: parseInt(e.target.value) || 1 })}
+              onChange={(e) =>
+                updateData({ adults: parseInt(e.target.value) || 1 })
+              }
               className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
             />
             {errors.adults && (
@@ -1944,35 +2067,46 @@ export default function IntakeWizard() {
               label: "Budget",
               icon: FaHome,
               description: "Eenvoudige, schone accommodaties",
-              details: "Hostels, budget hotels, eenvoudige appartementen"
+              details: "Hostels, budget hotels, eenvoudige appartementen",
             },
             {
               value: "mid-range",
               label: "Mid-range",
               icon: FaHotel,
               description: "Comfortabele accommodaties met goede service",
-              details: "3-4 sterren hotels, gezellige appartementen"
+              details: "3-4 sterren hotels, gezellige appartementen",
             },
             {
               value: "luxury",
               label: "Luxury",
               icon: FaStar,
               description: "Luxe verblijf met premium voorzieningen",
-              details: "5 sterren hotels, resorts, luxe villa's"
+              details: "5 sterren hotels, resorts, luxe villa's",
             },
           ].map((option) => (
             <button
               key={option.value}
-              onClick={() => updateData({ accommodationLevel: option.value as "budget" | "mid-range" | "luxury" })}
+              onClick={() =>
+                updateData({
+                  accommodationLevel: option.value as
+                    | "budget"
+                    | "mid-range"
+                    | "luxury",
+                })
+              }
               className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
                 wizardData.accommodationLevel === option.value
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                   : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
               }`}
             >
-              <div className={`p-3 rounded-lg ${
-                wizardData.accommodationLevel === option.value ? "bg-yellow-400/30" : "bg-white/20"
-              }`}>
+              <div
+                className={`p-3 rounded-lg ${
+                  wizardData.accommodationLevel === option.value
+                    ? "bg-yellow-400/30"
+                    : "bg-white/20"
+                }`}
+              >
                 <option.icon className="text-yellow-400 text-xl" />
               </div>
               <div className="flex-1">
@@ -1985,7 +2119,9 @@ export default function IntakeWizard() {
         </div>
 
         {errors.accommodationLevel && (
-          <p className="text-red-400 text-sm mt-4">{errors.accommodationLevel}</p>
+          <p className="text-red-400 text-sm mt-4">
+            {errors.accommodationLevel}
+          </p>
         )}
       </div>
     </div>
@@ -2005,42 +2141,86 @@ export default function IntakeWizard() {
       <div className="max-w-2xl mx-auto">
         <div className="space-y-4">
           <button
-            onClick={() => updateData({ accommodation: "included" as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "" })}
+            onClick={() =>
+              updateData({
+                accommodation: "included" as
+                  | "hotel"
+                  | "apartment"
+                  | "house"
+                  | "hostel"
+                  | "all-inclusive"
+                  | "included"
+                  | "not-included"
+                  | "",
+              })
+            }
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
               wizardData.accommodation === "included"
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
-            <div className={`p-3 rounded-lg ${
-              wizardData.accommodation === "included" ? "bg-yellow-400/30" : "bg-white/20"
-            }`}>
+            <div
+              className={`p-3 rounded-lg ${
+                wizardData.accommodation === "included"
+                  ? "bg-yellow-400/30"
+                  : "bg-white/20"
+              }`}
+            >
               <FaHotel className="text-yellow-400 text-xl" />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-lg mb-1">Ja, inclusief accommodatie</div>
-              <div className="text-sm mb-2">Volledige surprise reis met verblijf</div>
-              <div className="text-xs opacity-70">Wij zorgen voor de perfecte accommodatie bij je bestemming</div>
+              <div className="font-bold text-lg mb-1">
+                Ja, inclusief accommodatie
+              </div>
+              <div className="text-sm mb-2">
+                Volledige surprise reis met verblijf
+              </div>
+              <div className="text-xs opacity-70">
+                Wij zorgen voor de perfecte accommodatie bij je bestemming
+              </div>
             </div>
           </button>
 
           <button
-            onClick={() => updateData({ accommodation: "not-included" as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" | "included" | "not-included" | "" })}
+            onClick={() =>
+              updateData({
+                accommodation: "not-included" as
+                  | "hotel"
+                  | "apartment"
+                  | "house"
+                  | "hostel"
+                  | "all-inclusive"
+                  | "included"
+                  | "not-included"
+                  | "",
+              })
+            }
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
               wizardData.accommodation === "not-included"
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
-            <div className={`p-3 rounded-lg ${
-              wizardData.accommodation === "not-included" ? "bg-yellow-400/30" : "bg-white/20"
-            }`}>
+            <div
+              className={`p-3 rounded-lg ${
+                wizardData.accommodation === "not-included"
+                  ? "bg-yellow-400/30"
+                  : "bg-white/20"
+              }`}
+            >
               <FaPlane className="text-yellow-400 text-xl" />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-lg mb-1">Nee, alleen de ervaring</div>
-              <div className="text-sm mb-2">Surprise bestemming zonder accommodatie</div>
-              <div className="text-xs opacity-70">Je regelt zelf je verblijf ter plaatse</div>
+              <div className="font-bold text-lg mb-1">
+                Nee, alleen de ervaring
+              </div>
+              <div className="text-sm mb-2">
+                Surprise bestemming zonder accommodatie
+              </div>
+              <div className="text-xs opacity-70">
+                Je regelt zelf je verblijf ter plaatse
+              </div>
             </div>
           </button>
         </div>
@@ -2055,7 +2235,8 @@ export default function IntakeWizard() {
           Contactgegevens
         </h2>
         <p className="text-white/80 drop-shadow-sm">
-          We hebben je contactgegevens nodig om je de reis aanbiedingen te sturen
+          We hebben je contactgegevens nodig om je de reis aanbiedingen te
+          sturen
         </p>
       </div>
 
@@ -2099,7 +2280,9 @@ export default function IntakeWizard() {
             <input
               type="checkbox"
               checked={wizardData.wantsNewsletter}
-              onChange={(e) => updateData({ wantsNewsletter: e.target.checked })}
+              onChange={(e) =>
+                updateData({ wantsNewsletter: e.target.checked })
+              }
               className="w-5 h-5 rounded border-2 border-yellow-400/40 bg-white/10 checked:bg-yellow-400 checked:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 text-yellow-400 accent-yellow-400"
             />
             <span className="text-white text-sm">
@@ -2110,7 +2293,9 @@ export default function IntakeWizard() {
 
         <div className="mt-6 p-4 bg-white/10 rounded-xl border border-white/20">
           <p className="text-white/80 text-sm">
-            <strong className="text-white">Privacy:</strong> Je gegevens worden alleen gebruikt om je reis aanbiedingen te sturen. We delen je gegevens niet met derden.
+            <strong className="text-white">Privacy:</strong> Je gegevens worden
+            alleen gebruikt om je reis aanbiedingen te sturen. We delen je
+            gegevens niet met derden.
           </p>
         </div>
       </div>
@@ -2146,8 +2331,12 @@ export default function IntakeWizard() {
       {currentStep === totalSteps ? (
         <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
           <div className="text-center text-white/70 text-xs max-w-md mx-auto md:mx-0">
-            Door verder te gaan ga je akkoord met onze{' '}
-            <a href="/privacy" target="_blank" className="text-yellow-400 hover:text-yellow-300 underline">
+            Door verder te gaan ga je akkoord met onze{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              className="text-yellow-400 hover:text-yellow-300 underline"
+            >
               privacybeleid
             </a>
             . We gebruiken je gegevens alleen om reisaanbiedingen te maken.
@@ -2157,18 +2346,18 @@ export default function IntakeWizard() {
             disabled={isSubmitting}
             className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-black font-bold px-8 py-3 rounded-xl transition-all duration-300 disabled:opacity-70 whitespace-nowrap mx-auto md:mx-0"
           >
-          {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent" />
-              Bezig...
-            </>
-          ) : (
-            <>
-              Verstuur intake
-              <FaArrowRight />
-            </>
-          )}
-        </button>
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent" />
+                Bezig...
+              </>
+            ) : (
+              <>
+                Verstuur intake
+                <FaArrowRight />
+              </>
+            )}
+          </button>
         </div>
       ) : (
         <button
@@ -2239,7 +2428,14 @@ export default function IntakeWizard() {
               {wizardData.tripType === "flight" && (
                 <>
                   {currentStep === 3 && renderTripStyleStep()}
-                  {currentStep === 4 && renderDestinationStep()}
+                  {currentStep === 4 && (
+                    <SimpleDestinationStep
+                      destination={wizardData.destination}
+                      destinationType={wizardData.destinationType}
+                      onUpdate={updateData}
+                      errors={errors}
+                    />
+                  )}
                   {currentStep === 5 && renderDepartureAirportStep()}
                   {currentStep === 6 && renderStep3()}
                   {currentStep === 7 && renderPassengersStep()}
@@ -2254,7 +2450,14 @@ export default function IntakeWizard() {
               {/* Flight Only Flow - Skip trip style step */}
               {wizardData.tripType === "flight-only" && (
                 <>
-                  {currentStep === 3 && renderDestinationStep()}
+                  {currentStep === 3 && (
+                    <SimpleDestinationStep
+                      destination={wizardData.destination}
+                      destinationType={wizardData.destinationType}
+                      onUpdate={updateData}
+                      errors={errors}
+                    />
+                  )}
                   {currentStep === 4 && renderDepartureAirportStep()}
                   {currentStep === 5 && renderStep3()}
                   {currentStep === 6 && renderPassengersStep()}
@@ -2268,7 +2471,14 @@ export default function IntakeWizard() {
               {wizardData.tripType === "accommodation-only" && (
                 <>
                   {currentStep === 3 && renderTripStyleStep()}
-                  {currentStep === 4 && renderDestinationStep()}
+                  {currentStep === 4 && (
+                    <SimpleDestinationStep
+                      destination={wizardData.destination}
+                      destinationType={wizardData.destinationType}
+                      onUpdate={updateData}
+                      errors={errors}
+                    />
+                  )}
                   {currentStep === 5 && renderStep3()}
                   {currentStep === 6 && renderPassengersStep()}
                   {currentStep === 7 && renderAccommodationStep()}
@@ -2283,7 +2493,8 @@ export default function IntakeWizard() {
                   {currentStep === 2 && renderSurpriseDatesStep()}
                   {currentStep === 3 && renderSurpriseInfoStep()}
                   {currentStep === 4 && renderSurpriseAccommodationStep()}
-                  {currentStep === 5 && renderSurpriseAccommodationConfirmStep()}
+                  {currentStep === 5 &&
+                    renderSurpriseAccommodationConfirmStep()}
                   {currentStep === 6 && renderEmailStep()}
                 </>
               )}
