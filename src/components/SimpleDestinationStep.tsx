@@ -89,6 +89,7 @@ export default function SimpleDestinationStep({
               "Italië",
               "Frankrijk",
               "Turkije",
+              "Marokko",
             ].map((country) => (
               <button
                 key={country}
