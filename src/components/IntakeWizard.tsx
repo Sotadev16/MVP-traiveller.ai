@@ -52,9 +52,7 @@ interface WizardData {
     | "worldwide"
     | "custom"
     | "ai-anywhere"
-    | "ai-decide"
     | "country"
-    | "city"
     | "manual"
     | "";
   selectedCountry: string;
@@ -97,6 +95,7 @@ interface WizardData {
     | "included"
     | "not-included"
     | "";
+  accommodationWanted: boolean;
 
   // Step 10: Budget
   budget: string;
@@ -155,6 +154,7 @@ const INITIAL_DATA: WizardData = {
   carGearbox: "",
   driverAge: 25,
   accommodation: "",
+  accommodationWanted: false,
   budget: "",
   customBudget: "",
   tripStyle: "",
@@ -177,7 +177,7 @@ export default function IntakeWizard() {
   const router = useRouter();
 
   const getTotalSteps = () => {
-    if (wizardData.tripType === "surprise") return 6; // Added accommodation Y/N step + contact step
+    if (wizardData.tripType === "surprise") return 7; // Travel dates, Budget+Travelers, Accommodation, Car rental, Contact, Final
     if (wizardData.tripType === "flight") return 12;
     if (wizardData.tripType === "accommodation-only") return 9; // Skip flight-related steps
     if (wizardData.tripType === "flight-only") return 9; // Skip accommodation and trip style steps
@@ -547,13 +547,23 @@ export default function IntakeWizard() {
               }
               break;
 
-            case 4: // Accommodation Y/N
-              if (!wizardData.accommodationLevel) {
-                newErrors.accommodationLevel = "Selecteer accommodatieniveau";
+            case 4: // Accommodation Y/N + type selection
+              if (wizardData.accommodationWanted === undefined) {
+                newErrors.accommodation = "Kies of je accommodatie wilt";
               }
               break;
 
-            case 5: // Contact details for Surprise Me
+            case 5: // Car rental Y/N + details
+              // Car rental choice validation is optional, defaults to false
+              if (wizardData.carRental && !wizardData.carType) {
+                newErrors.carType = "Selecteer auto type";
+              }
+              if (wizardData.carRental && !wizardData.carGearbox) {
+                newErrors.carGearbox = "Selecteer transmissie";
+              }
+              break;
+
+            case 6: // Contact details for Surprise Me
               if (!wizardData.fullName)
                 newErrors.fullName = "Naam is verplicht";
               if (!wizardData.email) newErrors.email = "Email is verplicht";
@@ -564,7 +574,7 @@ export default function IntakeWizard() {
               }
               break;
 
-            case 6: // Final step for Surprise Me
+            case 7: // Final step for Surprise Me
               // No validation needed for final step
               break;
           }
@@ -1157,7 +1167,19 @@ export default function IntakeWizard() {
   );
 
   const renderDepartureAirportStep = () => {
+    const allAirportCodes = ["AMS", "RTM", "EIN", "DUS", "BRU"];
+
     const handleAirportToggle = (airportCode: string) => {
+      // If flexible is enabled, disable it first and then toggle the specific airport
+      if (wizardData.flexibleAirport) {
+        updateData({
+          flexibleAirport: false,
+          departureAirports: [airportCode],
+          departureAirport: airportCode as "AMS" | "RTM" | "EIN" | "DUS" | "BRU" | "",
+        });
+        return;
+      }
+
       const currentAirports = wizardData.departureAirports || [];
       const isSelected = currentAirports.includes(airportCode);
 
@@ -1173,7 +1195,16 @@ export default function IntakeWizard() {
         departureAirport:
           newAirports.length > 0
             ? (newAirports[0] as "AMS" | "RTM" | "EIN" | "DUS" | "BRU" | "")
-            : "", // Keep single selection for compatibility
+            : "",
+      });
+    };
+
+    const handleFlexibleToggle = () => {
+      const newFlexible = !wizardData.flexibleAirport;
+      updateData({
+        flexibleAirport: newFlexible,
+        departureAirports: newFlexible ? allAirportCodes : [],
+        departureAirport: newFlexible ? "AMS" : "",
       });
     };
 
@@ -1192,9 +1223,7 @@ export default function IntakeWizard() {
           {/* Flexible Option */}
           <div>
             <button
-              onClick={() =>
-                updateData({ flexibleAirport: !wizardData.flexibleAirport })
-              }
+              onClick={handleFlexibleToggle}
               className={`w-full p-4 rounded-xl text-left transition-all flex items-center gap-4 ${
                 wizardData.flexibleAirport
                   ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
@@ -1229,7 +1258,8 @@ export default function IntakeWizard() {
               { code: "BRU", name: "Brussel", city: "Brussel" },
             ].map((airport) => {
               const isSelected =
-                wizardData.departureAirports?.includes(airport.code) || false;
+                wizardData.flexibleAirport ||
+                (wizardData.departureAirports?.includes(airport.code) || false);
               return (
                 <button
                   key={airport.code}
@@ -1859,7 +1889,7 @@ export default function IntakeWizard() {
   const renderSurpriseDatesStep = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+        <h2 className="mt-10 text-3xl font-bold text-white mb-4 drop-shadow-lg">
           Wanneer wil je gaan?
         </h2>
         <p className="text-white/80 drop-shadow-sm">Kies je reisperiode</p>
@@ -2048,84 +2078,6 @@ export default function IntakeWizard() {
     </div>
   );
 
-  const renderSurpriseAccommodationStep = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
-          Accommodatie niveau
-        </h2>
-        <p className="text-white/80 drop-shadow-sm">
-          Kies je gewenste comfort niveau
-        </p>
-      </div>
-
-      <div className="max-w-2xl mx-auto">
-        <div className="space-y-4">
-          {[
-            {
-              value: "budget",
-              label: "Budget",
-              icon: FaHome,
-              description: "Eenvoudige, schone accommodaties",
-              details: "Hostels, budget hotels, eenvoudige appartementen",
-            },
-            {
-              value: "mid-range",
-              label: "Mid-range",
-              icon: FaHotel,
-              description: "Comfortabele accommodaties met goede service",
-              details: "3-4 sterren hotels, gezellige appartementen",
-            },
-            {
-              value: "luxury",
-              label: "Luxury",
-              icon: FaStar,
-              description: "Luxe verblijf met premium voorzieningen",
-              details: "5 sterren hotels, resorts, luxe villa's",
-            },
-          ].map((option) => (
-            <button
-              key={option.value}
-              onClick={() =>
-                updateData({
-                  accommodationLevel: option.value as
-                    | "budget"
-                    | "mid-range"
-                    | "luxury",
-                })
-              }
-              className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
-                wizardData.accommodationLevel === option.value
-                  ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
-                  : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
-              }`}
-            >
-              <div
-                className={`p-3 rounded-lg ${
-                  wizardData.accommodationLevel === option.value
-                    ? "bg-yellow-400/30"
-                    : "bg-white/20"
-                }`}
-              >
-                <option.icon className="text-yellow-400 text-xl" />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-lg mb-1">{option.label}</div>
-                <div className="text-sm mb-2">{option.description}</div>
-                <div className="text-xs opacity-70">{option.details}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {errors.accommodationLevel && (
-          <p className="text-red-400 text-sm mt-4">
-            {errors.accommodationLevel}
-          </p>
-        )}
-      </div>
-    </div>
-  );
 
   const renderSurpriseAccommodationConfirmStep = () => (
     <div className="space-y-6">
@@ -2139,30 +2091,25 @@ export default function IntakeWizard() {
       </div>
 
       <div className="max-w-2xl mx-auto">
-        <div className="space-y-4">
+        <div className="space-y-4 mb-6">
           <button
-            onClick={() =>
+            type="button"
+            onClick={() => {
+              console.log('Clicking YES for accommodation');
               updateData({
-                accommodation: "included" as
-                  | "hotel"
-                  | "apartment"
-                  | "house"
-                  | "hostel"
-                  | "all-inclusive"
-                  | "included"
-                  | "not-included"
-                  | "",
-              })
-            }
+                accommodationWanted: true,
+                accommodation: wizardData.accommodation || "hotel" // Default to hotel if not already selected
+              });
+            }}
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
-              wizardData.accommodation === "included"
+              wizardData.accommodationWanted
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
             <div
               className={`p-3 rounded-lg ${
-                wizardData.accommodation === "included"
+                wizardData.accommodationWanted
                   ? "bg-yellow-400/30"
                   : "bg-white/20"
               }`}
@@ -2171,40 +2118,32 @@ export default function IntakeWizard() {
             </div>
             <div className="flex-1">
               <div className="font-bold text-lg mb-1">
-                Ja, inclusief accommodatie
+                Ja
               </div>
-              <div className="text-sm mb-2">
-                Volledige surprise reis met verblijf
-              </div>
-              <div className="text-xs opacity-70">
-                Wij zorgen voor de perfecte accommodatie bij je bestemming
+              <div className="text-sm opacity-70">
+                Ik wil accommodatie bij mijn surprise reis
               </div>
             </div>
           </button>
 
           <button
-            onClick={() =>
+            type="button"
+            onClick={() => {
+              console.log('Clicking NO for accommodation');
               updateData({
-                accommodation: "not-included" as
-                  | "hotel"
-                  | "apartment"
-                  | "house"
-                  | "hostel"
-                  | "all-inclusive"
-                  | "included"
-                  | "not-included"
-                  | "",
-              })
-            }
+                accommodationWanted: false,
+                accommodation: ""
+              });
+            }}
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
-              wizardData.accommodation === "not-included"
+              wizardData.accommodationWanted === false
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
             <div
               className={`p-3 rounded-lg ${
-                wizardData.accommodation === "not-included"
+                wizardData.accommodationWanted === false
                   ? "bg-yellow-400/30"
                   : "bg-white/20"
               }`}
@@ -2213,17 +2152,198 @@ export default function IntakeWizard() {
             </div>
             <div className="flex-1">
               <div className="font-bold text-lg mb-1">
-                Nee, alleen de ervaring
+                Nee
               </div>
-              <div className="text-sm mb-2">
-                Surprise bestemming zonder accommodatie
-              </div>
-              <div className="text-xs opacity-70">
-                Je regelt zelf je verblijf ter plaatse
+              <div className="text-sm opacity-70">
+                Ik regel zelf mijn verblijf ter plaatse
               </div>
             </div>
           </button>
         </div>
+
+        {wizardData.accommodationWanted && (
+          <div className="space-y-4">
+            <h3 className="text-white font-medium text-lg">Wat voor accommodatie verkies je?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { value: "hotel", label: "Hotel", icon: FaHotel },
+                { value: "apartment", label: "Apartment", icon: FaHome },
+                { value: "house", label: "House", icon: FaHome },
+                { value: "hostel", label: "Hostel", icon: FaUmbrellaBeach },
+                { value: "all-inclusive", label: "All-inclusive", icon: FaStar }
+              ].map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  onClick={() => updateData({ accommodation: option.value as "hotel" | "apartment" | "house" | "hostel" | "all-inclusive" })}
+                  className={`p-4 rounded-xl text-left transition-all flex items-center gap-3 ${
+                    wizardData.accommodation === option.value
+                      ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                      : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                  }`}
+                >
+                  <div
+                    className={`p-2 rounded-lg ${
+                      wizardData.accommodation === option.value
+                        ? "bg-yellow-400/30"
+                        : "bg-white/20"
+                    }`}
+                  >
+                    <option.icon className="text-yellow-400" />
+                  </div>
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {errors.accommodation && (
+          <p className="text-red-400 text-sm mt-4 text-center">
+            {errors.accommodation}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderSurpriseCarRentalStep = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+          Wil je een huurauto?
+        </h2>
+        <p className="text-white/80 drop-shadow-sm">
+          Kies of je een auto wilt huren voor je surprise reis
+        </p>
+      </div>
+
+      <div className="max-w-2xl mx-auto">
+        <div className="space-y-4 mb-6">
+          <button
+            onClick={() => updateData({ carRental: true })}
+            className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
+              wizardData.carRental
+                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+            }`}
+          >
+            <div
+              className={`p-3 rounded-lg ${
+                wizardData.carRental
+                  ? "bg-yellow-400/30"
+                  : "bg-white/20"
+              }`}
+            >
+              <FaCar className="text-yellow-400 text-xl" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-lg mb-1">
+                Ja, ik wil een huurauto
+              </div>
+              <div className="text-sm opacity-70">
+                Voeg huurauto toe aan je surprise reis
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => updateData({ carRental: false, carType: "", carGearbox: "" })}
+            className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
+              !wizardData.carRental
+                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+            }`}
+          >
+            <div
+              className={`p-3 rounded-lg ${
+                !wizardData.carRental
+                  ? "bg-yellow-400/30"
+                  : "bg-white/20"
+              }`}
+            >
+              <FaPlane className="text-yellow-400 text-xl" />
+            </div>
+            <div className="flex-1">
+              <div className="font-bold text-lg mb-1">
+                Nee, geen huurauto
+              </div>
+              <div className="text-sm opacity-70">
+                Ik regel zelf vervoer ter plaatse
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {wizardData.carRental && (
+          <div className="space-y-4">
+            <div>
+              <label className="flex items-center gap-3 text-white font-medium mb-3">
+                <FaCog className="text-yellow-400" />
+                Type auto
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {["hatchback", "sedan", "mpv", "suv", "4x4"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => updateData({ carType: type as "hatchback" | "sedan" | "mpv" | "suv" | "4x4" })}
+                    className={`p-3 rounded-xl text-center capitalize transition-all ${
+                      wizardData.carType === type
+                        ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                        : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 text-white font-medium mb-3">
+                <FaCog className="text-yellow-400" />
+                Transmissie
+              </label>
+              <div className="flex gap-3">
+                {["automatic", "manual"].map((gear) => (
+                  <button
+                    key={gear}
+                    onClick={() => updateData({ carGearbox: gear as "manual" | "automatic" })}
+                    className={`flex-1 p-3 rounded-xl capitalize transition-all ${
+                      wizardData.carGearbox === gear
+                        ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                        : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    {gear}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 text-white font-medium mb-3">
+                <FaUsers className="text-yellow-400" />
+                Leeftijd bestuurder
+              </label>
+              <input
+                type="number"
+                min="18"
+                max="99"
+                value={wizardData.driverAge}
+                onChange={(e) => updateData({ driverAge: parseInt(e.target.value) || 25 })}
+                className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+              />
+            </div>
+
+            {errors.carType && (
+              <p className="text-red-400 text-sm mt-2">{errors.carType}</p>
+            )}
+            {errors.carGearbox && (
+              <p className="text-red-400 text-sm mt-2">{errors.carGearbox}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2302,17 +2422,68 @@ export default function IntakeWizard() {
     </div>
   );
 
-  const renderSurpriseButton = () => (
-    <div className="text-center mt-8">
-      <button
-        onClick={() => updateData({ tripType: "surprise" })}
-        className="mb-3 inline-flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
-      >
-        <FaGift className="text-lg" />
-        Surprise me
-      </button>
-    </div>
-  );
+  const renderSurpriseButton = () => {
+    const handleSurpriseMeClick = () => {
+      // Reset to a clean state for surprise me flow
+      const cleanState: Partial<WizardData> = {
+        tripType: "surprise",
+        // Keep user type but reset everything else
+        destination: "",
+        destinationType: "",
+        selectedCountry: "",
+        selectedCity: "",
+        departureDate: "",
+        returnDate: "",
+        tripDuration: "",
+        useDuration: false,
+        flexibility: "",
+        departureAirport: "",
+        departureAirports: [],
+        flexibleAirport: false,
+        flightType: "",
+        flightClass: "",
+        carRental: false,
+        carType: "",
+        carGearbox: "",
+        accommodation: "",
+        accommodationWanted: false,
+        budget: "",
+        customBudget: "",
+        tripStyle: "",
+        accommodationLevel: "",
+        // Reset to step 1 to start surprise flow properly
+      };
+
+      setWizardData(prev => ({
+        ...prev,
+        ...cleanState,
+        // Keep user's traveler type
+        travelerType: prev.travelerType,
+        // Keep contact info if already filled
+        fullName: prev.fullName,
+        email: prev.email,
+        wantsNewsletter: prev.wantsNewsletter,
+        timestamp: Date.now()
+      }));
+
+      // Reset current step to start the surprise flow
+      setCurrentStep(1);
+      // Clear any existing errors
+      setErrors({});
+    };
+
+    return (
+      <div className="text-center mt-8">
+        <button
+          onClick={handleSurpriseMeClick}
+          className="mb-3 inline-flex items-center gap-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+        >
+          <FaGift className="text-lg" />
+          Surprise me
+        </button>
+      </div>
+    );
+  };
 
   const renderNavigationButtons = () => (
     <div className="flex justify-between items-center mt-8">
@@ -2492,10 +2663,15 @@ export default function IntakeWizard() {
                 <>
                   {currentStep === 2 && renderSurpriseDatesStep()}
                   {currentStep === 3 && renderSurpriseInfoStep()}
-                  {currentStep === 4 && renderSurpriseAccommodationStep()}
-                  {currentStep === 5 &&
-                    renderSurpriseAccommodationConfirmStep()}
+                  {currentStep === 4 && renderSurpriseAccommodationConfirmStep()}
+                  {currentStep === 5 && renderSurpriseCarRentalStep()}
                   {currentStep === 6 && renderEmailStep()}
+                  {currentStep === 7 && (
+                    <div className="text-center space-y-6">
+                      <h2 className="text-3xl font-bold text-white mb-4">Bedankt!</h2>
+                      <p className="text-white">Je surprise reis aanvraag is ontvangen.</p>
+                    </div>
+                  )}
                 </>
               )}
 

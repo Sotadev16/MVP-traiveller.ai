@@ -327,8 +327,6 @@ function getDestinationForStorage(destination: string, destinationType: string):
   switch (destinationType) {
     case 'ai-anywhere':
       return 'AI: Anywhere in the world';
-    case 'ai-decide':
-      return 'AI: Let AI decide';
     case 'custom':
       return `Custom: ${destination}`;
     case 'popular':
@@ -346,8 +344,6 @@ function buildNotesForTripType(formData: Record<string, unknown>, tripType: stri
 
     if (formData.destinationType === 'ai-anywhere') {
       notes.push('• Destination: Anywhere in the world - let user decide');
-    } else if (formData.destinationType === 'ai-decide') {
-      notes.push('• Destination: AI decide based on preferences');
     }
 
     if (formData.accommodation === 'included') {

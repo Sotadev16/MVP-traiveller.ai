@@ -1,15 +1,32 @@
-import { useState } from 'react';
-import { FaMapMarkerAlt, FaChevronDown } from 'react-icons/fa';
-import { useDebounce } from '@/hooks/useDebounce';
-import { filterCountries, ALL_COUNTRIES, type Country } from '@/utils/countries';
-import { filterCities, type City } from '@/utils/cities';
+import { useState } from "react";
+import { FaMapMarkerAlt, FaChevronDown } from "react-icons/fa";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  filterCountries,
+  ALL_COUNTRIES,
+  type Country,
+} from "@/utils/countries";
 
 interface SimpleDestinationStepProps {
   destination: string;
-  destinationType: "popular" | "worldwide" | "custom" | "ai-anywhere" | "ai-decide" | "country" | "city" | "manual" | "";
+  destinationType:
+    | "popular"
+    | "worldwide"
+    | "custom"
+    | "ai-anywhere"
+    | "country"
+    | "manual"
+    | "";
   onUpdate: (updates: {
     destination?: string;
-    destinationType?: "popular" | "worldwide" | "custom" | "ai-anywhere" | "ai-decide" | "country" | "city" | "manual" | "";
+    destinationType?:
+      | "popular"
+      | "worldwide"
+      | "custom"
+      | "ai-anywhere"
+      | "country"
+      | "manual"
+      | "";
   }) => void;
   errors?: { destination?: string };
 }
@@ -18,45 +35,33 @@ export default function SimpleDestinationStep({
   destination,
   destinationType,
   onUpdate,
-  errors = {}
+  errors = {},
 }: SimpleDestinationStepProps) {
-  const [countryInput, setCountryInput] = useState('');
-  const [cityInput, setCityInput] = useState('');
+  const [countryInput, setCountryInput] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   // 300ms debounce as specified
   const debouncedCountryInput = useDebounce(countryInput, 300);
-  const debouncedCityInput = useDebounce(cityInput, 300);
 
-  const filteredCountries = debouncedCountryInput ? filterCountries(debouncedCountryInput) : ALL_COUNTRIES.slice(0, 10);
-  const filteredCities = debouncedCityInput ? filterCities(debouncedCityInput) : [];
+  const filteredCountries = debouncedCountryInput
+    ? filterCountries(debouncedCountryInput)
+    : ALL_COUNTRIES.slice(0, 10);
 
   const handleCountrySelect = (country: Country) => {
     setCountryInput(country.name);
     onUpdate({
       destination: country.name,
-      destinationType: 'country'
+      destinationType: "country",
     });
     setShowCountryDropdown(false);
   };
 
-  const handleCitySelect = (city: City) => {
-    const countryName = ALL_COUNTRIES.find(c => c.code === city.countryCode)?.name || city.countryCode;
-    const fullDestination = `${city.city}, ${countryName}`;
-    setCityInput(fullDestination);
-    onUpdate({
-      destination: fullDestination,
-      destinationType: 'city'
-    });
-    setShowCityDropdown(false);
-  };
 
   const handleManualEntry = (input: string) => {
     if (input.trim()) {
       onUpdate({
         destination: input.trim(),
-        destinationType: 'manual'
+        destinationType: "manual",
       });
     }
   };
@@ -67,12 +72,41 @@ export default function SimpleDestinationStep({
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
           Waar wil je naartoe?
         </h2>
-        <p className="text-white drop-shadow-sm">
-          Zoek een land of stad
-        </p>
+        <p className="text-white drop-shadow-sm">Zoek een land of stad</p>
       </div>
 
       <div className="max-w-lg mx-auto space-y-4">
+        {/* Popular Destinations Dropdown */}
+        <div className="mb-6">
+          <label className="block text-white font-medium mb-2">
+            Populaire bestemmingen
+          </label>
+          <div className="space-y-2">
+            {[
+              "Aruba",
+              "Spanje",
+              "Griekenland",
+              "Italië",
+              "Frankrijk",
+              "Turkije",
+            ].map((country) => (
+              <button
+                key={country}
+                onClick={() =>
+                  onUpdate({ destination: country, destinationType: "popular" })
+                }
+                className={`w-full p-3 rounded-xl text-left transition-all ${
+                  destination === country && destinationType === "popular"
+                    ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                    : "bg-yellow-400/10 border border-yellow-400/40 text-white hover:bg-yellow-400/20"
+                }`}
+              >
+                {country}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Current selection display */}
         {destination && (
           <div className="text-center mb-6">
@@ -85,9 +119,7 @@ export default function SimpleDestinationStep({
 
         {/* Country Dropdown */}
         <div className="relative">
-          <label className="block text-white font-medium mb-2">
-            Land
-          </label>
+          <label className="block text-white font-medium mb-2">Land</label>
           <div className="relative">
             <input
               type="text"
@@ -118,7 +150,9 @@ export default function SimpleDestinationStep({
                 ))
               ) : debouncedCountryInput ? (
                 <div className="px-4 py-3">
-                  <div className="text-gray-300 text-sm mb-2">Geen landen gevonden</div>
+                  <div className="text-gray-300 text-sm mb-2">
+                    Geen landen gevonden
+                  </div>
                   <button
                     onClick={() => {
                       handleManualEntry(debouncedCountryInput);
@@ -134,91 +168,24 @@ export default function SimpleDestinationStep({
           )}
         </div>
 
-        {/* City Dropdown */}
-        <div className="relative">
-          <label className="block text-white font-medium mb-2">
-            Stad
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={cityInput}
-              onChange={(e) => {
-                setCityInput(e.target.value);
-                setShowCityDropdown(true);
-              }}
-              onFocus={() => setShowCityDropdown(true)}
-              placeholder="Typ een stad (minimaal 2 karakters...)"
-              className="w-full px-4 py-3 pr-10 bg-yellow-400/20 border-2 border-yellow-400 rounded-xl text-white placeholder:text-white/70 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30"
-            />
-            <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50" />
-          </div>
 
-          {/* City Dropdown Results */}
-          {showCityDropdown && (
-            <div className="absolute z-10 w-full mt-1 bg-gray-900 border-2 border-gray-700 shadow-2xl rounded-xl max-h-48 overflow-y-auto">
-              {filteredCities.length > 0 ? (
-                filteredCities.map((city, index) => {
-                  const countryName = ALL_COUNTRIES.find(c => c.code === city.countryCode)?.name || city.countryCode;
-                  return (
-                    <button
-                      key={`${city.city}-${city.countryCode}-${index}`}
-                      onClick={() => handleCitySelect(city)}
-                      className="w-full px-4 py-2 text-left text-white hover:bg-gray-800 first:rounded-t-xl last:rounded-b-xl transition-colors"
-                    >
-                      <div className="font-medium">{city.city}</div>
-                      <div className="text-xs text-gray-300">{countryName}</div>
-                    </button>
-                  );
-                })
-              ) : debouncedCityInput && debouncedCityInput.length >= 2 ? (
-                <div className="px-4 py-3">
-                  <div className="text-gray-300 text-sm mb-2">Geen steden gevonden</div>
-                  <button
-                    onClick={() => {
-                      handleManualEntry(debouncedCityInput);
-                      setShowCityDropdown(false);
-                    }}
-                    className="w-full px-3 py-2 bg-yellow-600 border-2 border-yellow-500 rounded-lg text-white hover:bg-yellow-500 transition-colors text-sm font-medium"
-                  >
-                    Gebruik {debouncedCityInput} als bestemming
-                  </button>
-                </div>
-              ) : debouncedCityInput && debouncedCityInput.length < 2 ? (
-                <div className="px-4 py-2 text-gray-300 text-sm">
-                  Typ minimaal 2 karakters
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-
-        {/* Special AI Options */}
-        <div className="space-y-3 pt-4 border-t border-white/20">
-          <div className="text-center text-white/60 text-sm mb-3">of laat AI je bestemming kiezen</div>
-
+        {/* Worldwide Option */}
+        <div className="pt-4 border-t border-white/20">
           <button
-            onClick={() => onUpdate({ destination: 'anywhere-world', destinationType: 'ai-anywhere' })}
+            onClick={() =>
+              onUpdate({
+                destination: "anywhere-world",
+                destinationType: "ai-anywhere",
+              })
+            }
             className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-              destinationType === 'ai-anywhere'
-                ? 'bg-yellow-400/20 border-2 border-yellow-400 text-white'
-                : 'bg-yellow-400/20 border-2 border-yellow-400 text-white hover:bg-yellow-400/30'
+              destinationType === "ai-anywhere"
+                ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
+                : "bg-yellow-400/20 border-2 border-yellow-400 text-white hover:bg-yellow-400/30"
             }`}
           >
             <span className="text-xl">🌍</span>
             Anywhere in the world – let me decide
-          </button>
-
-          <button
-            onClick={() => onUpdate({ destination: 'ai-decide', destinationType: 'ai-decide' })}
-            className={`w-full p-4 rounded-xl transition-all flex items-center justify-center gap-3 ${
-              destinationType === 'ai-decide'
-                ? 'bg-yellow-400/20 border-2 border-yellow-400 text-white'
-                : 'bg-yellow-400/20 border-2 border-yellow-400 text-white hover:bg-yellow-400/30'
-            }`}
-          >
-            <span className="text-xl">🤖</span>
-            A.I decide
           </button>
         </div>
 
@@ -228,12 +195,11 @@ export default function SimpleDestinationStep({
       </div>
 
       {/* Click outside to close dropdowns */}
-      {(showCountryDropdown || showCityDropdown) && (
+      {showCountryDropdown && (
         <div
           className="fixed inset-0 z-0"
           onClick={() => {
             setShowCountryDropdown(false);
-            setShowCityDropdown(false);
           }}
         />
       )}
