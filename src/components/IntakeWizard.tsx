@@ -96,6 +96,7 @@ interface WizardData {
     | "not-included"
     | "";
   accommodationWanted: boolean;
+  accommodationChoiceMade: boolean;
 
   // Step 10: Budget
   budget: string;
@@ -155,6 +156,7 @@ const INITIAL_DATA: WizardData = {
   driverAge: 25,
   accommodation: "",
   accommodationWanted: false,
+  accommodationChoiceMade: false,
   budget: "",
   customBudget: "",
   tripStyle: "",
@@ -174,6 +176,7 @@ export default function IntakeWizard() {
   const [wizardData, setWizardData] = useState<WizardData>(INITIAL_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
   const router = useRouter();
 
   const getTotalSteps = () => {
@@ -191,12 +194,26 @@ export default function IntakeWizard() {
     setWizardData((prev) => ({ ...prev, timestamp: Date.now() }));
   }, []);
 
+  // Auto-dismiss toast after 5 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const updateData = (updates: Partial<WizardData>) => {
     setWizardData((prev) => ({ ...prev, ...updates }));
     setErrors({});
 
     // No automatic step reset when changing trip type
     // Let user navigate manually with Next/Previous buttons
+  };
+
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
   };
 
   const validateCurrentStep = (): boolean => {
@@ -548,8 +565,13 @@ export default function IntakeWizard() {
               break;
 
             case 4: // Accommodation Y/N + type selection
-              if (wizardData.accommodationWanted === undefined) {
+              // Check if user has made a choice at all
+              if (!wizardData.accommodationChoiceMade) {
                 newErrors.accommodation = "Kies of je accommodatie wilt";
+              }
+              // If they chose Yes but didn't select a type
+              else if (wizardData.accommodationWanted && !wizardData.accommodation) {
+                newErrors.accommodation = "Selecteer een accommodatie type";
               }
               break;
 
@@ -585,6 +607,13 @@ export default function IntakeWizard() {
     }
 
     setErrors(newErrors);
+
+    // Show toast with specific missing field message
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      showToast(firstError, 'error');
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -598,16 +627,78 @@ export default function IntakeWizard() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const validateAllSteps = (): boolean => {
+    const allErrors: Record<string, string> = {};
+
+    if (wizardData.tripType === "surprise") {
+      // Step 2: Dates
+      if (!wizardData.departureDate) allErrors.departureDate = "Vertrekdatum is verplicht";
+      if (!wizardData.returnDate) allErrors.returnDate = "Terugkomstdatum is verplicht";
+
+      // Step 3: Budget & Travelers
+      if (!wizardData.budget && !wizardData.customBudget) allErrors.budget = "Budget is verplicht";
+      if (wizardData.adults < 1) allErrors.adults = "Minimaal 1 volwassene";
+
+      // Step 4: Accommodation choice
+      if (!wizardData.accommodationChoiceMade) {
+        allErrors.accommodation = "Kies of je accommodatie wilt";
+      } else if (wizardData.accommodationWanted && !wizardData.accommodation) {
+        allErrors.accommodation = "Selecteer een accommodatie type";
+      }
+
+      // Step 6: Contact details
+      if (!wizardData.fullName) allErrors.fullName = "Naam is verplicht";
+      if (!wizardData.email) allErrors.email = "Email is verplicht";
+    }
+
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      const firstError = Object.values(allErrors)[0];
+      showToast(firstError, 'error');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
-    if (!validateCurrentStep()) return;
+    console.log('HandleSubmit called, current step:', currentStep);
+    console.log('Current wizard data:', wizardData);
+
+    if (!validateAllSteps()) {
+      console.log('Full validation failed, not submitting');
+      return;
+    }
+
+    console.log('Full validation passed, submitting...');
 
     setIsSubmitting(true);
     try {
+      // Calculate return date if using duration
+      let calculatedReturnDate = wizardData.returnDate;
+      if (wizardData.useDuration && wizardData.tripDuration && wizardData.departureDate) {
+        const depDate = new Date(wizardData.departureDate);
+        const durationDays = parseInt(wizardData.tripDuration);
+        const returnDate = new Date(depDate);
+        returnDate.setDate(depDate.getDate() + durationDays);
+        calculatedReturnDate = returnDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      }
+
+      // Handle budget - if custom budget is used, use customBudget value as budget
+      let finalBudget = wizardData.budget;
+      if (wizardData.budget === "custom" && wizardData.customBudget) {
+        finalBudget = wizardData.customBudget;
+      }
+
       // Map tripType to travelType for API compatibility
       const submissionData = {
         ...wizardData,
         travelType: wizardData.tripType,
+        returnDate: calculatedReturnDate,
+        budget: finalBudget,
       };
+
+      console.log('Submitting data:', submissionData);
 
       const response = await fetch("/api/intake", {
         method: "POST",
@@ -615,23 +706,32 @@ export default function IntakeWizard() {
         body: JSON.stringify(submissionData),
       });
 
+      console.log('Response status:', response.status);
+
       if (response.ok) {
         const result = await response.json();
-        router.push(`/results?id=${result.id || "demo"}`);
+        showToast('Formulier succesvol verzonden!', 'success');
+
+        // Use setTimeout to allow toast to show before navigation
+        setTimeout(() => {
+          router.push(`/results?id=${result.id || "demo"}`);
+        }, 1000);
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error("API Error:", errorData);
-        throw new Error(
-          `Submission failed: ${errorData.error || response.status}`
-        );
+        console.error("Response status:", response.status);
+
+        // Show specific error message from API or generic message
+        const errorMessage = errorData.error || errorData.message || `Server error: ${response.status}`;
+        showToast(errorMessage, 'error');
+
+        // Don't throw error, just show toast
+        return;
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert(
-        `Er ging iets mis: ${
-          error instanceof Error ? error.message : "Onbekende fout"
-        }. Probeer het opnieuw.`
-      );
+      const errorMessage = error instanceof Error ? error.message : "Onbekende fout";
+      showToast(`Er ging iets mis: ${errorMessage}. Probeer het opnieuw.`, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -2098,18 +2198,19 @@ export default function IntakeWizard() {
               console.log('Clicking YES for accommodation');
               updateData({
                 accommodationWanted: true,
+                accommodationChoiceMade: true,
                 accommodation: wizardData.accommodation || "hotel" // Default to hotel if not already selected
               });
             }}
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
-              wizardData.accommodationWanted
+              wizardData.accommodationChoiceMade && wizardData.accommodationWanted
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
             <div
               className={`p-3 rounded-lg ${
-                wizardData.accommodationWanted
+                wizardData.accommodationChoiceMade && wizardData.accommodationWanted
                   ? "bg-yellow-400/30"
                   : "bg-white/20"
               }`}
@@ -2132,18 +2233,19 @@ export default function IntakeWizard() {
               console.log('Clicking NO for accommodation');
               updateData({
                 accommodationWanted: false,
+                accommodationChoiceMade: true,
                 accommodation: ""
               });
             }}
             className={`w-full p-6 rounded-xl text-left transition-all flex items-start gap-4 ${
-              wizardData.accommodationWanted === false
+              wizardData.accommodationChoiceMade && wizardData.accommodationWanted === false
                 ? "bg-yellow-400/20 border-2 border-yellow-400 text-white"
                 : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
             }`}
           >
             <div
               className={`p-3 rounded-lg ${
-                wizardData.accommodationWanted === false
+                wizardData.accommodationChoiceMade && wizardData.accommodationWanted === false
                   ? "bg-yellow-400/30"
                   : "bg-white/20"
               }`}
@@ -2447,6 +2549,7 @@ export default function IntakeWizard() {
         carGearbox: "",
         accommodation: "",
         accommodationWanted: false,
+        accommodationChoiceMade: false,
         budget: "",
         customBudget: "",
         tripStyle: "",
@@ -2689,6 +2792,42 @@ export default function IntakeWizard() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 transition-all duration-300 ease-in-out">
+          <div
+            className={`px-6 py-4 rounded-xl shadow-2xl border-2 max-w-md ${
+              toast.type === 'error'
+                ? 'bg-red-500/90 border-red-400 text-white'
+                : 'bg-green-500/90 border-green-400 text-white'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                {toast.type === 'error' ? (
+                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">!</span>
+                  </div>
+                ) : (
+                  <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">✓</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="flex-shrink-0 text-white hover:text-gray-200 transition-colors"
+              >
+                <span className="text-xl">×</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
