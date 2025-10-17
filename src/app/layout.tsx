@@ -19,7 +19,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl" className="h-full">
+      <head>
+        <script
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          dangerouslySetInnerHTML={{
+            __html: `(function () {
+              var script = document.createElement("script");
+              script.async = 1;
+              script.src = "https://emrld.cc/NDY20Dgw.js?t=466880";
+              document.head.appendChild(script);
+            })();`,
+          }}
+        />
+      </head>
       <body className="h-full font-sans antialiased">{children}</body>
     </html>
   );
 }
+
