@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "TrAIveller.ai - Jouw slimme AI-reisplanner",
@@ -19,7 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl" className="h-full">
-      <body className="h-full font-sans antialiased">{children}</body>
+      <body className="h-full font-sans antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

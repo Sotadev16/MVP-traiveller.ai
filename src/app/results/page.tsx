@@ -1,261 +1,250 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Head from "next/head";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { FaChevronDown } from "react-icons/fa";
+import toast, { Toaster } from 'react-hot-toast';
+import {
+  getIATACode,
+  getCountryCode,
+  getFlagUrl,
+  COUNTRY_MAPPINGS,
+} from "@/lib/utils/countryMappings";
 
-interface TravelOption {
+interface RouteOption {
   id: string;
-  title: string;
-  price: number;
-  currency: string;
-  duration: number; // in nights
-  rating: number;
-  description: string;
-  image: string;
   origin: string;
+  originCode: string;
   destination: string;
-  hotel: {
-    name: string;
-    rating: number;
-  };
-  score: number; // recommendation score 0-1
-  bookUrl: string;
-  type: "flight" | "cruise" | "surprise";
-  highlights: string[];
+  destinationCode: string;
+  destinationCountryCode?: string;
+  flightCount: number;
+  hotelCount: number;
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
+  currency: string;
+  dateRange: string;
+  image: string;
 }
-
-// Mock API function - simulates database/API call based on user intake
-const getMockTravelOptions = (): TravelOption[] => [
-  {
-    id: "1",
-    title: "✈️ Amsterdam → Barcelona",
-    price: 299,
-    currency: "EUR",
-    duration: 5,
-    rating: 4.6,
-    description: "5 nachten, Hotel 3★ - Perfecte stedentrip naar het bruisende Barcelona met Gothic Quarter verkenning.",
-    image: "https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Amsterdam",
-    destination: "Barcelona",
-    hotel: {
-      name: "Hotel Barcelona Center",
-      rating: 4.3,
-    },
-    score: 0.92,
-    bookUrl: "#",
-    type: "flight" as const,
-    highlights: [
-      "🛫 Direct vlucht",
-      "🏰 Centrale locatie",
-      "🍳 Ontbijt inbegrepen",
-      "💰 Beste prijs",
-    ],
-  },
-  {
-    id: "2",
-    title: "✈️ Amsterdam → Rome",
-    price: 399,
-    currency: "EUR",
-    duration: 7,
-    rating: 4.7,
-    description: "7 nachten, Appartement - Ontdek de eeuwige stad Rome met eigen appartement in Trastevere.",
-    image: "https://images.unsplash.com/photo-1552832230-c0197047daf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Amsterdam",
-    destination: "Rome",
-    hotel: {
-      name: "Rome Trastevere Apartments",
-      rating: 4.4,
-    },
-    score: 0.89,
-    bookUrl: "#",
-    type: "flight" as const,
-    highlights: [
-      "🏠 Eigen appartement",
-      "🍝 Lokale ervaring",
-      "🏛️ Historisch centrum",
-      "⭐ Populair",
-    ],
-  },
-  {
-    id: "3",
-    title: "✈️ Amsterdam → Gran Canaria",
-    price: 699,
-    currency: "EUR",
-    duration: 10,
-    rating: 4.8,
-    description: "10 nachten, All-Inclusive - Tropisch paradijs met kristalheldere stranden en eindloze zon.",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Amsterdam",
-    destination: "Gran Canaria",
-    hotel: {
-      name: "Gran Canaria Beach Resort",
-      rating: 4.5,
-    },
-    score: 0.91,
-    bookUrl: "#",
-    type: "flight" as const,
-    highlights: [
-      "🏖️ All-Inclusive",
-      "☀️ Gegarandeerd zon",
-      "🏊 Zwembadcomplex",
-      "🌟 Beste kwaliteit",
-    ],
-  },
-  {
-    id: "4",
-    title: "✈️ Amsterdam → Athene",
-    price: 549,
-    currency: "EUR",
-    duration: 7,
-    rating: 4.6,
-    description: "7 nachten, Boutique Hotel - Verken de bakermat van de democratie met moderne luxe.",
-    image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Amsterdam",
-    destination: "Athene",
-    hotel: {
-      name: "Athens Boutique Suites",
-      rating: 4.7,
-    },
-    score: 0.87,
-    bookUrl: "#",
-    type: "flight" as const,
-    highlights: [
-      "🏛️ Boutique hotel",
-      "🌊 Dichtbij Akropolis",
-      "🍷 Lokale culinair",
-      "💎 Cultureel",
-    ],
-  },
-  {
-    id: "5",
-    title: "✈️ Amsterdam → Aruba",
-    price: 1299,
-    currency: "EUR",
-    duration: 14,
-    rating: 4.9,
-    description: "14 nachten, Strandresort - Ultimate Caribbean escape met wit zand en turkooisblauw water.",
-    image: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    origin: "Amsterdam",
-    destination: "Aruba",
-    hotel: {
-      name: "Aruba Eagle Beach Resort",
-      rating: 4.8,
-    },
-    score: 0.94,
-    bookUrl: "#",
-    type: "flight" as const,
-    highlights: [
-      "🏝️ Eagle Beach",
-      "🛫 Direct vlucht",
-      "🌺 Strandresort",
-      "🏆 Premium ervaring",
-    ],
-  },
-].slice(0, 5); // Always return exactly 5 options
 
 function ResultsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const submissionId = searchParams.get("id");
-  const [results, setResults] = useState<TravelOption[]>([]);
-  const [filteredResults, setFilteredResults] = useState<TravelOption[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [filteredRoutes, setFilteredRoutes] = useState<RouteOption[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
-  const [filters, setFilters] = useState({
-    maxPrice: "",
-    duration: "",
-    rating: "",
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // New state for country/city selection
+  const [departureCountry, setDepartureCountry] = useState<string>("");
+  const [departureCity, setDepartureCity] = useState<string>("");
+  const [arrivalCountry, setArrivalCountry] = useState<string>("");
+  const [arrivalCity, setArrivalCity] = useState<string>("");
+
+  const [dateFilters, setDateFilters] = useState({
+    departureDate: "",
+    returnDate: "",
   });
 
-  const applyFilters = useCallback(() => {
-    let filtered = [...results];
-
-    if (filters.maxPrice) {
-      filtered = filtered.filter(
-        (option) => option.price <= parseInt(filters.maxPrice)
-      );
-    }
-
-    if (filters.duration) {
-      filtered = filtered.filter(
-        (option) => option.duration === parseInt(filters.duration)
-      );
-    }
-
-    if (filters.rating) {
-      filtered = filtered.filter(
-        (option) => option.rating >= parseFloat(filters.rating)
-      );
-    }
-
-    // Sort by recommendation score
-    filtered.sort((a, b) => b.score - a.score);
-
-    setFilteredResults(filtered);
-  }, [filters, results]);
-
+  // Initialize date filters with today and +30 days, and restore saved state
   useEffect(() => {
-    // Simulate API call with query parameters
-    const fetchResults = async () => {
-      setLoading(true);
+    const today = new Date();
+    const future = new Date();
+    future.setDate(today.getDate() + 30);
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+    // Try to restore saved state from sessionStorage
+    const savedState = sessionStorage.getItem('resultsPageState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        console.log('🔄 Restoring saved state:', parsed);
+        setDepartureCountry(parsed.departureCountry || "");
+        setDepartureCity(parsed.departureCity || "");
+        setArrivalCountry(parsed.arrivalCountry || "");
+        setArrivalCity(parsed.arrivalCity || "");
+        setDateFilters(parsed.dateFilters || {
+          departureDate: today.toISOString().split('T')[0],
+          returnDate: future.toISOString().split('T')[0],
+        });
+        setRoutes(parsed.routes || []);
+      } catch (e) {
+        console.error('Failed to restore state:', e);
+      }
+    } else {
+      // Set default dates if no saved state
+      setDateFilters({
+        departureDate: today.toISOString().split('T')[0],
+        returnDate: future.toISOString().split('T')[0],
+      });
+    }
 
-      // Get mock data based on intake
-      const intakeId = searchParams.get("id");
-      console.log("Loading results for intake:", intakeId);
-      const options = getMockTravelOptions();
+    // Mark as initialized after restoring state
+    setIsInitialized(true);
+  }, []);
 
-      setResults(options);
-      setFilteredResults(options);
-      setLoading(false);
+  // Filter routes
+  useEffect(() => {
+    setFilteredRoutes(routes);
+  }, [routes]);
+
+  // Save state to sessionStorage whenever it changes (but only after initialization)
+  useEffect(() => {
+    // Don't save during initial mount/restoration
+    if (!isInitialized) return;
+
+    const stateToSave = {
+      departureCountry,
+      departureCity,
+      arrivalCountry,
+      arrivalCity,
+      dateFilters,
+      routes,
     };
+    console.log('💾 Saving state to sessionStorage:', stateToSave);
+    sessionStorage.setItem('resultsPageState', JSON.stringify(stateToSave));
+  }, [isInitialized, departureCountry, departureCity, arrivalCountry, arrivalCity, dateFilters, routes]);
 
-    fetchResults();
-  }, [searchParams]);
+  // Removed auto-fetch on page load - user must manually search now
 
   useEffect(() => {
-    // Show thank you message if this is from a fresh submission
+    // Show thank you message when coming from intake submission
     if (submissionId && submissionId !== 'demo') {
       setShowThankYou(true);
-      // Hide after 8 seconds
       const timer = setTimeout(() => setShowThankYou(false), 8000);
       return () => clearTimeout(timer);
     }
   }, [submissionId]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  const handleSearch = useCallback(async () => {
+    // Validation
+    if (!departureCountry || !departureCity) {
+      toast.error('Selecteer vertrekland en stad', { icon: '🛫' });
+      return;
+    }
+    if (!arrivalCountry || !arrivalCity) {
+      toast.error('Selecteer aankomstland en stad', { icon: '🛬' });
+      return;
+    }
+    if (!dateFilters.departureDate || !dateFilters.returnDate) {
+      toast.error('Selecteer beide datums', { icon: '📅' });
+      return;
+    }
 
-  const handleFilterChange = (filterName: string, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterName]: value,
-    }));
-  };
+    setLoading(true);
+    try {
+      const originCode = getIATACode(departureCity);
+      const destinationCode = getIATACode(arrivalCity);
 
-  const resetFilters = () => {
-    setFilters({
-      maxPrice: "",
-      duration: "",
-      rating: "",
-    });
+      console.log(`🔍 Searching flights: ${departureCity} (${originCode}) → ${arrivalCity} (${destinationCode})`);
+      console.log(`📅 Dates: ${dateFilters.departureDate} to ${dateFilters.returnDate}`);
+
+      // Fetch flights for the selected route
+      const flightParams = new URLSearchParams({
+        origin: originCode,
+        destination: destinationCode,
+        date: dateFilters.departureDate,
+        return_date: dateFilters.returnDate,
+        adults: '2',
+        children: '0',
+        currency: 'EUR',
+        pageSize: '50',
+      });
+
+      const flightResponse = await fetch(`/api/flights?${flightParams}`, {
+        cache: 'no-store',
+      });
+      const flightResult = await flightResponse.json();
+      const flights = flightResult.ok && flightResult.data ? flightResult.data : [];
+
+      // Fetch hotels for arrival city
+      const hotelParams = new URLSearchParams({
+        location: arrivalCity,
+        checkIn: dateFilters.departureDate,
+        checkOut: dateFilters.returnDate,
+        guests: '2',
+        currency: 'EUR',
+        pageSize: '50',
+      });
+
+      const hotelResponse = await fetch(`/api/hotels?${hotelParams}`, {
+        cache: 'no-store',
+      });
+      const hotelResult = await hotelResponse.json();
+      const hotels = hotelResult.ok && hotelResult.data ? hotelResult.data : [];
+
+      console.log(`✈️ Found ${flights.length} flights, 🏨 ${hotels.length} hotels`);
+
+      if (flights.length > 0 || hotels.length > 0) {
+        interface Flight {
+          price?: {
+            amount?: number;
+          };
+        }
+        const prices = (flights as Flight[]).map((f) => f.price?.amount || 0).filter((p: number) => p > 0);
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+        const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a: number, b: number) => a + b, 0) / prices.length) : 0;
+        const countryCode = getCountryCode(arrivalCity);
+
+        const route: RouteOption = {
+          id: `${originCode}-${destinationCode}`,
+          origin: departureCity,
+          originCode,
+          destination: arrivalCity,
+          destinationCode,
+          destinationCountryCode: countryCode,
+          flightCount: flights.length,
+          hotelCount: hotels.length,
+          minPrice,
+          maxPrice,
+          avgPrice,
+          currency: 'EUR',
+          dateRange: `${dateFilters.departureDate} - ${dateFilters.returnDate}`,
+          image: hotels[0]?.thumbnail || `https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`,
+        };
+
+        setRoutes([route]);
+
+        // Show appropriate success message based on what was found
+        if (flights.length > 0 && hotels.length > 0) {
+          toast.success(`${flights.length} vluchten en ${hotels.length} hotels gevonden!`, { icon: '✈️' });
+        } else if (flights.length > 0) {
+          toast.success(`${flights.length} vluchten gevonden! (Geen hotels beschikbaar)`, { icon: '✈️' });
+        } else {
+          toast.success(`${hotels.length} hotels gevonden! (Geen vluchten beschikbaar)`, { icon: '🏨' });
+        }
+      } else {
+        toast.error('Geen vluchten of hotels gevonden voor deze route.', { icon: '😔' });
+        setRoutes([]);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+      toast.error('Er is een fout opgetreden bij het zoeken.', { icon: '❌' });
+    } finally {
+      setLoading(false);
+    }
+  }, [departureCountry, departureCity, arrivalCountry, arrivalCity, dateFilters]);
+
+  const handleRouteClick = (route: RouteOption) => {
+    // Navigate to detailed page with route info using Next.js router
+    const url = `/results/route?origin=${route.originCode}&destination=${route.destinationCode}&from=${dateFilters.departureDate}&to=${dateFilters.returnDate}`;
+    router.push(url);
   };
 
   interface CustomSelectProps {
-    label: string;
     value: string;
     options: { value: string; label: string }[];
     onChange: (value: string) => void;
   }
 
   const CustomSelect = ({
-    label,
     value,
     options,
     onChange,
@@ -286,94 +275,77 @@ function ResultsContent() {
     };
 
     const selectedLabel =
-      options.find((opt) => opt.value === value)?.label || options[0].label;
+      options.find((opt) => opt.value === value)?.label || options[0]?.label || "Selecteer...";
 
     return (
-      <div
-        className="flex-1 min-w-[140px] bg-white/10 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-200 relative rounded-xl"
-        style={{ zIndex: 100 }}
-        ref={dropdownRef}
-      >
-        <div className="flex items-center px-4 py-3 gap-3">
-          <label className="text-sm font-medium text-white/90 whitespace-nowrap flex-shrink-0">
-            {label}
-          </label>
-          <div className="relative flex-1 min-w-0">
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center justify-between w-full text-sm text-left border-0 outline-0 cursor-pointer text-white hover:text-yellow-400 transition-colors duration-200 bg-transparent"
-            >
-              <span className="truncate">{selectedLabel}</span>
-              <FaChevronDown
-                className={`ml-2 text-yellow-400 transition-transform duration-200 flex-shrink-0 text-xs ${
-                  isOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+      <div className="relative" ref={dropdownRef} style={{ zIndex: isOpen ? 50 : 10 }}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 text-base text-left outline-0 cursor-pointer text-white hover:text-yellow-400 transition-all duration-200 bg-white/10 rounded-xl hover:bg-white/20 border border-white/20"
+        >
+          <span className="truncate font-medium">{selectedLabel}</span>
+          <FaChevronDown
+            className={`ml-2 text-yellow-400 transition-transform duration-200 flex-shrink-0 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-            {isOpen && (
+        {isOpen && (
+          <div
+            className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-yellow-400/50 shadow-2xl rounded-xl overflow-hidden max-h-60 overflow-y-auto"
+            style={{ zIndex: 100 }}
+          >
+            {options.map((option) => (
               <div
-                className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden max-h-48 overflow-y-auto bg-slate-900/98 backdrop-blur-md border border-white/30 shadow-2xl"
-                style={{ zIndex: 100000 }}
+                key={option.value}
+                className={`px-4 py-3 cursor-pointer transition-all duration-200 text-sm ${
+                  option.value === value
+                    ? "bg-yellow-400 text-black font-semibold"
+                    : "text-gray-800 hover:bg-yellow-50 hover:text-yellow-600"
+                }`}
+                onClick={() => handleSelect(option.value)}
               >
-                {options.map((option) => (
-                  <div
-                    key={option.value}
-                    className={`px-3 py-3 cursor-pointer transition-all duration-200 first:rounded-t-xl last:rounded-b-xl ${
-                      option.value === value
-                        ? "bg-yellow-400/20 text-yellow-400 font-medium"
-                        : "text-white/90 hover:bg-white/15 hover:text-yellow-400"
-                    }`}
-                    onClick={() => handleSelect(option.value)}
-                  >
-                    {option.label}
-                  </div>
-                ))}
+                {option.label}
               </div>
-            )}
+            ))}
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
-  const formatPrice = (price: number, currency: string = "EUR") => {
-    return new Intl.NumberFormat("nl-NL", {
-      style: "currency",
-      currency: currency,
-    }).format(price);
-  };
-
-  const getQueryChips = () => {
-    const chips = [];
-    const id = searchParams.get("id");
-
-    if (id) {
-      chips.push(`Zoekresultaat ID: ${id}`);
-    }
-
-    // Add more chips based on query parameters
-    const params = [
-      { key: "type", label: "Type" },
-      { key: "budget", label: "Budget" },
-      { key: "destination", label: "Bestemming" },
-      { key: "adults", label: "Volwassenen" },
-      { key: "children", label: "Kinderen" },
-    ];
-
-    params.forEach((param) => {
-      const value = searchParams.get(param.key);
-      if (value) {
-        chips.push(`${param.label}: ${value}`);
-      }
-    });
-
-    return chips;
-  };
 
   return (
     <>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            padding: '16px',
+            borderRadius: '12px',
+            fontSize: '14px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+
       <Head>
         <title>Zoekresultaten - TrAIveller.ai</title>
         <meta
@@ -433,351 +405,301 @@ function ResultsContent() {
         )}
 
         <main
-          className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8"
+          className="relative z-10 container mx-auto px-6 py-12"
           style={{ paddingTop: "120px" }}
         >
-          <div className="mb-6 sm:mb-8 text-center">
-            <h1 className="font-black leading-none tracking-tight mb-3 sm:mb-4">
-              <div className="text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] [text-shadow:_2px_2px_4px_rgba(0,0,0,0.9)]">
-                <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tighter">
-                  JOUW PERFECTE
-                </span>
-                <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tighter mt-1 text-yellow-400">
-                  REISMATCHES
-                </span>
-              </div>
-            </h1>
-            <p className="text-white/90 text-sm sm:text-base md:text-lg drop-shadow-lg px-2 sm:px-0 font-medium">
-              Handpicked door onze AI • Beste prijzen gegarandeerd • Klaar om te
-              boeken
-            </p>
-          </div>
-
-          {/* Query summary chips */}
-          <div className="flex flex-wrap gap-2 my-2.5 mb-6 justify-center">
-            {getQueryChips().map((chip, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm text-white/80 font-medium"
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-2 sm:gap-2.5 flex-wrap my-3 mb-6 p-3 sm:p-4 md:p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 relative z-50">
-            <div className="flex gap-2 items-center rounded-lg px-3 py-3 flex-1 min-w-[140px] bg-white/10 border border-white/20">
-              <label className="text-sm font-semibold text-white/80 whitespace-nowrap">
-                Max prijs
-              </label>
-              <input
-                type="number"
-                placeholder="€"
-                value={filters.maxPrice}
-                onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-                className="border-0 outline-0 w-full bg-transparent text-sm flex-1 text-white placeholder:text-white/50"
-              />
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8 text-center">
+              <h1 className="font-black leading-none tracking-tight mb-4">
+                <div className="text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] [text-shadow:_2px_2px_4px_rgba(0,0,0,0.9)]">
+                  <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter">
+                    JOUW PERFECTE
+                  </span>
+                  <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mt-1 text-yellow-400">
+                    REISMATCHES
+                  </span>
+                </div>
+              </h1>
+              <p className="text-white/90 text-lg drop-shadow-lg font-medium">
+                Handpicked door onze AI • Beste prijzen gegarandeerd
+              </p>
             </div>
 
-            <CustomSelect
-              label="Nachten"
-              value={filters.duration}
-              onChange={(value) => handleFilterChange("duration", value)}
-              options={[
-                { value: "", label: "Alle" },
-                { value: "3", label: "3 nachten" },
-                { value: "7", label: "7 nachten" },
-                { value: "8", label: "8 nachten" },
-                { value: "9", label: "9 nachten" },
-                { value: "10", label: "10 nachten" },
-                { value: "12", label: "12 nachten" },
-              ]}
-            />
+          {/* Main Content Card */}
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
+            {/* Search Section */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                <span className="text-2xl mr-2">✈️</span>
+                Zoek je perfecte reis
+              </h2>
+              <p className="text-white/80 text-center mb-6">Kies je vertrek- en aankomstlocatie met reisdatums</p>
+            </div>
 
-            <CustomSelect
-              label="Min. rating"
-              value={filters.rating}
-              onChange={(value) => handleFilterChange("rating", value)}
-              options={[
-                { value: "", label: "Alle" },
-                { value: "4.0", label: "4.0+" },
-                { value: "4.5", label: "4.5+" },
-                { value: "4.7", label: "4.7+" },
-              ]}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Departure Country */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">🛫 Vertrek Land</label>
+                <CustomSelect
+                  value={departureCountry}
+                  onChange={(value) => {
+                    setDepartureCountry(value);
+                    setDepartureCity(""); // Reset city when country changes
+                  }}
+                  options={[
+                    { value: "", label: "Selecteer land" },
+                    ...COUNTRY_MAPPINGS.map(country => ({
+                      value: country.country,
+                      label: country.dutchName || country.country
+                    }))
+                  ]}
+                />
+              </div>
 
-            <button
-              className="border-0 bg-yellow-400 text-black rounded-lg px-4 py-3 font-bold cursor-pointer transition-all duration-300 ease-out hover:bg-yellow-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-yellow-400/30 text-sm whitespace-nowrap flex-shrink-0"
-              onClick={applyFilters}
-            >
-              Toepassen
-            </button>
+              {/* Departure City */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">🏙️ Vertrek Stad</label>
+                {departureCountry ? (
+                  <CustomSelect
+                    value={departureCity}
+                    onChange={(value) => setDepartureCity(value)}
+                    options={[
+                      { value: "", label: "Selecteer stad" },
+                      ...(COUNTRY_MAPPINGS.find(c => c.country === departureCountry)?.cities.map(city => ({
+                        value: city,
+                        label: city
+                      })) || [])
+                    ]}
+                  />
+                ) : (
+                  <div className="text-sm text-white/60 py-3 px-4 bg-white/5 rounded-xl border border-white/10 italic">
+                    Selecteer eerst een land
+                  </div>
+                )}
+              </div>
 
-            <button
-              className="bg-transparent rounded-lg px-4 py-3 font-bold cursor-pointer transition-all duration-300 ease-out text-sm whitespace-nowrap flex-shrink-0"
-              style={{
-                color: "#ffffff",
-                borderColor: "#1e293b",
-                border: "1px solid #1e293b",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1e293b";
-                e.currentTarget.style.color = "#e9eef7";
-                e.currentTarget.style.borderColor = "#a9b7cd";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#ffffff";
-                e.currentTarget.style.borderColor = "#1e293b";
-              }}
-              onClick={resetFilters}
-            >
-              Reset
-            </button>
-          </div>
+              {/* Arrival Country */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">🛬 Aankomst Land</label>
+                <CustomSelect
+                  value={arrivalCountry}
+                  onChange={(value) => {
+                    setArrivalCountry(value);
+                    setArrivalCity(""); // Reset city when country changes
+                  }}
+                  options={[
+                    { value: "", label: "Selecteer land" },
+                    ...COUNTRY_MAPPINGS.map(country => ({
+                      value: country.country,
+                      label: country.dutchName || country.country
+                    }))
+                  ]}
+                />
+              </div>
 
-          {loading ? (
-            <div className="p-10 text-center" style={{ color: "#ffffff" }}>
-              <div className="flex flex-col items-center gap-6 py-16">
+              {/* Arrival City */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">🏝️ Aankomst Stad</label>
+                {arrivalCountry ? (
+                  <CustomSelect
+                    value={arrivalCity}
+                    onChange={(value) => setArrivalCity(value)}
+                    options={[
+                      { value: "", label: "Selecteer stad" },
+                      ...(COUNTRY_MAPPINGS.find(c => c.country === arrivalCountry)?.cities.map(city => ({
+                        value: city,
+                        label: city
+                      })) || [])
+                    ]}
+                  />
+                ) : (
+                  <div className="text-sm text-white/60 py-3 px-4 bg-white/5 rounded-xl border border-white/10 italic">
+                    Selecteer eerst een land
+                  </div>
+                )}
+              </div>
+
+              {/* Departure Date */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">📅 Vertrekdatum</label>
+                <input
+                  type="date"
+                  value={dateFilters.departureDate}
+                  onChange={(e) => setDateFilters(prev => ({ ...prev, departureDate: e.target.value }))}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl outline-0 text-base text-white py-3 px-4 focus:border-yellow-400/50 hover:bg-white/15 transition-all"
+                />
+              </div>
+
+              {/* Return Date */}
+              <div>
+                <label className="text-sm font-medium text-white/90 mb-2 block">📅 Retourdatum</label>
+                <input
+                  type="date"
+                  value={dateFilters.returnDate}
+                  onChange={(e) => setDateFilters(prev => ({ ...prev, returnDate: e.target.value }))}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl outline-0 text-base text-white py-3 px-4 focus:border-yellow-400/50 hover:bg-white/15 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Search Button */}
+            <div className="flex justify-center mt-6">
+              <button
+                className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-black font-bold px-8 py-3 rounded-xl transition-all duration-300 disabled:opacity-70 flex items-center gap-2"
+                onClick={handleSearch}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent" />
+                    Zoeken...
+                  </>
+                ) : (
+                  <>
+                    🔍 Zoek Vluchten & Hotels
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Results Section */}
+            {loading ? (
+            <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-12 text-center mt-6">
+              <div className="flex flex-col items-center gap-8 py-12">
                 {/* Animated spinner */}
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin"></div>
-                  <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-yellow-400 rounded-full animate-spin"></div>
+                <div className="relative w-24 h-24">
+                  <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-transparent border-t-yellow-400 rounded-full animate-spin"></div>
                   <div
-                    className="absolute top-2 left-2 w-12 h-12 border-4 border-transparent border-t-blue-400 rounded-full animate-spin"
+                    className="absolute inset-2 border-4 border-transparent border-t-orange-400 rounded-full animate-spin"
                     style={{
                       animationDirection: "reverse",
                       animationDuration: "0.8s",
                     }}
                   ></div>
                   <div
-                    className="absolute top-4 left-4 w-8 h-8 border-4 border-transparent border-t-green-400 rounded-full animate-spin"
+                    className="absolute inset-4 border-4 border-transparent border-t-yellow-300 rounded-full animate-spin"
                     style={{ animationDuration: "0.6s" }}
                   ></div>
                 </div>
 
                 {/* Loading text with animation */}
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-white mb-2 animate-pulse">
-                    Zoeken naar de beste reisopties voor jou...
+                  <h3 className="text-2xl font-black text-white mb-3 animate-pulse">
+                    Zoeken naar vluchten en hotels...
                   </h3>
-                  <p className="text-gray-400 animate-fade-in">
-                    Onze AI analyseert duizenden opties om jou de perfecte
-                    matches te bieden
+                  <p className="text-white/70 text-lg">
+                    Even geduld, we doorzoeken duizenden opties voor jou
                   </p>
                 </div>
 
                 {/* Progress dots */}
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"></div>
+                <div className="flex space-x-3">
+                  <div className="w-4 h-4 bg-yellow-400 rounded-full animate-bounce shadow-lg"></div>
                   <div
-                    className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"
+                    className="w-4 h-4 bg-orange-400 rounded-full animate-bounce shadow-lg"
                     style={{ animationDelay: "0.1s" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-green-400 rounded-full animate-bounce"
+                    className="w-4 h-4 bg-yellow-300 rounded-full animate-bounce shadow-lg"
                     style={{ animationDelay: "0.2s" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-purple-400 rounded-full animate-bounce"
+                    className="w-4 h-4 bg-orange-300 rounded-full animate-bounce shadow-lg"
                     style={{ animationDelay: "0.3s" }}
                   ></div>
                   <div
-                    className="w-3 h-3 bg-pink-400 rounded-full animate-bounce"
+                    className="w-4 h-4 bg-yellow-400 rounded-full animate-bounce shadow-lg"
                     style={{ animationDelay: "0.4s" }}
                   ></div>
                 </div>
-
-                {/* Loading stats */}
-                <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-8 text-center">
-                  <div className="text-gray-400">
-                    <div className="text-xl sm:text-2xl font-bold text-yellow-400 animate-pulse">
-                      1000+
-                    </div>
-                    <div className="text-xs sm:text-sm">Hotels gecheckt</div>
-                  </div>
-                  <div className="text-gray-400">
-                    <div className="text-xl sm:text-2xl font-bold text-blue-400 animate-pulse">
-                      500+
-                    </div>
-                    <div className="text-xs sm:text-sm">
-                      Vluchten vergeleken
-                    </div>
-                  </div>
-                  <div className="text-gray-400">
-                    <div className="text-xl sm:text-2xl font-bold text-green-400 animate-pulse">
-                      50+
-                    </div>
-                    <div className="text-xs sm:text-sm">Cruise opties</div>
-                  </div>
-                </div>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="my-2.5 text-sm text-white">
-                {filteredResults.length} resultaten gevonden
+          ) : routes.length === 0 ? (
+            <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-12 text-center mt-6">
+              <div className="flex flex-col items-center gap-4 py-8">
+                <div className="text-6xl">✈️</div>
+                <h3 className="text-2xl font-bold text-white">Klaar voor je volgende avontuur?</h3>
+                <p className="text-white/70">
+                  Vul bovenstaande velden in om vluchten te zoeken
+                </p>
               </div>
-
-              {filteredResults.length > 0 ? (
-                <div className="grid gap-3 sm:gap-4 md:gap-5">
-                  {filteredResults.map((option, index) => (
+            </div>
+          ) : filteredRoutes.length > 0 ? (
+            <>
+              <div className="space-y-4 mt-6">
+                {filteredRoutes.map((route) => (
                     <article
-                      key={option.id}
-                      className="rounded-3xl overflow-hidden shadow-2xl grid transition-all duration-[400ms] ease-out transform translate-y-0 opacity-0 animate-[cardFadeIn_0.6s_ease-out_forwards] group lg:grid-cols-[280px_1fr] grid-cols-1 bg-white/20 backdrop-blur-sm border border-white/40 hover:border-yellow-400/80 hover:bg-white/30"
-                      style={{
-                        animationDelay: `${(index + 1) * 100}ms`,
-                        boxShadow: "0 12px 40px rgba(0,0,0,.35)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-8px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 25px 60px rgba(250,204,21,0.3), 0 12px 40px rgba(0,0,0,.35)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow =
-                          "0 12px 40px rgba(0,0,0,.35)";
-                      }}
+                      key={route.id}
+                      onClick={() => handleRouteClick(route)}
+                      className="rounded-2xl overflow-hidden shadow-xl grid transition-all duration-300 ease-out group lg:grid-cols-[300px_1fr] grid-cols-1 bg-white/10 backdrop-blur-sm border border-white/20 hover:border-yellow-400/50 hover:bg-white/15 cursor-pointer"
                     >
-                      <div className="relative overflow-hidden h-full lg:min-h-[240px] h-[200px] sm:h-[220px] md:h-[240px]">
-                        <Image
-                          src={option.image}
-                          alt={option.title}
-                          fill
-                          className="object-cover"
-                        />
+                      <div className="relative overflow-hidden lg:min-h-[240px] h-[200px]">
+                        {route.image && route.image !== `https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80` ? (
+                          <Image
+                            src={route.image}
+                            alt={route.destination}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : route.destinationCountryCode ? (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+                            <Image
+                              src={getFlagUrl(route.destinationCountryCode, 'w320')}
+                              alt={`${route.destination} flag`}
+                              width={320}
+                              height={240}
+                              className="object-contain max-h-[60%]"
+                            />
+                          </div>
+                        ) : (
+                          <Image
+                            src={route.image}
+                            alt={route.destination}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
 
-                        {/* Rating badge - top right */}
-                        <div className="absolute top-4 right-4">
-                          <div className="bg-black/70 backdrop-blur text-white font-bold px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                            ⭐ {option.rating}
+                        {/* Price label */}
+                        <div className="absolute top-3 left-3">
+                          <div className="bg-yellow-400 text-black font-bold px-3 py-1 rounded-lg text-sm">
+                            vanaf €{route.minPrice}
                           </div>
                         </div>
-
-                        {/* Single quality label per card - top left */}
-                        {(() => {
-                          if (option.type === "cruise") {
-                            return (
-                              <div className="absolute top-4 left-4">
-                                <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
-                                  🚢 Binnenkort beschikbaar
-                                </div>
-                              </div>
-                            );
-                          } else if (index === 0) {
-                            return (
-                              <div className="absolute top-4 left-4">
-                                <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
-                                  🏆 Topkwaliteit
-                                </div>
-                              </div>
-                            );
-                          } else if (
-                            option.price ===
-                            Math.min(...filteredResults.map((r) => r.price))
-                          ) {
-                            return (
-                              <div className="absolute top-4 left-4">
-                                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
-                                  💰 Beste prijs
-                                </div>
-                              </div>
-                            );
-                          } else if (option.score > 0.88) {
-                            return (
-                              <div className="absolute top-4 left-4">
-                                <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
-                                  🔥 Populair
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
                       </div>
 
-                      <div className="p-4 sm:p-5 lg:p-6 flex flex-col">
-                        {/* Header with title and route */}
-                        <div className="mb-3">
-                          <h3 className="font-black m-0 mb-2 text-xl sm:text-2xl lg:text-xl text-white group-hover:text-yellow-400 transition-colors duration-300">
-                            {option.title}
+                      <div className="p-6 flex flex-col">
+                        <div className="mb-4">
+                          <h3 className="font-bold m-0 mb-2 text-2xl text-white group-hover:text-yellow-400 transition-colors duration-300">
+                            {route.origin} → {route.destination}
                           </h3>
-                          <div className="flex items-center gap-2 text-sm sm:text-base lg:text-sm">
-                            <span className="font-semibold text-teal-300">
-                              {option.origin} → {option.destination}
-                            </span>
-                            <span className="text-white">•</span>
-                            <span className="text-white">
-                              {option.duration} nachten
-                            </span>
+                          <div className="flex items-center gap-2 text-sm text-white/80">
+                            <span>✈️ {route.flightCount} vluchten</span>
+                            <span>•</span>
+                            <span>🏨 {route.hotelCount} hotels</span>
                           </div>
                         </div>
 
-                        {/* Hotel info */}
-                        <p className="text-sm sm:text-base lg:text-sm text-white leading-relaxed m-0 mb-4 flex-grow">
-                          <span className="font-medium text-white">
-                            🏨 {option.hotel.name}
-                          </span>
-                          <br />
-                          {option.description}
-                        </p>
-
-                        {/* Key highlights - show only 3 most important */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {option.highlights
-                            .slice(0, 3)
-                            .map((highlight, index) => (
-                              <span
-                                key={index}
-                                className="text-xs sm:text-sm lg:text-xs px-2 py-1 bg-gray-600 text-yellow-300 rounded-full font-medium border border-slate-600"
-                              >
-                                {highlight}
-                              </span>
-                            ))}
+                        <div className="space-y-2 mb-4 text-sm text-white/90">
+                          <div>📅 {route.dateRange}</div>
+                          <div>💰 €{route.minPrice} - €{route.maxPrice}</div>
+                          <div>📊 Gemiddeld: €{route.avgPrice}</div>
                         </div>
 
-                        {/* Bottom section with price and booking */}
-                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-auto pt-3 border-t border-white/10">
-                          <div className="flex flex-col">
-                            <div className="text-2xl sm:text-3xl lg:text-2xl font-black text-white mb-1">
-                              {formatPrice(option.price, option.currency)}
-                            </div>
-                            <div className="text-sm text-white">
-                              per persoon
-                            </div>
-                          </div>
-
-                          <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-2">
-                            <div className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-full font-bold">
-                              {Math.round(option.score * 100)}% match
-                            </div>
-                            <a
-                              href={option.bookUrl}
-                              className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-black no-underline px-6 py-3 rounded-lg font-black text-sm transition-all duration-300 ease-out transform translate-y-0 inline-block hover:-translate-y-1 hover:shadow-xl flex-shrink-0"
-                            >
-                              Boek nu
-                            </a>
-                          </div>
+                        <div className="mt-auto">
+                          <button className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-black px-6 py-2 rounded-xl font-bold text-sm transition-all duration-300 w-full">
+                            Bekijk alle opties →
+                          </button>
                         </div>
                       </div>
                     </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-10 text-center" style={{ color: "#a9b7cd" }}>
-                  <p>Geen resultaten gevonden met de huidige filters.</p>
-                  <button
-                    className="border-0 bg-yellow-400 text-black rounded-lg px-4 py-2.5 font-bold cursor-pointer transition-all duration-300 ease-out hover:bg-yellow-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-yellow-400/30"
-                    onClick={resetFilters}
-                  >
-                    Reset filters
-                  </button>
-                </div>
-              )}
+                ))}
+              </div>
             </>
-          )}
+          ) : null}
+          </div>
+          </div>
         </main>
       </div>
     </>
@@ -789,8 +711,10 @@ export default function ResultsPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-white text-center">
-          <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-yellow-400 rounded-full animate-spin mx-auto"></div>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-yellow-400 rounded-full animate-spin"></div>
+          </div>
           <p>Loading...</p>
         </div>
       </div>

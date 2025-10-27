@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaMapMarkerAlt, FaChevronDown } from "react-icons/fa";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
@@ -6,6 +6,13 @@ import {
   ALL_COUNTRIES,
   type Country,
 } from "@/utils/countries";
+
+interface LocationResult {
+  code: string;
+  name: string;
+  countryCode?: string;
+  type: string;
+}
 
 interface SimpleDestinationStepProps {
   destination: string;
@@ -39,11 +46,47 @@ export default function SimpleDestinationStep({
 }: SimpleDestinationStepProps) {
   const [countryInput, setCountryInput] = useState("");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [apiLocations, setApiLocations] = useState<LocationResult[]>([]);
+  const [isLoadingAPI, setIsLoadingAPI] = useState(false);
+  const [useAPI, setUseAPI] = useState(true); // Toggle between API and static list
 
   // 300ms debounce as specified
   const debouncedCountryInput = useDebounce(countryInput, 300);
 
-  const filteredCountries = debouncedCountryInput
+  // Fetch from locations API when user types
+  useEffect(() => {
+    const fetchLocations = async () => {
+      if (!debouncedCountryInput || !useAPI) {
+        setApiLocations([]);
+        return;
+      }
+
+      setIsLoadingAPI(true);
+      try {
+        const response = await fetch(
+          `/api/locations?q=${encodeURIComponent(debouncedCountryInput)}&type=city&limit=10`
+        );
+        const result = await response.json();
+
+        if (result.ok && result.data) {
+          setApiLocations(result.data);
+        } else {
+          // Fallback to static list if API fails
+          setUseAPI(false);
+        }
+      } catch (error) {
+        console.error('Location API error:', error);
+        setUseAPI(false); // Fallback to static list
+      } finally {
+        setIsLoadingAPI(false);
+      }
+    };
+
+    fetchLocations();
+  }, [debouncedCountryInput, useAPI]);
+
+  // Fallback to static country list
+  const filteredCountries = debouncedCountryInput && !useAPI
     ? filterCountries(debouncedCountryInput)
     : ALL_COUNTRIES.slice(0, 10);
 
@@ -51,6 +94,15 @@ export default function SimpleDestinationStep({
     setCountryInput(country.name);
     onUpdate({
       destination: country.name,
+      destinationType: "country",
+    });
+    setShowCountryDropdown(false);
+  };
+
+  const handleAPILocationSelect = (location: LocationResult) => {
+    setCountryInput(location.name);
+    onUpdate({
+      destination: location.name,
       destinationType: "country",
     });
     setShowCountryDropdown(false);
@@ -139,7 +191,26 @@ export default function SimpleDestinationStep({
           {/* Country Dropdown Results */}
           {showCountryDropdown && (
             <div className="absolute z-10 w-full mt-1 bg-gray-900 border-2 border-gray-700 shadow-2xl rounded-xl max-h-48 overflow-y-auto">
-              {filteredCountries.length > 0 ? (
+              {isLoadingAPI ? (
+                <div className="px-4 py-3 text-center text-white/60 text-sm">
+                  Zoeken...
+                </div>
+              ) : useAPI && apiLocations.length > 0 ? (
+                // Show API results
+                apiLocations.map((location) => (
+                  <button
+                    key={location.code}
+                    onClick={() => handleAPILocationSelect(location)}
+                    className="w-full px-4 py-2 text-left text-white hover:bg-gray-800 first:rounded-t-xl last:rounded-b-xl transition-colors"
+                  >
+                    <div className="font-medium">{location.name}</div>
+                    {location.type && (
+                      <div className="text-xs text-white/50">{location.type}</div>
+                    )}
+                  </button>
+                ))
+              ) : !useAPI && filteredCountries.length > 0 ? (
+                // Fallback to static country list
                 filteredCountries.map((country) => (
                   <button
                     key={country.code}
@@ -152,7 +223,7 @@ export default function SimpleDestinationStep({
               ) : debouncedCountryInput ? (
                 <div className="px-4 py-3">
                   <div className="text-gray-300 text-sm mb-2">
-                    Geen landen gevonden
+                    Geen locaties gevonden
                   </div>
                   <button
                     onClick={() => {
