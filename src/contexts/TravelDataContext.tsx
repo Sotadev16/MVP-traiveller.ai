@@ -5,20 +5,20 @@ import { FlightItineraryDTO, HotelDTO } from '@/lib/types/api';
 import { POPULAR_DESTINATIONS, SUPPORTED_ORIGINS, getIATACode, getCityFromLocation, getCountryCode } from '@/lib/utils/countryMappings';
 
 // Supported routes for our application (kept for backward compatibility)
-const SUPPORTED_ROUTES = [
-  // Netherlands departures
-  { origin: 'AMS', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS', 'ATH', 'IST', 'RAK'] },
-  { origin: 'EIN', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS'] },
-  { origin: 'RTM', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD'] },
+// const SUPPORTED_ROUTES = [
+//   // Netherlands departures
+//   { origin: 'AMS', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS', 'ATH', 'IST', 'RAK'] },
+//   { origin: 'EIN', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS'] },
+//   { origin: 'RTM', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD'] },
 
-  // Belgium departures
-  { origin: 'BRU', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS', 'ATH', 'RAK'] },
-];
+//   // Belgium departures
+//   { origin: 'BRU', destinations: ['BCN', 'FCO', 'CDG', 'LHR', 'MAD', 'BER', 'LIS', 'ATH', 'RAK'] },
+// ];
 
-const SUPPORTED_CITIES = [
-  'Barcelona', 'Rome', 'Paris', 'London', 'Madrid',
-  'Berlin', 'Lisbon', 'Athens', 'Istanbul', 'Marrakech'
-];
+// const SUPPORTED_CITIES = [
+//   'Barcelona', 'Rome', 'Paris', 'London', 'Madrid',
+//   'Berlin', 'Lisbon', 'Athens', 'Istanbul', 'Marrakech'
+// ];
 
 interface CachedFlightData {
   [key: string]: { // key format: "ORIGIN-DESTINATION"
@@ -129,79 +129,79 @@ export function TravelDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Fetch flight data for a specific route
-  const fetchFlightsForRoute = async (origin: string, destination: string): Promise<FlightItineraryDTO[]> => {
-    try {
-      // Use dates 1 month from now
-      const departDate = new Date();
-      departDate.setDate(departDate.getDate() + 30);
-      const returnDate = new Date(departDate);
-      returnDate.setDate(returnDate.getDate() + 7);
+  // const fetchFlightsForRoute = async (origin: string, destination: string): Promise<FlightItineraryDTO[]> => {
+  //   try {
+  //     // Use dates 1 month from now
+  //     const departDate = new Date();
+  //     departDate.setDate(departDate.getDate() + 30);
+  //     const returnDate = new Date(departDate);
+  //     returnDate.setDate(returnDate.getDate() + 7);
 
-      const params = new URLSearchParams({
-        origin,
-        destination,
-        date: departDate.toISOString().split('T')[0],
-        return_date: returnDate.toISOString().split('T')[0],
-        adults: '2',
-        children: '0',
-        currency: 'EUR',
-        pageSize: '20', // Get more results to cache
-      });
+  //     const params = new URLSearchParams({
+  //       origin,
+  //       destination,
+  //       date: departDate.toISOString().split('T')[0],
+  //       return_date: returnDate.toISOString().split('T')[0],
+  //       adults: '2',
+  //       children: '0',
+  //       currency: 'EUR',
+  //       pageSize: '20', // Get more results to cache
+  //     });
 
-      const response = await fetch(`/api/flights?${params}`, {
-        cache: 'no-store',
-      });
+  //     const response = await fetch(`/api/flights?${params}`, {
+  //       cache: 'no-store',
+  //     });
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      if (result.ok && result.data) {
-        console.log(`✅ Fetched ${result.data.length} flights for ${origin} → ${destination}`);
-        return result.data;
-      } else {
-        console.warn(`⚠️ No flights for ${origin} → ${destination}`);
-        return [];
-      }
-    } catch (error) {
-      console.error(`Error fetching flights ${origin} → ${destination}:`, error);
-      return [];
-    }
-  };
+  //     if (result.ok && result.data) {
+  //       console.log(`✅ Fetched ${result.data.length} flights for ${origin} → ${destination}`);
+  //       return result.data;
+  //     } else {
+  //       console.warn(`⚠️ No flights for ${origin} → ${destination}`);
+  //       return [];
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error fetching flights ${origin} → ${destination}:`, error);
+  //     return [];
+  //   }
+  // };
 
   // Fetch hotel data for a city
-  const fetchHotelsForCity = async (city: string): Promise<HotelDTO[]> => {
-    try {
-      const checkIn = new Date();
-      checkIn.setDate(checkIn.getDate() + 30);
-      const checkOut = new Date(checkIn);
-      checkOut.setDate(checkOut.getDate() + 7);
+  // const fetchHotelsForCity = async (city: string): Promise<HotelDTO[]> => {
+  //   try {
+  //     const checkIn = new Date();
+  //     checkIn.setDate(checkIn.getDate() + 30);
+  //     const checkOut = new Date(checkIn);
+  //     checkOut.setDate(checkOut.getDate() + 7);
 
-      const params = new URLSearchParams({
-        location: city,
-        checkIn: checkIn.toISOString().split('T')[0],
-        checkOut: checkOut.toISOString().split('T')[0],
-        guests: '2',
-        currency: 'EUR',
-        pageSize: '20', // Get more results to cache
-      });
+  //     const params = new URLSearchParams({
+  //       location: city,
+  //       checkIn: checkIn.toISOString().split('T')[0],
+  //       checkOut: checkOut.toISOString().split('T')[0],
+  //       guests: '2',
+  //       currency: 'EUR',
+  //       pageSize: '20', // Get more results to cache
+  //     });
 
-      const response = await fetch(`/api/hotels?${params}`, {
-        cache: 'no-store',
-      });
+  //     const response = await fetch(`/api/hotels?${params}`, {
+  //       cache: 'no-store',
+  //     });
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      if (result.ok && result.data) {
-        console.log(`✅ Fetched ${result.data.length} hotels for ${city}`);
-        return result.data;
-      } else {
-        console.warn(`⚠️ No hotels for ${city}`);
-        return [];
-      }
-    } catch (error) {
-      console.error(`Error fetching hotels for ${city}:`, error);
-      return [];
-    }
-  };
+  //     if (result.ok && result.data) {
+  //       console.log(`✅ Fetched ${result.data.length} hotels for ${city}`);
+  //       return result.data;
+  //     } else {
+  //       console.warn(`⚠️ No hotels for ${city}`);
+  //       return [];
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error fetching hotels for ${city}:`, error);
+  //     return [];
+  //   }
+  // };
 
   // Fetch route summaries for multiple origin-destination combinations
   const fetchRouteSummaries = async (originsToFetch?: typeof SUPPORTED_ORIGINS): Promise<RouteOption[]> => {
