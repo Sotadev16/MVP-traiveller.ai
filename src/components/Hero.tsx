@@ -1,28 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ContentType } from "@/content/home";
+import { COUNTRY_MAPPINGS } from "@/lib/utils/countryMappings";
 
 interface HeroProps {
   content: ContentType;
 }
 
-export default function Hero({  }: HeroProps) {
+export default function Hero({}: HeroProps) {
   const router = useRouter();
-  const [to, setTo] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<{city: string, country: string, dutchName?: string}[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Create flat list of all cities with their countries
+  const allCities = COUNTRY_MAPPINGS.flatMap(country =>
+    country.cities.map(city => ({
+      city,
+      country: country.country,
+      dutchName: country.dutchName as string | undefined
+    }))
+  );
+
+  // Handle input change and filter suggestions
+  const handleInputChange = (value: string) => {
+    setSearchInput(value);
+
+    if (value.trim().length > 0) {
+      const filtered = allCities
+        .filter(item =>
+          item.city.toLowerCase().includes(value.toLowerCase()) ||
+          item.country.toLowerCase().includes(value.toLowerCase()) ||
+          item.dutchName?.toLowerCase().includes(value.toLowerCase())
+        )
+        .slice(0, 8); // Limit to 8 suggestions
+
+      setFilteredSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (city: string, country: string) => {
+    setSearchInput(`${city}, ${country}`);
+    setShowSuggestions(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleQuickSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (to) {
-      router.push(`/results?to=${to}`);
+
+    if (searchInput.trim()) {
+      // Extract city from input (format: "City, Country")
+      const cityMatch = searchInput.split(',')[0].trim();
+
+      // Navigate to results page with multi-airport search
+      // The results page will fetch from all 4 airports
+      router.push(`/results?to=${encodeURIComponent(cityMatch)}&multiAirport=true`);
     }
   };
 
   return (
-    <section className="relative z-10 min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-16 px-4">
-      <div className="relative z-20 w-full max-w-6xl mx-auto">
+    <section className="relative z-30 min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-16 px-4">
+      <div className="relative z-30 w-full max-w-6xl mx-auto">
         {/* Hero Title */}
         <div className="text-center mb-8">
           <h1 className="font-black leading-tight tracking-tight mb-6">
@@ -73,7 +130,7 @@ export default function Hero({  }: HeroProps) {
           </Link>
         </div>
 
-        {/* QuickSearch - Horizontal Single Line */}
+        {/* QuickSearch - Horizontal Single Line with Autocomplete */}
         <div className="max-w-4xl mx-auto px-4">
           <form onSubmit={handleQuickSearch} className="flex flex-col sm:flex-row gap-3 items-stretch">
             {/* From - Static Display */}
@@ -84,17 +141,51 @@ export default function Hero({  }: HeroProps) {
               </span>
             </div>
 
-            {/* To - Input */}
-            <div className="flex items-center bg-white rounded-full px-6 py-4 shadow-xl flex-1">
-              <span className="text-gray-600 font-medium text-sm mr-4">To</span>
-              <input
-                type="text"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder=""
-                className="flex-1 text-gray-900 font-semibold text-sm outline-none bg-transparent"
-                aria-label="Destination"
-              />
+            {/* To - Input with Autocomplete */}
+            <div className="relative flex-1" ref={dropdownRef}>
+              <div className="flex items-center bg-white rounded-full px-6 py-4 shadow-xl">
+                <span className="text-gray-600 font-medium text-sm mr-4">To</span>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onFocus={() => {
+                    if (searchInput.trim().length > 0 && filteredSuggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  placeholder="Typ een stad of land..."
+                  className="flex-1 text-gray-900 font-semibold text-sm outline-none bg-transparent"
+                  aria-label="Destination"
+                />
+              </div>
+
+              {/* Autocomplete Dropdown */}
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-[9999] max-h-64 overflow-y-auto">
+                  {filteredSuggestions.map((item, index) => (
+                    <div
+                      key={`${item.city}-${item.country}-${index}`}
+                      onClick={() => handleSelectSuggestion(item.city, item.country)}
+                      className="px-6 py-3 hover:bg-yellow-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-gray-900 text-sm">
+                            {item.city}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {item.dutchName || item.country}
+                          </div>
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Search Button */}

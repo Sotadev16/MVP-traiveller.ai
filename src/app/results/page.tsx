@@ -35,6 +35,8 @@ function ResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const submissionId = searchParams.get("id");
+  const multiAirportParam = searchParams.get("multiAirport");
+  const toParam = searchParams.get("to");
 
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [filteredRoutes, setFilteredRoutes] = useState<RouteOption[]>([]);
@@ -121,6 +123,155 @@ function ResultsContent() {
       return () => clearTimeout(timer);
     }
   }, [submissionId]);
+
+  // Multi-airport search function
+  const handleMultiAirportSearch = useCallback(async (destination: string) => {
+    setLoading(true);
+
+    // All 4 airports to search from
+    const airports = [
+      { code: 'AMS', city: 'Amsterdam' },
+      { code: 'RTM', city: 'Rotterdam' },
+      { code: 'BRU', city: 'Brussels' },
+      { code: 'DUS', city: 'Dusseldorf' }
+    ];
+
+    try {
+      // Get destination code
+      const destinationCode = getIATACode(destination);
+
+      // Set default dates (today + 30 days)
+      const today = new Date();
+      const future = new Date();
+      future.setDate(today.getDate() + 30);
+      const departureDate = today.toISOString().split('T')[0];
+      const returnDate = future.toISOString().split('T')[0];
+
+      console.log(`🔍 Multi-airport search to ${destination} (${destinationCode})`);
+      console.log(`📅 Dates: ${departureDate} to ${returnDate}`);
+
+      // Fetch flights from all 4 airports in parallel
+      const flightPromises = airports.map(async (airport) => {
+        const flightParams = new URLSearchParams({
+          origin: airport.code,
+          destination: destinationCode,
+          date: departureDate,
+          return_date: returnDate,
+          adults: '2',
+          children: '0',
+          currency: 'EUR',
+          pageSize: '50',
+        });
+
+        try {
+          const response = await fetch(`/api/flights?${flightParams}`, {
+            cache: 'no-store',
+          });
+          const result = await response.json();
+          const flights = result.ok && result.data ? result.data : [];
+
+          return {
+            airport,
+            flights,
+          };
+        } catch (error) {
+          console.error(`Error fetching flights from ${airport.city}:`, error);
+          return {
+            airport,
+            flights: [],
+          };
+        }
+      });
+
+      // Fetch hotels for destination (only once)
+      const hotelParams = new URLSearchParams({
+        location: destination,
+        checkIn: departureDate,
+        checkOut: returnDate,
+        guests: '2',
+        currency: 'EUR',
+        pageSize: '50',
+      });
+
+      const hotelPromise = fetch(`/api/hotels?${hotelParams}`, {
+        cache: 'no-store',
+      }).then(res => res.json());
+
+      // Wait for all requests
+      const [flightResults, hotelResult] = await Promise.all([
+        Promise.all(flightPromises),
+        hotelPromise
+      ]);
+
+      const hotels = hotelResult.ok && hotelResult.data ? hotelResult.data : [];
+
+      console.log('✅ Multi-airport search complete');
+
+      // Create routes for airports with flights
+      const allRoutes: RouteOption[] = [];
+
+      for (const { airport, flights } of flightResults) {
+        if (flights.length > 0) {
+          interface Flight {
+            price?: {
+              amount?: number;
+            };
+          }
+          const prices = (flights as Flight[]).map((f) => f.price?.amount || 0).filter((p: number) => p > 0);
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+          const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+          const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a: number, b: number) => a + b, 0) / prices.length) : 0;
+          const countryCode = getCountryCode(destination);
+
+          const route: RouteOption = {
+            id: `${airport.code}-${destinationCode}`,
+            origin: airport.city,
+            originCode: airport.code,
+            destination: destination,
+            destinationCode,
+            destinationCountryCode: countryCode,
+            flightCount: flights.length,
+            hotelCount: hotels.length,
+            minPrice,
+            maxPrice,
+            avgPrice,
+            currency: 'EUR',
+            dateRange: `${departureDate} - ${returnDate}`,
+            image: hotels[0]?.thumbnail || `https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`,
+          };
+
+          allRoutes.push(route);
+          console.log(`✈️ ${airport.city}: ${flights.length} flights found`);
+        }
+      }
+
+      // Sort by price and take top 5
+      const top5Routes = allRoutes
+        .sort((a, b) => a.minPrice - b.minPrice)
+        .slice(0, 5);
+
+      setRoutes(top5Routes);
+
+      if (top5Routes.length > 0) {
+        const totalFlights = top5Routes.reduce((sum, r) => sum + r.flightCount, 0);
+        toast.success(`${totalFlights} vluchten gevonden vanaf ${top5Routes.length} luchthavens!`, { icon: '✈️' });
+      } else {
+        toast.error('Geen vluchten gevonden vanaf deze luchthavens.', { icon: '😔' });
+      }
+    } catch (error) {
+      console.error('Error in multi-airport search:', error);
+      toast.error('Er is een fout opgetreden bij het zoeken.', { icon: '❌' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Multi-airport search effect
+  useEffect(() => {
+    if (multiAirportParam === 'true' && toParam && isInitialized) {
+      handleMultiAirportSearch(toParam);
+    }
+  }, [multiAirportParam, toParam, isInitialized, handleMultiAirportSearch]);
 
   const handleSearch = useCallback(async () => {
     // Validation
